@@ -6,7 +6,11 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { useToys } from "./lib/queries";
-import type { Toy } from "./lib/types";
+import type { Toy, ToyImage } from "./lib/types";
+
+function getFeaturedImage(toy: Toy): ToyImage | null {
+  return toy.images.find((img: ToyImage) => img.is_featured) ?? toy.images[0] ?? null;
+}
 
 function formatAgeRange(toy: Toy): string | null {
   if (toy.age_min === null && toy.age_max === null) return null;
@@ -44,9 +48,23 @@ export default function Page(): JSX.Element {
             <Stack spacing={2}>
               {data.map((toy: Toy) => {
                 const ageRange: string | null = formatAgeRange(toy);
+                const featuredImage: ToyImage | null = getFeaturedImage(toy);
                 return (
                   <Paper key={toy.id} sx={{ p: 3 }} elevation={0}>
                     <Stack spacing={1}>
+                      {featuredImage !== null ? (
+                        <Box
+                          component="img"
+                          src={featuredImage.image_url}
+                          alt={toy.name}
+                          sx={{
+                            width: "100%",
+                            aspectRatio: "16/9",
+                            objectFit: "cover",
+                            borderRadius: 1,
+                          }}
+                        />
+                      ) : null}
                       <Typography variant="sectionTitle" component="h2">
                         {toy.name}
                       </Typography>

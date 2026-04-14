@@ -53,6 +53,10 @@ class ToyImageRead(ToyImageBase, AuditRead):
     toy_id: uuid.UUID
 
 
+class ToyReadWithImages(ToyRead):
+    images: list[ToyImageRead] = []
+
+
 class TagBase(BaseModel):
     name: str = Field(min_length=1, max_length=64)
 
