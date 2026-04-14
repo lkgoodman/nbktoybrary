@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
+import QueryProvider from "./lib/QueryProvider";
 import ThemeRegistry from "./theme/ThemeRegistry";
 
 export const metadata: Metadata = {
@@ -13,7 +14,9 @@ export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
   return (
     <html lang="en">
       <body>
-        <ThemeRegistry>{children}</ThemeRegistry>
+        <ThemeRegistry>
+          <QueryProvider>{children}</QueryProvider>
+        </ThemeRegistry>
       </body>
     </html>
   );
