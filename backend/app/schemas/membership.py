@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from app.models.membership import AccountStanding, MembershipRequestStatus
 from app.schemas.base import AuditRead, ORMModel
+from app.schemas.user import UserRead
 
 
 class MembershipRequestCreate(BaseModel):
@@ -16,8 +17,6 @@ class MembershipRequestCreate(BaseModel):
 
 class MembershipRequestUpdate(BaseModel):
     status: MembershipRequestStatus
-    reviewed_by: uuid.UUID
-    reviewed_at: datetime
     notes: str | None = Field(default=None, max_length=1024)
 
 
@@ -28,6 +27,10 @@ class MembershipRequestRead(AuditRead):
     reviewed_at: datetime | None
     status: MembershipRequestStatus
     notes: str | None
+
+
+class MembershipRequestReadWithUser(MembershipRequestRead):
+    user: UserRead
 
 
 class MembershipCreate(BaseModel):

@@ -19,6 +19,7 @@ class Toy(AuditMixin, Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(String(2048), nullable=False)
     brand: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    language: Mapped[str | None] = mapped_column(String(64), nullable=True)
     link: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     battery_operated: Mapped[bool] = mapped_column(Boolean, nullable=False)
     shareable: Mapped[bool] = mapped_column(Boolean, nullable=False)

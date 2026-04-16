@@ -15,12 +15,20 @@ declare module "@mui/material/styles" {
     sectionTitle: React.CSSProperties;
     bodyStrong: React.CSSProperties;
     label: React.CSSProperties;
+    navTitle: React.CSSProperties;
   }
   interface TypographyVariantsOptions {
     pageTitle?: React.CSSProperties;
     sectionTitle?: React.CSSProperties;
     bodyStrong?: React.CSSProperties;
     label?: React.CSSProperties;
+    navTitle?: React.CSSProperties;
+  }
+  interface Theme {
+    layout: { sidebarWidth: number };
+  }
+  interface ThemeOptions {
+    layout?: { sidebarWidth?: number };
   }
 }
 
@@ -30,6 +38,7 @@ declare module "@mui/material/Typography" {
     sectionTitle: true;
     bodyStrong: true;
     label: true;
+    navTitle: true;
   }
 }
 
@@ -69,6 +78,12 @@ const typography: TypographyVariantsOptions = {
     letterSpacing: "0.08em",
     textTransform: "uppercase",
   },
+  navTitle: {
+    fontFamily,
+    fontSize: "1.25rem",
+    fontWeight: 700,
+    lineHeight: 1.3,
+  },
 };
 
 const themeOptions: ThemeOptions = {
@@ -81,6 +96,7 @@ const themeOptions: ThemeOptions = {
   },
   spacing: 8,
   shape: { borderRadius: 8 },
+  layout: { sidebarWidth: 220 },
   typography,
 };
 

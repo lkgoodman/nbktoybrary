@@ -13,6 +13,7 @@ export interface Toy {
   name: string;
   description: string;
   brand: string | null;
+  language: string | null;
   link: string | null;
   battery_operated: boolean;
   shareable: boolean;
@@ -20,9 +21,97 @@ export interface Toy {
   age_max: number | null;
   piece_count: number | null;
   images: ToyImage[];
+  tags: string[];
+  is_available: boolean;
   created_at: string;
   updated_at: string;
   created_by: string | null;
+}
+
+export interface UserRead {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address_line1: string;
+  address_line2: string | null;
+  city: string;
+  state: string;
+  zip: string;
+  roles: string[];
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  user: UserRead;
+}
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  phone: string;
+  address_line1: string;
+  address_line2: string | null;
+  city: string;
+  state: string;
+  zip: string;
+  password: string;
+}
+
+export interface MembershipRequestRead {
+  id: string;
+  user_id: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  status: "pending" | "approved" | "denied";
+  notes: string | null;
+  user: UserRead;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+}
+
+export interface ToyCreate {
+  name: string;
+  description: string;
+  brand: string | null;
+  language: string | null;
+  link: string | null;
+  battery_operated: boolean;
+  shareable: boolean;
+  age_min: number | null;
+  age_max: number | null;
+  piece_count: number | null;
+}
+
+export interface ToyUpdate {
+  name?: string;
+  description?: string;
+  brand?: string | null;
+  link?: string | null;
+  battery_operated?: boolean;
+  shareable?: boolean;
+  age_min?: number | null;
+  age_max?: number | null;
+  piece_count?: number | null;
+}
+
+export interface BorrowRequestRead {
+  id: string;
+  toy_id: string;
+  membership_id: string;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+}
+
+export interface BorrowRequestReadWithDetails extends BorrowRequestRead {
+  toy_name: string;
+  member_name: string;
 }
 
 export interface HelloResponse {

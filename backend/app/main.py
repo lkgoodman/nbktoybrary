@@ -4,13 +4,16 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app.db.base import Base
 from app.db.seed import seed
 from app.db.session import DATABASE_PATH, SessionLocal, engine
 from app.models import *  # noqa: F401,F403  -- register mappers
-from app.routers import toys
+from app.routers import auth, borrow_requests, membership_requests, toy_images, toys, users
+
+IMAGES_DIR: str = os.getenv("IMAGES_DIR", "/data/images")
 
 
 @asynccontextmanager
@@ -34,7 +37,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(membership_requests.router)
+app.include_router(borrow_requests.router)
 app.include_router(toys.router)
+app.include_router(toy_images.router)
+os.makedirs(IMAGES_DIR, exist_ok=True)
+app.mount("/static/images", StaticFiles(directory=IMAGES_DIR), name="images")
 
 
 class HelloResponse(BaseModel):

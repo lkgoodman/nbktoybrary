@@ -26,6 +26,10 @@ class UserRead(UserBase, AuditRead):
     id: uuid.UUID
 
 
+class UserReadWithRoles(UserRead):
+    roles: list[str] = []
+
+
 class RoleBase(BaseModel):
     name: str = Field(min_length=1, max_length=64)
 

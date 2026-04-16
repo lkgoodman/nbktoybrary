@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from datetime import date, timedelta
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password
-from app.models.toy import Toy, ToyImage
+from app.models.membership import AccountStanding, Membership, MembershipRequest, MembershipRequestStatus, MembershipUser
+from app.models.toy import Tag, Toy, ToyImage, ToyTag
 from app.models.user import Role, User, UserRole
 
 
@@ -14,8 +17,8 @@ async def seed(db: AsyncSession) -> None:
     await db.flush()
 
     admin = User(
-        name="Ada Admin",
-        email="admin@toybrary.local",
+        name="Ada",
+        email="admin@toybrary.com",
         phone="555-0100",
         password_hash=hash_password("adminpass"),
         address_line1="1 Library Way",
@@ -25,7 +28,7 @@ async def seed(db: AsyncSession) -> None:
     )
     member = User(
         name="Milo Member",
-        email="member@toybrary.local",
+        email="member@toybrary.com",
         phone="555-0101",
         password_hash=hash_password("memberpass"),
         address_line1="42 Play St",
@@ -43,6 +46,27 @@ async def seed(db: AsyncSession) -> None:
             UserRole(user_id=member.id, role_id=member_role.id),
         ]
     )
+    await db.flush()
+
+    today = date.today()
+    membership_request = MembershipRequest(
+        user_id=member.id,
+        reviewed_by=admin.id,
+        status=MembershipRequestStatus.approved,
+    )
+    db.add(membership_request)
+    await db.flush()
+
+    membership = Membership(
+        membership_request_id=membership_request.id,
+        start_date=today,
+        end_date=today + timedelta(days=365),
+        account_standing=AccountStanding.active,
+    )
+    db.add(membership)
+    await db.flush()
+
+    db.add(MembershipUser(membership_id=membership.id, user_id=member.id))
 
     blocks = Toy(
         name="Wooden Blocks",
@@ -94,6 +118,27 @@ async def seed(db: AsyncSession) -> None:
                 image_url="https://picsum.photos/seed/arteasel/600/400",
                 is_featured=True,
             ),
+        ]
+    )
+
+    tag_building = Tag(name="building")
+    tag_creative = Tag(name="creative")
+    tag_vehicles = Tag(name="vehicles")
+    tag_outdoor = Tag(name="outdoor")
+    tag_electronic = Tag(name="electronic")
+    tag_art = Tag(name="art")
+    db.add_all([tag_building, tag_creative, tag_vehicles, tag_outdoor, tag_electronic, tag_art])
+    await db.flush()
+
+    db.add_all(
+        [
+            ToyTag(toy_id=blocks.id, tag_id=tag_building.id),
+            ToyTag(toy_id=blocks.id, tag_id=tag_creative.id),
+            ToyTag(toy_id=rc_car.id, tag_id=tag_vehicles.id),
+            ToyTag(toy_id=rc_car.id, tag_id=tag_outdoor.id),
+            ToyTag(toy_id=rc_car.id, tag_id=tag_electronic.id),
+            ToyTag(toy_id=easel.id, tag_id=tag_art.id),
+            ToyTag(toy_id=easel.id, tag_id=tag_creative.id),
         ]
     )
 
