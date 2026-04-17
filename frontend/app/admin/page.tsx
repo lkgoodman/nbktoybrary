@@ -21,8 +21,8 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import NextLink from "next/link";
 import { useAuth } from "../lib/AuthContext";
-import { useMembershipRequests, useUpdateMembershipRequest, useToys, useAdminBorrowRequests, useTimeframes, useCreateTimeframe, useDeleteTimeframe, queryKeys } from "../lib/queries";
-import type { BorrowRequestReadWithDetails, MembershipRequestRead, TimeframeRead, Toy, ToyImage } from "../lib/types";
+import { useMembershipRequests, useUpdateMembershipRequest, useToys, useAdminBorrowRequests, useTimeframes, useCreateTimeframe, useDeleteTimeframe, useUsers, queryKeys } from "../lib/queries";
+import type { BorrowRequestReadWithDetails, MembershipRequestRead, TimeframeRead, Toy, ToyImage, UserRead } from "../lib/types";
 
 export default function AdminPage(): JSX.Element {
   const { isAdmin, token, isAuthenticated } = useAuth();
@@ -30,7 +30,7 @@ export default function AdminPage(): JSX.Element {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<number>(
-    searchParams.get("tab") === "inventory" ? 1 : searchParams.get("tab") === "borrow" ? 2 : searchParams.get("tab") === "pickup" ? 3 : 0
+    searchParams.get("tab") === "borrow" ? 1 : searchParams.get("tab") === "membership" ? 2 : searchParams.get("tab") === "members" ? 3 : searchParams.get("tab") === "pickup" ? 4 : 0
   );
   const [inventorySearch, setInventorySearch] = useState<string>("");
   const [inventoryTags, setInventoryTags] = useState<Set<string>>(new Set());
@@ -47,7 +47,19 @@ export default function AdminPage(): JSX.Element {
   });
   const [selectedCalendarDay, setSelectedCalendarDay] = useState<{ year: number; month: number; day: number } | null>(null);
 
-  const AGE_BUCKETS = [0, 1, 2, 3, 4, 5, 6, 7];
+  const AGE_BUCKETS: { label: string; age: number }[] = [
+    { label: "0+", age: 0 },
+    { label: "3m+", age: 3 },
+    { label: "6m+", age: 6 },
+    { label: "9m+", age: 9 },
+    { label: "1+", age: 12 },
+    { label: "2+", age: 24 },
+    { label: "3+", age: 36 },
+    { label: "4+", age: 48 },
+    { label: "5+", age: 60 },
+    { label: "6+", age: 72 },
+    { label: "7+", age: 84 },
+  ];
   const LANGUAGES: string[] = ["French", "Spanish"];
 
   function handleInventoryTagsChange(e: SelectChangeEvent<string[]>): void {
@@ -57,7 +69,7 @@ export default function AdminPage(): JSX.Element {
 
   function handleInventoryAgeChange(e: SelectChangeEvent<string>): void {
     const val = e.target.value;
-    setInventoryAge(val === "" ? null : Number(val));
+    setInventoryAge(val === "" ? null : AGE_BUCKETS.find((b) => b.label === val)?.age ?? null);
   }
 
   useEffect(() => {
@@ -71,6 +83,7 @@ export default function AdminPage(): JSX.Element {
   const { data: toys, isPending: toysPending, isError: toysError } = useToys();
   const { data: borrowRequests, isPending: borrowPending, isError: borrowError } = useAdminBorrowRequests(token);
   const { data: timeframes, isPending: timeframesPending, isError: timeframesError } = useTimeframes(token);
+  const { data: users, isPending: usersPending, isError: usersError } = useUsers(token);
   const createTimeframe = useCreateTimeframe();
   const deleteTimeframe = useDeleteTimeframe();
 
@@ -88,6 +101,7 @@ export default function AdminPage(): JSX.Element {
       inventoryTags.size === 0 || toy.tags.some((t: string) => inventoryTags.has(t));
     const ageMatch =
       inventoryAge === null || (toy.age_min !== null && toy.age_min <= inventoryAge);
+
     const languageMatch =
       inventoryLanguage === null || toy.language === inventoryLanguage;
     const availabilityMatch =
@@ -115,20 +129,28 @@ export default function AdminPage(): JSX.Element {
   if (!isAuthenticated || !isAdmin) return <Box />;
 
   return (
-    <Box component="main" sx={{ p: 4, maxWidth: 800, mx: "auto" }}>
+    <Box component="main" sx={{ p: 4, maxWidth: 1100, mx: "auto" }}>
       <Stack spacing={4}>
         <Typography variant="pageTitle" component="h1">
           Admin
         </Typography>
 
-        <Tabs value={tab} onChange={(_e, v: number) => setTab(v)}>
-          <Tab label="Membership requests" />
-          <Tab label="Inventory" />
-          <Tab label="Borrow requests" />
-          <Tab label="Open hours" />
-        </Tabs>
+        <Stack direction="row" spacing={4} alignItems="flex-start">
+          <Tabs
+            value={tab}
+            onChange={(_e, v: number) => setTab(v)}
+            orientation="vertical"
+            sx={{ borderRight: 1, borderColor: "divider", minWidth: 180, flexShrink: 0 }}
+          >
+            <Tab label="Inventory" sx={{ alignItems: "flex-start" }} />
+            <Tab label="Borrow requests" sx={{ alignItems: "flex-start" }} />
+            <Tab label="Membership requests" sx={{ alignItems: "flex-start" }} />
+            <Tab label="Members" sx={{ alignItems: "flex-start" }} />
+            <Tab label="Open hours" sx={{ alignItems: "flex-start" }} />
+          </Tabs>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
 
-        {tab === 0 ? (
+        {tab === 2 ? (
           <Stack spacing={2}>
             {requestsPending ? (
               <Typography variant="body1" color="text.secondary">Loading…</Typography>
@@ -196,7 +218,7 @@ export default function AdminPage(): JSX.Element {
               </>
             ) : null}
           </Stack>
-        ) : tab === 1 ? (
+        ) : tab === 0 ? (
           <Stack spacing={2}>
             <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
               <TextField
@@ -227,12 +249,12 @@ export default function AdminPage(): JSX.Element {
                 <InputLabel>Age</InputLabel>
                 <Select
                   label="Age"
-                  value={inventoryAge !== null ? String(inventoryAge) : ""}
+                  value={inventoryAge !== null ? (AGE_BUCKETS.find((b) => b.age === inventoryAge)?.label ?? "") : ""}
                   onChange={handleInventoryAgeChange}
                 >
                   <MenuItem value="">Any</MenuItem>
-                  {AGE_BUCKETS.map((age: number) => (
-                    <MenuItem key={age} value={String(age)}>{age}+</MenuItem>
+                  {AGE_BUCKETS.map((b) => (
+                    <MenuItem key={b.label} value={b.label}>{b.label}</MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -296,10 +318,10 @@ export default function AdminPage(): JSX.Element {
                             component="img"
                             src={featured.image_url}
                             alt={toy.name}
-                            sx={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: 1 }}
+                            sx={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", borderRadius: 1 }}
                           />
                         ) : (
-                          <Box sx={{ width: "100%", aspectRatio: "16/9", bgcolor: "grey.100", borderRadius: 1 }} />
+                          <Box sx={{ width: "100%", aspectRatio: "1/1", bgcolor: "grey.100", borderRadius: 1 }} />
                         )}
                         <Typography variant="bodyStrong" sx={{ flex: 1 }}>{toy.name}</Typography>
                         <Button
@@ -318,7 +340,7 @@ export default function AdminPage(): JSX.Element {
               </Box>
             )}
           </Stack>
-        ) : tab === 2 ? (
+        ) : tab === 1 ? (
           <Stack spacing={2}>
             {borrowPending ? (
               <Typography variant="body1" color="text.secondary">Loading…</Typography>
@@ -405,10 +427,39 @@ export default function AdminPage(): JSX.Element {
               );
             })()}
           </Stack>
-        ) : (
+        ) : tab === 3 ? (
+          <Stack spacing={2}>
+            {usersPending ? (
+              <Typography variant="body1" color="text.secondary">Loading…</Typography>
+            ) : usersError ? (
+              <Typography variant="body1" color="error">Failed to load members.</Typography>
+            ) : (
+              <Stack spacing={1}>
+                {(users ?? []).filter((u: UserRead) => u.roles.includes("member")).map((u: UserRead) => (
+                  <Paper key={u.id} elevation={0} sx={{ p: 2 }}>
+                    <Stack direction="row" alignItems="center" justifyContent="space-between">
+                      <Stack spacing={0.25}>
+                        <Typography variant="bodyStrong">{u.name}</Typography>
+                        <Typography variant="body1" color="text.secondary">{u.email}</Typography>
+                      </Stack>
+                      <Button
+                        component={NextLink}
+                        href={`/admin/members/${u.id}`}
+                        variant="outlined"
+                        size="small"
+                      >
+                        View profile
+                      </Button>
+                    </Stack>
+                  </Paper>
+                ))}
+              </Stack>
+            )}
+          </Stack>
+        ) : tab === 4 ? (
           <Stack spacing={3}>
             <Stack spacing={2}>
-              <Typography variant="bodyStrong">Add pickup time</Typography>
+              <Typography variant="bodyStrong">Add open hours</Typography>
               <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="flex-end">
                 <TextField
                   label="Date"
@@ -692,7 +743,10 @@ export default function AdminPage(): JSX.Element {
               );
             })()}
           </Stack>
-        )}
+        ) : null}
+
+          </Box>
+        </Stack>
       </Stack>
     </Box>
   );

@@ -28,6 +28,7 @@ export default function LoginPage(): JSX.Element {
     try {
       const user: UserRead = await login(email, password);
       const isAdmin = user.roles.includes("admin") || user.roles.includes("superadmin");
+      sessionStorage.setItem("welcomeName", user.name);
       router.push(isAdmin ? "/admin" : "/");
     } catch {
       setError("Invalid email or password.");

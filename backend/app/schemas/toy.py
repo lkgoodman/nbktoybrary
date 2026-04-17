@@ -19,6 +19,7 @@ class ToyBase(BaseModel):
     age_min: int | None = Field(default=None, ge=0)
     age_max: int | None = Field(default=None, ge=0)
     piece_count: int | None = Field(default=None, ge=0)
+    materials: list[str] = Field(default_factory=list)
 
 
 class ToyCreate(ToyBase):
@@ -36,6 +37,7 @@ class ToyUpdate(BaseModel):
     age_min: int | None = Field(default=None, ge=0)
     age_max: int | None = Field(default=None, ge=0)
     piece_count: int | None = Field(default=None, ge=0)
+    materials: list[str] | None = None
 
 
 class ToyRead(ToyBase, AuditRead):
@@ -78,6 +80,7 @@ class ToyReadWithImages(ToyRead):
         }
         toy_tags = getattr(data, "tags", [])
         result["tags"] = [tt.tag.name for tt in toy_tags if hasattr(tt, "tag")]
+        result["materials"] = result.get("materials") or []
         result["images"] = getattr(data, "images", [])
         requests = getattr(data, "requests", [])
         checkouts = getattr(data, "checkouts", [])

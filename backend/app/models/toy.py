@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, ForeignKey, Integer, String, Uuid
+from sqlalchemy import Boolean, ForeignKey, Integer, JSON, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import AuditMixin, Base, UuidPK
@@ -23,6 +23,7 @@ class Toy(AuditMixin, Base):
     link: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     battery_operated: Mapped[bool] = mapped_column(Boolean, nullable=False)
     shareable: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    materials: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     age_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
     age_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
     piece_count: Mapped[int | None] = mapped_column(Integer, nullable=True)

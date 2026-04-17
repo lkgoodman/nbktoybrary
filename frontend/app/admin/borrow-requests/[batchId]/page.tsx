@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -8,6 +8,7 @@ import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -28,6 +29,8 @@ export default function BorrowRequestDetailPage({
   const { data: allRequests, isPending, isError } = useAdminBorrowRequests(token);
   const { data: toys } = useToys();
   const updateBorrowRequest = useUpdateBorrowRequest();
+  const [denyingId, setDenyingId] = useState<string | null>(null);
+  const [denyNote, setDenyNote] = useState<string>("");
 
   useEffect(() => {
     if (!isAuthenticated || !isAdmin) {
@@ -49,12 +52,14 @@ export default function BorrowRequestDetailPage({
     return featured?.image_url ?? toy.images[0]?.image_url ?? null;
   }
 
-  function handleDeny(id: string): void {
+  function handleDeny(id: string, note: string): void {
     if (token === null) return;
     updateBorrowRequest.mutate(
-      { id, status: "denied", token },
+      { id, status: "denied", token, denialNote: note.trim() || undefined },
       {
         onSuccess: () => {
+          setDenyingId(null);
+          setDenyNote("");
           void queryClient.invalidateQueries({ queryKey: queryKeys.borrowRequests.adminList() });
           void queryClient.invalidateQueries({ queryKey: queryKeys.toys.list() });
         },
@@ -77,7 +82,7 @@ export default function BorrowRequestDetailPage({
 
   function handleDenyAll(): void {
     if (token === null) return;
-    batch.filter((r) => r.status === "pending").forEach((req) => handleDeny(req.id));
+    batch.filter((r) => r.status === "pending").forEach((req) => handleDeny(req.id, ""));
   }
 
   function handleApproveAll(): void {
@@ -148,35 +153,72 @@ export default function BorrowRequestDetailPage({
                   const imageUrl = getFeaturedImage(req.toy_id);
                   return (
                     <Paper key={req.id} elevation={0} sx={{ p: 2 }}>
-                      <Stack direction="row" alignItems="center" spacing={2} justifyContent="space-between">
-                        <Stack direction="row" alignItems="center" spacing={2}>
-                          <Box sx={{ width: 64, height: 64, flexShrink: 0, bgcolor: "grey.100", borderRadius: 1, overflow: "hidden" }}>
-                            {imageUrl !== null ? (
-                              <Box component="img" src={imageUrl} alt={req.toy_name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            ) : null}
-                          </Box>
-                          <Typography variant="body1">{req.toy_name}</Typography>
+                      <Stack spacing={1}>
+                        <Stack direction="row" alignItems="center" spacing={2} justifyContent="space-between">
+                          <Stack direction="row" alignItems="center" spacing={2}>
+                            <Box sx={{ width: 64, height: 64, flexShrink: 0, bgcolor: "grey.100", borderRadius: 1, overflow: "hidden" }}>
+                              {imageUrl !== null ? (
+                                <Box component="img" src={imageUrl} alt={req.toy_name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              ) : null}
+                            </Box>
+                            <Typography variant="body1">{req.toy_name}</Typography>
+                          </Stack>
+                          <Stack direction="row" spacing={1}>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              color="success"
+                              disabled={updateBorrowRequest.isPending}
+                              onClick={() => handleApprove(req.id)}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                              disabled={updateBorrowRequest.isPending}
+                              onClick={() => {
+                                setDenyingId(req.id);
+                                setDenyNote("");
+                              }}
+                            >
+                              Deny
+                            </Button>
+                          </Stack>
                         </Stack>
-                        <Stack direction="row" spacing={1}>
-                          <Button
-                            size="small"
-                            variant="contained"
-                            color="success"
-                            disabled={updateBorrowRequest.isPending}
-                            onClick={() => handleApprove(req.id)}
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            color="error"
-                            disabled={updateBorrowRequest.isPending}
-                            onClick={() => handleDeny(req.id)}
-                          >
-                            Deny
-                          </Button>
-                        </Stack>
+                        {denyingId === req.id ? (
+                          <Stack spacing={1}>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              multiline
+                              rows={2}
+                              label="Note to member (optional)"
+                              value={denyNote}
+                              onChange={(e) => setDenyNote(e.target.value)}
+                              autoFocus
+                            />
+                            <Stack direction="row" spacing={1}>
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="error"
+                                disabled={updateBorrowRequest.isPending}
+                                onClick={() => handleDeny(req.id, denyNote)}
+                              >
+                                Confirm deny
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="text"
+                                onClick={() => { setDenyingId(null); setDenyNote(""); }}
+                              >
+                                Cancel
+                              </Button>
+                            </Stack>
+                          </Stack>
+                        ) : null}
                       </Stack>
                     </Paper>
                   );

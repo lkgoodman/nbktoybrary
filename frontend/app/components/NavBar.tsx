@@ -51,10 +51,10 @@ export default function NavBar(): JSX.Element {
                 </Button>
               </>
             ) : null}
-            <Typography variant="label" color="text.secondary">
+            <Typography variant="label" sx={{ color: "text.secondary" }}>
               {user?.name}
             </Typography>
-            <Button variant="outlined" size="small" onClick={logout}>
+            <Button variant="contained" size="large" onClick={logout} sx={{ px: 4, py: 1.5, fontSize: "1.1rem", bgcolor: "brand.name", "&:hover": { bgcolor: "brand.name" } }}>
               Sign out
             </Button>
           </Box>

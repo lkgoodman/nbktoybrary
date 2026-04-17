@@ -64,6 +64,7 @@ class Request(AuditMixin, Base):
         server_default=RequestStatus.pending.value,
         nullable=False,
     )
+    denial_note: Mapped[str | None] = mapped_column(String(1024), nullable=True)
 
     toy: Mapped["Toy"] = relationship(back_populates="requests")
     membership: Mapped["Membership"] = relationship(back_populates="borrow_requests")

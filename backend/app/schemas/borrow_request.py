@@ -16,6 +16,7 @@ class BorrowRequestCreate(BaseModel):
 
 class BorrowRequestUpdate(BaseModel):
     status: RequestStatus
+    denial_note: str | None = Field(default=None, max_length=1024)
 
 
 class BorrowRequestRead(AuditRead):
@@ -24,6 +25,7 @@ class BorrowRequestRead(AuditRead):
     toy_id: uuid.UUID
     membership_id: uuid.UUID
     status: RequestStatus
+    denial_note: str | None
 
 
 class BorrowRequestReadWithDetails(AuditRead):
@@ -32,7 +34,9 @@ class BorrowRequestReadWithDetails(AuditRead):
     toy_id: uuid.UUID
     membership_id: uuid.UUID
     status: RequestStatus
+    denial_note: str | None
     toy_name: str
     member_name: str
+    member_user_id: uuid.UUID | None
     pickup_start: datetime | None
     pickup_end: datetime | None

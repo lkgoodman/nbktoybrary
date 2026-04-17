@@ -43,7 +43,14 @@ export const endpoints = {
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res: Response = await fetch(url, { cache: "no-store", ...init });
   if (!res.ok) {
-    throw new Error(`request to ${url} failed: ${res.status}`);
+    let detail: string | null = null;
+    try {
+      const body = await res.json() as { detail?: string };
+      if (typeof body.detail === "string") detail = body.detail;
+    } catch {
+      // ignore parse errors
+    }
+    throw new Error(detail ?? `request to ${url} failed: ${res.status}`);
   }
   return (await res.json()) as T;
 }
@@ -172,11 +179,23 @@ export async function listAdminBorrowRequests(token: string): Promise<BorrowRequ
   });
 }
 
-export async function updateBorrowRequest(id: string, status: "pending" | "approved" | "denied", token: string): Promise<BorrowRequestRead> {
+export async function updateBorrowRequest(id: string, status: "pending" | "approved" | "denied", token: string, denialNote?: string): Promise<BorrowRequestRead> {
   return request<BorrowRequestRead>(endpoints.borrowRequests.update(id), {
     method: "PATCH",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status, denial_note: denialNote ?? null }),
+  });
+}
+
+export async function listUsers(token: string): Promise<UserRead[]> {
+  return request<UserRead[]>(endpoints.users.create(), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function getUser(id: string, token: string): Promise<UserRead> {
+  return request<UserRead>(endpoints.users.detail(id), {
+    headers: { Authorization: `Bearer ${token}` },
   });
 }
 

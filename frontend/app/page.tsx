@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import NextLink from "next/link";
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import TextField from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import InputLabel from "@mui/material/InputLabel";
 import ListItemText from "@mui/material/ListItemText";
 import MenuItem from "@mui/material/MenuItem";
@@ -28,22 +30,31 @@ interface AgeBucket {
 
 const AGE_BUCKETS: AgeBucket[] = [
   { label: "0+", age: 0 },
-  { label: "1+", age: 1 },
-  { label: "2+", age: 2 },
-  { label: "3+", age: 3 },
-  { label: "4+", age: 4 },
-  { label: "5+", age: 5 },
-  { label: "6+", age: 6 },
-  { label: "7+", age: 7 },
+  { label: "3m+", age: 3 },
+  { label: "6m+", age: 6 },
+  { label: "9m+", age: 9 },
+  { label: "1+", age: 12 },
+  { label: "2+", age: 24 },
+  { label: "3+", age: 36 },
+  { label: "4+", age: 48 },
+  { label: "5+", age: 60 },
+  { label: "6+", age: 72 },
+  { label: "7+", age: 84 },
 ];
 
 function getFeaturedImage(toy: Toy): ToyImage | null {
   return toy.images.find((img: ToyImage) => img.is_featured) ?? toy.images[0] ?? null;
 }
 
+function formatAgeMonths(months: number): string {
+  if (months === 0) return "0+";
+  if (months < 12) return `${months}m+`;
+  return `${months / 12}+`;
+}
+
 function formatAgeRange(toy: Toy): string | null {
   if (toy.age_min === null) return null;
-  return `${toy.age_min}+`;
+  return formatAgeMonths(toy.age_min);
 }
 
 function toyMatchesAgeBucket(toy: Toy, bucket: AgeBucket): boolean {
@@ -54,22 +65,41 @@ function toyMatchesAgeBucket(toy: Toy, bucket: AgeBucket): boolean {
 export default function Page(): JSX.Element {
   const { data, isPending, isError, error } = useToys();
   const { isInCart } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isMember } = useAuth();
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
+  const [welcomeName, setWelcomeName] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const name = sessionStorage.getItem("welcomeName");
+    if (name !== null) sessionStorage.removeItem("welcomeName");
+    return name;
+  });
   const [activeAgeBucket, setActiveAgeBucket] = useState<AgeBucket | null>(null);
   const [activeLanguage, setActiveLanguage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [availableOnly, setAvailableOnly] = useState<boolean>(false);
 
   const LANGUAGES: string[] = ["French", "Spanish"];
 
-  const allTags: string[] = data
-    ? [...new Set(data.flatMap((toy: Toy) => toy.tags))].sort()
-    : [];
+  const toys: Toy[] = useMemo(() => {
+    if (!data) return [];
+    if (isAuthenticated) return data;
+    const shuffled = [...data];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }, [data, isAuthenticated]);
+
+  const allTags: string[] = useMemo(
+    () => [...new Set(toys.flatMap((toy: Toy) => toy.tags))].sort(),
+    [toys],
+  );
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
-  const visibleToys: Toy[] = data
-    ? data.filter((toy: Toy) => {
+  const visibleToys: Toy[] = toys
+    ? toys.filter((toy: Toy) => {
         const searchMatch =
           normalizedQuery === "" ||
           toy.name.toLowerCase().includes(normalizedQuery) ||
@@ -80,7 +110,8 @@ export default function Page(): JSX.Element {
           activeAgeBucket === null || toyMatchesAgeBucket(toy, activeAgeBucket);
         const languageMatch =
           activeLanguage === null || toy.language === activeLanguage;
-        return searchMatch && tagMatch && ageMatch && languageMatch;
+        const availabilityMatch = !availableOnly || toy.is_available;
+        return searchMatch && tagMatch && ageMatch && languageMatch && availabilityMatch;
       })
     : [];
 
@@ -94,7 +125,7 @@ export default function Page(): JSX.Element {
     setActiveAgeBucket(val === "" ? null : AGE_BUCKETS.find((b) => b.label === val) ?? null);
   }
 
-  const hasFilters = searchQuery.trim() !== "" || activeTags.size > 0 || activeAgeBucket !== null || activeLanguage !== null;
+  const hasFilters = searchQuery.trim() !== "" || activeTags.size > 0 || activeAgeBucket !== null || activeLanguage !== null || availableOnly;
 
   const sidebarContent = (
     <Stack spacing={2}>
@@ -108,6 +139,7 @@ export default function Page(): JSX.Element {
             setActiveTags(new Set());
             setActiveAgeBucket(null);
             setActiveLanguage(null);
+            setAvailableOnly(false);
           }}
         />
       ) : null}
@@ -121,6 +153,21 @@ export default function Page(): JSX.Element {
         slotProps={{ input: { sx: { bgcolor: "background.default" } } }}
       />
 
+      {isMember ? (
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={availableOnly}
+              onChange={(e) => setAvailableOnly(e.target.checked)}
+              size="small"
+            />
+          }
+          label={
+            <Typography variant="body1">Available only</Typography>
+          }
+        />
+      ) : null}
+
       <Divider />
 
       <FormControl size="small" fullWidth>
@@ -133,6 +180,13 @@ export default function Page(): JSX.Element {
           renderValue={(selected: string[]) => selected.join(", ")}
           sx={{ bgcolor: "background.default" }}
         >
+          <MenuItem
+            onClick={() => setActiveTags(new Set())}
+            sx={{ fontStyle: activeTags.size === 0 ? "normal" : "normal" }}
+          >
+            <Checkbox checked={activeTags.size === 0} size="small" />
+            <ListItemText primary="All" />
+          </MenuItem>
           {allTags.map((tag: string) => (
             <MenuItem key={tag} value={tag}>
               <Checkbox checked={activeTags.has(tag)} size="small" />
@@ -177,15 +231,27 @@ export default function Page(): JSX.Element {
           ))}
         </Select>
       </FormControl>
+
     </Stack>
   );
 
   return (
     <Box component="main" sx={{ p: 4 }}>
       <Stack spacing={3}>
-        <Typography variant="pageTitle" component="h1">
-          nbk toybrary
-        </Typography>
+        {welcomeName !== null ? (
+          <Alert severity="success" onClose={() => setWelcomeName(null)}>
+            Welcome, {welcomeName}!
+          </Alert>
+        ) : null}
+
+        <Stack spacing={0.5} sx={{ alignItems: "center" }}>
+          <Typography variant="pageTitle" component="h1" sx={{ textAlign: "center" }}>
+            our toys
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ textAlign: "center" }}>
+            everyone can browse, only members can borrow
+          </Typography>
+        </Stack>
 
         {/* Mobile filter row */}
         <Stack

@@ -22,6 +22,7 @@ export interface Toy {
   piece_count: number | null;
   images: ToyImage[];
   tags: string[];
+  materials: string[];
   is_available: boolean;
   created_at: string;
   updated_at: string;
@@ -86,6 +87,7 @@ export interface ToyCreate {
   age_min: number | null;
   age_max: number | null;
   piece_count: number | null;
+  materials: string[];
 }
 
 export interface ToyUpdate {
@@ -98,6 +100,7 @@ export interface ToyUpdate {
   age_min?: number | null;
   age_max?: number | null;
   piece_count?: number | null;
+  materials?: string[];
 }
 
 export interface BorrowRequestRead {
@@ -106,6 +109,7 @@ export interface BorrowRequestRead {
   toy_id: string;
   membership_id: string;
   status: "pending" | "approved" | "denied";
+  denial_note: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -114,6 +118,7 @@ export interface BorrowRequestRead {
 export interface BorrowRequestReadWithDetails extends BorrowRequestRead {
   toy_name: string;
   member_name: string;
+  member_user_id: string | null;
   pickup_start: string | null;
   pickup_end: string | null;
 }

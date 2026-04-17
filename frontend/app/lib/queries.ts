@@ -1,9 +1,15 @@
 import { useMutation, useQuery, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 
-import { createBorrowRequests, createTimeframe, createToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, getToy, listAdminBorrowRequests, listBorrowRequests, listMembershipRequests, listTimeframes, listToys, login, registerUser, setFeaturedImage, updateMembershipRequest, updateToy, uploadToyImage } from "./api";
+import { createBorrowRequests, createTimeframe, createToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, setFeaturedImage, updateMembershipRequest, updateToy, uploadToyImage } from "./api";
 import type { BorrowRequestRead, BorrowRequestReadWithDetails, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
 
+
 export const queryKeys = {
+  users: {
+    all: ["users"] as const,
+    list: () => [...queryKeys.users.all, "list"] as const,
+    detail: (id: string) => [...queryKeys.users.all, "detail", id] as const,
+  },
   toys: {
     all: ["toys"] as const,
     list: () => [...queryKeys.toys.all, "list"] as const,
@@ -23,6 +29,22 @@ export const queryKeys = {
     list: () => [...queryKeys.timeframes.all, "list"] as const,
   },
 } as const;
+
+export function useUsers(token: string | null): UseQueryResult<UserRead[], Error> {
+  return useQuery<UserRead[], Error>({
+    queryKey: queryKeys.users.list(),
+    queryFn: () => listUsers(token!),
+    enabled: token !== null,
+  });
+}
+
+export function useUser(id: string, token: string | null): UseQueryResult<UserRead, Error> {
+  return useQuery<UserRead, Error>({
+    queryKey: queryKeys.users.detail(id),
+    queryFn: () => getUser(id, token!),
+    enabled: token !== null,
+  });
+}
 
 export function useToys(): UseQueryResult<Toy[], Error> {
   return useQuery<Toy[], Error>({
@@ -108,9 +130,9 @@ export function useAdminBorrowRequests(token: string | null): UseQueryResult<Bor
   });
 }
 
-export function useUpdateBorrowRequest(): UseMutationResult<BorrowRequestRead, Error, { id: string; status: "pending" | "approved" | "denied"; token: string }> {
-  return useMutation<BorrowRequestRead, Error, { id: string; status: "pending" | "approved" | "denied"; token: string }>({
-    mutationFn: ({ id, status, token }) => updateBorrowRequest(id, status, token),
+export function useUpdateBorrowRequest(): UseMutationResult<BorrowRequestRead, Error, { id: string; status: "pending" | "approved" | "denied"; token: string; denialNote?: string }> {
+  return useMutation<BorrowRequestRead, Error, { id: string; status: "pending" | "approved" | "denied"; token: string; denialNote?: string }>({
+    mutationFn: ({ id, status, token, denialNote }) => updateBorrowRequest(id, status, token, denialNote),
   });
 }
 

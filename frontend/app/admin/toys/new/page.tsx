@@ -27,6 +27,7 @@ const EMPTY: ToyCreate = {
   age_min: null,
   age_max: null,
   piece_count: null,
+  materials: [],
 };
 
 export default function NewToyPage(): JSX.Element {

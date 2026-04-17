@@ -10,17 +10,12 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { useAuth } from "../lib/AuthContext";
-import { useBorrowRequests, useToys } from "../lib/queries";
-import type { BorrowRequestRead, Toy, ToyImage } from "../lib/types";
-
-function getFeaturedImage(toy: Toy): ToyImage | null {
-  return toy.images.find((img: ToyImage) => img.is_featured) ?? toy.images[0] ?? null;
-}
+import { useBorrowRequests } from "../lib/queries";
+import type { BorrowRequestRead } from "../lib/types";
 
 export default function RequestsPage(): JSX.Element {
   const { token, isMember } = useAuth();
-  const { data: requests, isPending: requestsPending, isError: requestsError } = useBorrowRequests(token);
-  const { data: toys } = useToys();
+  const { data: requests, isPending, isError } = useBorrowRequests(token);
 
   if (!isMember) {
     return (
@@ -32,46 +27,51 @@ export default function RequestsPage(): JSX.Element {
     );
   }
 
-  const toysById = new Map((toys ?? []).map((t: Toy) => [t.id, t]));
+  const batches = Object.values(
+    (requests ?? []).reduce<Record<string, BorrowRequestRead[]>>(
+      (groups, req) => {
+        const k = req.batch_id;
+        return { ...groups, [k]: [...(groups[k] ?? []), req] };
+      },
+      {},
+    )
+  ).sort((a, b) => new Date(b[0].created_at).getTime() - new Date(a[0].created_at).getTime());
 
-  const pending = (requests ?? []).filter((r: BorrowRequestRead) => r.status === "pending");
-  const approved = (requests ?? []).filter((r: BorrowRequestRead) => r.status === "approved");
-  const denied = (requests ?? []).filter((r: BorrowRequestRead) => r.status === "denied");
+  const pendingBatches = batches.filter((b) => b.some((r) => r.status === "pending"));
+  const resolvedBatches = batches.filter((b) => b.every((r) => r.status !== "pending"));
 
-  function RequestCard({ req }: { req: BorrowRequestRead }): JSX.Element {
-    const toy = toysById.get(req.toy_id);
-    const image = toy !== undefined ? getFeaturedImage(toy) : null;
+  function batchStatusChip(batch: BorrowRequestRead[]): JSX.Element {
+    const hasPending = batch.some((r) => r.status === "pending");
+    const allApproved = batch.every((r) => r.status === "approved");
+    const allDenied = batch.every((r) => r.status === "denied");
+    if (hasPending) return <Chip label="Pending review" size="small" variant="outlined" />;
+    if (allApproved) return <Chip label="Approved" size="small" color="success" variant="outlined" />;
+    if (allDenied) return <Chip label="Denied" size="small" color="error" variant="outlined" />;
+    return <Chip label="Partially approved" size="small" color="warning" variant="outlined" />;
+  }
+
+  function BatchCard({ batch }: { batch: BorrowRequestRead[] }): JSX.Element {
     return (
-      <Paper key={req.id} elevation={0} sx={{ p: 3 }}>
-        <Stack direction="row" alignItems="center" spacing={2}>
-          {image !== null ? (
-            <Box
-              component="img"
-              src={image.image_url}
-              alt={toy?.name}
-              sx={{ width: 64, height: 64, objectFit: "cover", borderRadius: 1, flexShrink: 0 }}
-            />
-          ) : (
-            <Box sx={{ width: 64, height: 64, borderRadius: 1, bgcolor: "grey.100", flexShrink: 0 }} />
-          )}
-          <Stack spacing={0.5} sx={{ flex: 1 }}>
-            <Typography variant="bodyStrong">{toy?.name ?? "Unknown toy"}</Typography>
+      <Paper elevation={0} sx={{ p: 3 }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+          <Stack spacing={0.5}>
+            <Typography variant="bodyStrong">
+              {batch.length} {batch.length === 1 ? "toy" : "toys"} requested
+            </Typography>
             <Typography variant="label" color="text.secondary">
-              Requested {new Date(req.created_at).toLocaleDateString()}
+              Submitted {new Date(batch[0].created_at).toLocaleDateString()}
             </Typography>
           </Stack>
           <Stack direction="row" spacing={1} alignItems="center">
-            {req.status === "approved" ? (
-              <Chip label="Approved" size="small" color="success" variant="outlined" />
-            ) : null}
-            {req.status === "denied" ? (
-              <Chip label="Denied" size="small" color="error" variant="outlined" />
-            ) : null}
-            {toy !== undefined ? (
-              <Button component={NextLink} href={`/toys/${toy.id}`} variant="outlined" size="small">
-                View
-              </Button>
-            ) : null}
+            {batchStatusChip(batch)}
+            <Button
+              component={NextLink}
+              href={`/requests/${batch[0].batch_id}`}
+              variant="outlined"
+              size="small"
+            >
+              View
+            </Button>
           </Stack>
         </Stack>
       </Paper>
@@ -83,11 +83,11 @@ export default function RequestsPage(): JSX.Element {
       <Stack spacing={4}>
         <Typography variant="pageTitle" component="h1">My requests</Typography>
 
-        {requestsPending ? (
+        {isPending ? (
           <Typography variant="body1" color="text.secondary">Loading…</Typography>
-        ) : requestsError ? (
+        ) : isError ? (
           <Typography variant="body1" color="error">Failed to load requests.</Typography>
-        ) : (requests ?? []).length === 0 ? (
+        ) : batches.length === 0 ? (
           <Stack spacing={2}>
             <Typography variant="body1" color="text.secondary">You have no borrow requests.</Typography>
             <Box>
@@ -96,28 +96,19 @@ export default function RequestsPage(): JSX.Element {
           </Stack>
         ) : (
           <Stack spacing={3}>
-            {pending.length > 0 ? (
+            {pendingBatches.length > 0 ? (
               <Stack spacing={1}>
-                {pending.map((req: BorrowRequestRead) => <RequestCard key={req.id} req={req} />)}
+                {pendingBatches.map((batch) => <BatchCard key={batch[0].batch_id} batch={batch} />)}
               </Stack>
             ) : (
               <Typography variant="body1" color="text.secondary">No pending requests.</Typography>
             )}
-            {approved.length > 0 ? (
+            {resolvedBatches.length > 0 ? (
               <>
                 <Divider />
-                <Typography variant="label" color="text.secondary">Approved</Typography>
+                <Typography variant="label" color="text.secondary">Resolved</Typography>
                 <Stack spacing={1}>
-                  {approved.map((req: BorrowRequestRead) => <RequestCard key={req.id} req={req} />)}
-                </Stack>
-              </>
-            ) : null}
-            {denied.length > 0 ? (
-              <>
-                <Divider />
-                <Typography variant="label" color="text.secondary">Previously denied</Typography>
-                <Stack spacing={1}>
-                  {denied.map((req: BorrowRequestRead) => <RequestCard key={req.id} req={req} />)}
+                  {resolvedBatches.map((batch) => <BatchCard key={batch[0].batch_id} batch={batch} />)}
                 </Stack>
               </>
             ) : null}

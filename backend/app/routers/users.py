@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, require_roles
 from app.core.security import hash_password
 from app.db.session import get_db
 from app.models.membership import MembershipRequest
@@ -23,6 +23,16 @@ def _build_user_with_roles(user: User) -> UserReadWithRoles:
     data = UserRead.model_validate(user).model_dump()
     data["roles"] = [ur.role.name for ur in user.roles]
     return UserReadWithRoles.model_validate(data)
+
+
+@router.get("", response_model=list[UserReadWithRoles])
+async def list_users(
+    db: AsyncSession = Depends(get_db),
+    _current_user: User = Depends(require_roles("admin", "superadmin")),
+) -> list[UserReadWithRoles]:
+    result = await db.execute(select(User).options(_load_roles).order_by(User.name))
+    users = list(result.scalars().all())
+    return [_build_user_with_roles(u) for u in users]
 
 
 @router.post("", response_model=UserReadWithRoles, status_code=status.HTTP_201_CREATED)
