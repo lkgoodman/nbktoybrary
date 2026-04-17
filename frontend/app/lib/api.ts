@@ -172,7 +172,7 @@ export async function listAdminBorrowRequests(token: string): Promise<BorrowRequ
   });
 }
 
-export async function updateBorrowRequest(id: string, status: "pending" | "denied", token: string): Promise<BorrowRequestRead> {
+export async function updateBorrowRequest(id: string, status: "pending" | "approved" | "denied", token: string): Promise<BorrowRequestRead> {
   return request<BorrowRequestRead>(endpoints.borrowRequests.update(id), {
     method: "PATCH",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

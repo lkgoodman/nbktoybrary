@@ -7,7 +7,7 @@ import ThemeRegistry from "./theme/ThemeRegistry";
 import NavBar from "./components/NavBar";
 
 export const metadata: Metadata = {
-  title: "nbktoybrary",
+  title: "nbk toybrary",
   description: "A toy lending library",
 };
 

@@ -105,7 +105,7 @@ export interface BorrowRequestRead {
   batch_id: string;
   toy_id: string;
   membership_id: string;
-  status: "pending" | "denied";
+  status: "pending" | "approved" | "denied";
   created_at: string;
   updated_at: string;
   created_by: string | null;

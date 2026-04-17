@@ -24,6 +24,18 @@ declare module "@mui/material/styles" {
     label?: React.CSSProperties;
     navTitle?: React.CSSProperties;
   }
+  interface Palette {
+    header: { main: string };
+    brand: { name: string };
+    filterBar: { main: string };
+    toyCard: { main: string };
+  }
+  interface PaletteOptions {
+    header?: { main: string };
+    brand?: { name: string };
+    filterBar?: { main: string };
+    toyCard?: { main: string };
+  }
   interface Theme {
     layout: { sidebarWidth: number };
   }
@@ -80,7 +92,7 @@ const typography: TypographyVariantsOptions = {
   },
   navTitle: {
     fontFamily,
-    fontSize: "1.25rem",
+    fontSize: "1.5rem",
     fontWeight: 700,
     lineHeight: 1.3,
   },
@@ -91,8 +103,12 @@ const themeOptions: ThemeOptions = {
     mode: "light",
     primary: { main: "#1f2937" },
     secondary: { main: "#6366f1" },
-    background: { default: "#ffffff", paper: "#f9fafb" },
+    background: { default: "#FBF5EF", paper: "#f9fafb" },
     text: { primary: "#111827", secondary: "#4b5563" },
+    header: { main: "#FBF5EF" },
+    brand: { name: "#194027" },
+    filterBar: { main: "#C1B2F0" },
+    toyCard: { main: "#EFF483" },
   },
   spacing: 8,
   shape: { borderRadius: 8 },

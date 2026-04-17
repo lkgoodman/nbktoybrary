@@ -62,12 +62,31 @@ export default function BorrowRequestDetailPage({
     );
   }
 
+  function handleApprove(id: string): void {
+    if (token === null) return;
+    updateBorrowRequest.mutate(
+      { id, status: "approved", token },
+      {
+        onSuccess: () => {
+          void queryClient.invalidateQueries({ queryKey: queryKeys.borrowRequests.adminList() });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.toys.list() });
+        },
+      },
+    );
+  }
+
   function handleDenyAll(): void {
     if (token === null) return;
     batch.filter((r) => r.status === "pending").forEach((req) => handleDeny(req.id));
   }
 
+  function handleApproveAll(): void {
+    if (token === null) return;
+    batch.filter((r) => r.status === "pending").forEach((req) => handleApprove(req.id));
+  }
+
   const pending = batch.filter((r) => r.status === "pending");
+  const approved = batch.filter((r) => r.status === "approved");
   const denied = batch.filter((r) => r.status === "denied");
 
   const pickupStart = batch[0]?.pickup_start ?? null;
@@ -138,15 +157,26 @@ export default function BorrowRequestDetailPage({
                           </Box>
                           <Typography variant="body1">{req.toy_name}</Typography>
                         </Stack>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="error"
-                          disabled={updateBorrowRequest.isPending}
-                          onClick={() => handleDeny(req.id)}
-                        >
-                          Deny
-                        </Button>
+                        <Stack direction="row" spacing={1}>
+                          <Button
+                            size="small"
+                            variant="contained"
+                            color="success"
+                            disabled={updateBorrowRequest.isPending}
+                            onClick={() => handleApprove(req.id)}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="error"
+                            disabled={updateBorrowRequest.isPending}
+                            onClick={() => handleDeny(req.id)}
+                          >
+                            Deny
+                          </Button>
+                        </Stack>
                       </Stack>
                     </Paper>
                   );
@@ -164,6 +194,30 @@ export default function BorrowRequestDetailPage({
                     </Button>
                   </Box>
                 ) : null}
+              </Stack>
+            ) : null}
+
+            {approved.length > 0 ? (
+              <Stack spacing={1}>
+                <Typography variant="label" color="text.secondary">Approved</Typography>
+                {approved.map((req) => {
+                  const imageUrl = getFeaturedImage(req.toy_id);
+                  return (
+                    <Paper key={req.id} elevation={0} sx={{ p: 2, opacity: 0.6 }}>
+                      <Stack direction="row" alignItems="center" spacing={2} justifyContent="space-between">
+                        <Stack direction="row" alignItems="center" spacing={2}>
+                          <Box sx={{ width: 64, height: 64, flexShrink: 0, bgcolor: "grey.100", borderRadius: 1, overflow: "hidden" }}>
+                            {imageUrl !== null ? (
+                              <Box component="img" src={imageUrl} alt={req.toy_name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ) : null}
+                          </Box>
+                          <Typography variant="body1">{req.toy_name}</Typography>
+                        </Stack>
+                        <Chip label="Approved" size="small" color="success" variant="outlined" />
+                      </Stack>
+                    </Paper>
+                  );
+                })}
               </Stack>
             ) : null}
 

@@ -18,6 +18,7 @@ import Typography from "@mui/material/Typography";
 
 import { useToys } from "./lib/queries";
 import { useCart } from "./lib/CartContext";
+import { useAuth } from "./lib/AuthContext";
 import type { Toy, ToyImage } from "./lib/types";
 
 interface AgeBucket {
@@ -53,6 +54,7 @@ function toyMatchesAgeBucket(toy: Toy, bucket: AgeBucket): boolean {
 export default function Page(): JSX.Element {
   const { data, isPending, isError, error } = useToys();
   const { isInCart } = useCart();
+  const { isAuthenticated } = useAuth();
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
   const [activeAgeBucket, setActiveAgeBucket] = useState<AgeBucket | null>(null);
   const [activeLanguage, setActiveLanguage] = useState<string | null>(null);
@@ -116,6 +118,7 @@ export default function Page(): JSX.Element {
         label="Search"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
+        slotProps={{ input: { sx: { bgcolor: "background.default" } } }}
       />
 
       <Divider />
@@ -128,6 +131,7 @@ export default function Page(): JSX.Element {
           value={[...activeTags]}
           onChange={handleTagsChange}
           renderValue={(selected: string[]) => selected.join(", ")}
+          sx={{ bgcolor: "background.default" }}
         >
           {allTags.map((tag: string) => (
             <MenuItem key={tag} value={tag}>
@@ -146,6 +150,7 @@ export default function Page(): JSX.Element {
           label="Age"
           value={activeAgeBucket?.label ?? ""}
           onChange={handleAgeChange}
+          sx={{ bgcolor: "background.default" }}
         >
           <MenuItem value="">Any age</MenuItem>
           {AGE_BUCKETS.map((bucket: AgeBucket) => (
@@ -164,6 +169,7 @@ export default function Page(): JSX.Element {
           label="Language"
           value={activeLanguage ?? ""}
           onChange={(e) => setActiveLanguage(e.target.value === "" ? null : e.target.value)}
+          sx={{ bgcolor: "background.default" }}
         >
           <MenuItem value="">Any language</MenuItem>
           {LANGUAGES.map((lang: string) => (
@@ -178,13 +184,13 @@ export default function Page(): JSX.Element {
     <Box component="main" sx={{ p: 4 }}>
       <Stack spacing={3}>
         <Typography variant="pageTitle" component="h1">
-          nbktoybrary
+          nbk toybrary
         </Typography>
 
         {/* Mobile filter row */}
         <Stack
           spacing={2}
-          sx={{ display: { xs: "flex", md: "none" } }}
+          sx={{ display: { xs: "flex", md: "none" }, bgcolor: "filterBar.main", p: 2, borderRadius: 1 }}
         >
           <FormControl size="small" fullWidth>
             <InputLabel>Age</InputLabel>
@@ -228,13 +234,16 @@ export default function Page(): JSX.Element {
         </Stack>
 
         {/* Main content: sidebar + grid */}
-        <Box sx={{ display: "flex", gap: 4, alignItems: "flex-start" }}>
+        <Box sx={{ display: "flex", gap: 4, alignItems: "stretch" }}>
           {/* Desktop sidebar */}
           <Box
             sx={{
               display: { xs: "none", md: "block" },
               width: (theme) => theme.layout.sidebarWidth,
               flexShrink: 0,
+              bgcolor: "filterBar.main",
+              p: 2,
+              borderRadius: 1,
             }}
           >
             {sidebarContent}
@@ -277,7 +286,7 @@ export default function Page(): JSX.Element {
                       href={`/toys/${toy.id}`}
                       sx={{ textDecoration: "none", color: "inherit", display: "block" }}
                     >
-                      <Paper sx={{ p: 3, height: "100%" }} elevation={0}>
+                      <Paper sx={{ p: 3, height: "100%", bgcolor: "toyCard.main" }} elevation={0}>
                         <Stack spacing={1}>
                           {featuredImage !== null ? (
                             <Box sx={{ position: "relative" }}>
@@ -287,13 +296,13 @@ export default function Page(): JSX.Element {
                                 alt={toy.name}
                                 sx={{
                                   width: "100%",
-                                  aspectRatio: "16/9",
+                                  aspectRatio: "1/1",
                                   objectFit: "cover",
                                   borderRadius: 1,
                                   display: "block",
                                 }}
                               />
-                              {(isInCart(toy.id) || !toy.is_available) ? (
+                              {isAuthenticated && (isInCart(toy.id) || !toy.is_available) ? (
                                 <Box
                                   sx={{
                                     position: "absolute",
@@ -316,24 +325,6 @@ export default function Page(): JSX.Element {
                           <Typography variant="sectionTitle" component="h2">
                             {toy.name}
                           </Typography>
-                          <Typography variant="body1">{toy.description}</Typography>
-                          <Stack direction="row" spacing={2} flexWrap="wrap">
-                            {ageRange !== null ? (
-                              <Typography variant="label" color="text.secondary">
-                                {ageRange}
-                              </Typography>
-                            ) : null}
-                            {toy.piece_count !== null ? (
-                              <Typography variant="label" color="text.secondary">
-                                {toy.piece_count} pieces
-                              </Typography>
-                            ) : null}
-                            {toy.brand !== null ? (
-                              <Typography variant="label" color="text.secondary">
-                                {toy.brand}
-                              </Typography>
-                            ) : null}
-                          </Stack>
                         </Stack>
                       </Paper>
                     </Box>

@@ -45,6 +45,7 @@ export default function AdminPage(): JSX.Element {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState<{ year: number; month: number; day: number } | null>(null);
 
   const AGE_BUCKETS = [0, 1, 2, 3, 4, 5, 6, 7];
   const LANGUAGES: string[] = ["French", "Spanish"];
@@ -300,12 +301,7 @@ export default function AdminPage(): JSX.Element {
                         ) : (
                           <Box sx={{ width: "100%", aspectRatio: "16/9", bgcolor: "grey.100", borderRadius: 1 }} />
                         )}
-                        <Stack spacing={0.25} sx={{ flex: 1 }}>
-                          <Typography variant="bodyStrong">{toy.name}</Typography>
-                          {toy.brand !== null ? (
-                            <Typography variant="body1" color="text.secondary">{toy.brand}</Typography>
-                          ) : null}
-                        </Stack>
+                        <Typography variant="bodyStrong" sx={{ flex: 1 }}>{toy.name}</Typography>
                         <Button
                           component={NextLink}
                           href={`/admin/toys/${toy.id}/edit`}
@@ -340,18 +336,29 @@ export default function AdminPage(): JSX.Element {
               ).sort((a, b) => new Date(b[0].created_at).getTime() - new Date(a[0].created_at).getTime());
 
               const pendingBatches = batches.filter((b) => b.some((r) => r.status === "pending"));
-              const deniedBatches = batches.filter((b) => b.every((r) => r.status === "denied"));
+              const resolvedBatches = batches.filter((b) => b.every((r) => r.status !== "pending"));
 
               function BatchCard({ batch }: { batch: BorrowRequestReadWithDetails[] }): JSX.Element {
                 const pendingCount = batch.filter((r) => r.status === "pending").length;
+                const approvedCount = batch.filter((r) => r.status === "approved").length;
                 const pickup = batch[0].pickup_start;
+                let statusLabel: string;
+                if (pendingCount > 0) {
+                  statusLabel = `${pendingCount} pending`;
+                } else if (approvedCount === batch.length) {
+                  statusLabel = "all approved";
+                } else if (approvedCount === 0) {
+                  statusLabel = "all denied";
+                } else {
+                  statusLabel = `${approvedCount} approved, ${batch.length - approvedCount} denied`;
+                }
                 return (
                   <Paper key={batch[0].batch_id} elevation={0} sx={{ p: 3 }}>
                     <Stack direction="row" alignItems="center" justifyContent="space-between">
                       <Stack spacing={0.5}>
                         <Typography variant="bodyStrong">{batch[0].member_name}</Typography>
                         <Typography variant="label" color="text.secondary">
-                          {new Date(batch[0].created_at).toLocaleDateString()} · {pendingCount > 0 ? `${pendingCount} pending` : "all denied"}
+                          {new Date(batch[0].created_at).toLocaleDateString()} · {statusLabel}
                         </Typography>
                         {pickup !== null ? (
                           <Typography variant="label" color="text.secondary">
@@ -385,12 +392,12 @@ export default function AdminPage(): JSX.Element {
                   ) : (
                     <Typography variant="body1" color="text.secondary">No pending borrow requests.</Typography>
                   )}
-                  {deniedBatches.length > 0 ? (
+                  {resolvedBatches.length > 0 ? (
                     <>
                       <Divider />
-                      <Typography variant="label" color="text.secondary">Previously denied</Typography>
+                      <Typography variant="label" color="text.secondary">Resolved</Typography>
                       <Stack spacing={1}>
-                        {deniedBatches.map((batch) => <BatchCard key={batch[0].batch_id} batch={batch} />)}
+                        {resolvedBatches.map((batch) => <BatchCard key={batch[0].batch_id} batch={batch} />)}
                       </Stack>
                     </>
                   ) : null}
@@ -548,16 +555,24 @@ export default function AdminPage(): JSX.Element {
                         today.getFullYear() === year &&
                         today.getMonth() === month &&
                         today.getDate() === day;
+                      const isSelected =
+                        selectedCalendarDay !== null &&
+                        selectedCalendarDay.year === year &&
+                        selectedCalendarDay.month === month &&
+                        selectedCalendarDay.day === day;
                       return (
                         <Box
                           key={key}
+                          onClick={() => setSelectedCalendarDay(isSelected ? null : { year, month, day })}
                           sx={{
                             minHeight: 80,
                             p: 0.75,
                             border: 1,
-                            borderColor: isToday ? "primary.main" : "divider",
+                            borderColor: isSelected ? "secondary.main" : isToday ? "primary.main" : "divider",
                             borderRadius: 1,
-                            bgcolor: "grey.50",
+                            bgcolor: isSelected ? "secondary.light" : "grey.50",
+                            cursor: "pointer",
+                            "&:hover": { borderColor: "secondary.main" },
                           }}
                         >
                           <Typography
@@ -610,6 +625,69 @@ export default function AdminPage(): JSX.Element {
                       );
                     })}
                   </Box>
+
+                  {selectedCalendarDay !== null ? (() => {
+                    const dayRequests = (borrowRequests ?? []).filter((r) => {
+                      if (r.pickup_start === null) return false;
+                      const d = new Date(r.pickup_start);
+                      return d.getFullYear() === selectedCalendarDay.year &&
+                        d.getMonth() === selectedCalendarDay.month &&
+                        d.getDate() === selectedCalendarDay.day;
+                    });
+                    const batches = Object.values(
+                      dayRequests.reduce<Record<string, BorrowRequestReadWithDetails[]>>(
+                        (groups, req) => {
+                          const k = req.batch_id;
+                          return { ...groups, [k]: [...(groups[k] ?? []), req] };
+                        },
+                        {},
+                      )
+                    );
+                    const label = new Date(
+                      selectedCalendarDay.year,
+                      selectedCalendarDay.month,
+                      selectedCalendarDay.day,
+                    ).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+                    return (
+                      <Stack spacing={1} sx={{ mt: 1 }}>
+                        <Divider />
+                        <Typography variant="bodyStrong">{label}</Typography>
+                        {batches.length === 0 ? (
+                          <Typography variant="body1" color="text.secondary">No pickup requests for this day.</Typography>
+                        ) : (
+                          <Stack spacing={1}>
+                            {batches.map((batch) => (
+                              <Paper key={batch[0].batch_id} elevation={0} sx={{ p: 2 }}>
+                                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                                  <Stack spacing={0.5}>
+                                    <Typography variant="bodyStrong">{batch[0].member_name}</Typography>
+                                    <Typography variant="label" color="text.secondary">
+                                      {batch.map((r) => r.toy_name).join(", ")}
+                                    </Typography>
+                                    <Typography variant="label" color="text.secondary">
+                                      {batch.filter((r) => r.status === "pending").length > 0
+                                        ? `${batch.filter((r) => r.status === "pending").length} pending`
+                                        : batch.every((r) => r.status === "approved")
+                                        ? "all approved"
+                                        : "resolved"}
+                                    </Typography>
+                                  </Stack>
+                                  <Button
+                                    component={NextLink}
+                                    href={`/admin/borrow-requests/${batch[0].batch_id}`}
+                                    variant="outlined"
+                                    size="small"
+                                  >
+                                    View
+                                  </Button>
+                                </Stack>
+                              </Paper>
+                            ))}
+                          </Stack>
+                        )}
+                      </Stack>
+                    );
+                  })() : null}
                 </Stack>
               );
             })()}

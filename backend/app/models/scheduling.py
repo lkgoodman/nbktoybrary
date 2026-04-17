@@ -25,6 +25,7 @@ class TimeframeStatus(str, enum.Enum):
 
 class RequestStatus(str, enum.Enum):
     pending = "pending"
+    approved = "approved"
     denied = "denied"
 
 

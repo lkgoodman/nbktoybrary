@@ -35,6 +35,7 @@ export default function RequestsPage(): JSX.Element {
   const toysById = new Map((toys ?? []).map((t: Toy) => [t.id, t]));
 
   const pending = (requests ?? []).filter((r: BorrowRequestRead) => r.status === "pending");
+  const approved = (requests ?? []).filter((r: BorrowRequestRead) => r.status === "approved");
   const denied = (requests ?? []).filter((r: BorrowRequestRead) => r.status === "denied");
 
   function RequestCard({ req }: { req: BorrowRequestRead }): JSX.Element {
@@ -60,6 +61,9 @@ export default function RequestsPage(): JSX.Element {
             </Typography>
           </Stack>
           <Stack direction="row" spacing={1} alignItems="center">
+            {req.status === "approved" ? (
+              <Chip label="Approved" size="small" color="success" variant="outlined" />
+            ) : null}
             {req.status === "denied" ? (
               <Chip label="Denied" size="small" color="error" variant="outlined" />
             ) : null}
@@ -99,6 +103,15 @@ export default function RequestsPage(): JSX.Element {
             ) : (
               <Typography variant="body1" color="text.secondary">No pending requests.</Typography>
             )}
+            {approved.length > 0 ? (
+              <>
+                <Divider />
+                <Typography variant="label" color="text.secondary">Approved</Typography>
+                <Stack spacing={1}>
+                  {approved.map((req: BorrowRequestRead) => <RequestCard key={req.id} req={req} />)}
+                </Stack>
+              </>
+            ) : null}
             {denied.length > 0 ? (
               <>
                 <Divider />

@@ -108,8 +108,8 @@ export function useAdminBorrowRequests(token: string | null): UseQueryResult<Bor
   });
 }
 
-export function useUpdateBorrowRequest(): UseMutationResult<BorrowRequestRead, Error, { id: string; status: "pending" | "denied"; token: string }> {
-  return useMutation<BorrowRequestRead, Error, { id: string; status: "pending" | "denied"; token: string }>({
+export function useUpdateBorrowRequest(): UseMutationResult<BorrowRequestRead, Error, { id: string; status: "pending" | "approved" | "denied"; token: string }> {
+  return useMutation<BorrowRequestRead, Error, { id: string; status: "pending" | "approved" | "denied"; token: string }>({
     mutationFn: ({ id, status, token }) => updateBorrowRequest(id, status, token),
   });
 }

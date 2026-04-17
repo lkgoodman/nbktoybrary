@@ -15,7 +15,7 @@ export default function NavBar(): JSX.Element {
   const { cartIds } = useCart();
 
   return (
-    <AppBar position="static" color="default" elevation={0}>
+    <AppBar position="static" elevation={0} sx={{ bgcolor: "header.main" }}>
       <Toolbar>
         <Box sx={{ flexGrow: 1 }}>
           <Box
@@ -29,7 +29,7 @@ export default function NavBar(): JSX.Element {
               alt="North Brooklyn Community Toybrary"
               sx={{ height: 112, width: 112 }}
             />
-            <Typography variant="navTitle">
+            <Typography variant="navTitle" sx={{ color: "brand.name" }}>
               North Brooklyn Community Toybrary
             </Typography>
           </Box>
@@ -60,10 +60,7 @@ export default function NavBar(): JSX.Element {
           </Box>
         ) : (
           <Box sx={{ display: "flex", gap: 1 }}>
-            <Button component={NextLink} href="/apply" variant="outlined" size="small">
-              Apply
-            </Button>
-            <Button component={NextLink} href="/login" variant="contained" size="small">
+            <Button component={NextLink} href="/login" variant="contained" size="large" sx={{ px: 4, py: 1.5, fontSize: "1.1rem", bgcolor: "brand.name", "&:hover": { bgcolor: "brand.name" } }}>
               Sign in
             </Button>
           </Box>
