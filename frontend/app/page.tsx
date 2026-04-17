@@ -17,6 +17,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { useToys } from "./lib/queries";
+import { useCart } from "./lib/CartContext";
 import type { Toy, ToyImage } from "./lib/types";
 
 interface AgeBucket {
@@ -51,6 +52,7 @@ function toyMatchesAgeBucket(toy: Toy, bucket: AgeBucket): boolean {
 
 export default function Page(): JSX.Element {
   const { data, isPending, isError, error } = useToys();
+  const { isInCart } = useCart();
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
   const [activeAgeBucket, setActiveAgeBucket] = useState<AgeBucket | null>(null);
   const [activeLanguage, setActiveLanguage] = useState<string | null>(null);
@@ -278,28 +280,42 @@ export default function Page(): JSX.Element {
                       <Paper sx={{ p: 3, height: "100%" }} elevation={0}>
                         <Stack spacing={1}>
                           {featuredImage !== null ? (
-                            <Box
-                              component="img"
-                              src={featuredImage.image_url}
-                              alt={toy.name}
-                              sx={{
-                                width: "100%",
-                                aspectRatio: "16/9",
-                                objectFit: "cover",
-                                borderRadius: 1,
-                              }}
-                            />
+                            <Box sx={{ position: "relative" }}>
+                              <Box
+                                component="img"
+                                src={featuredImage.image_url}
+                                alt={toy.name}
+                                sx={{
+                                  width: "100%",
+                                  aspectRatio: "16/9",
+                                  objectFit: "cover",
+                                  borderRadius: 1,
+                                  display: "block",
+                                }}
+                              />
+                              {(isInCart(toy.id) || !toy.is_available) ? (
+                                <Box
+                                  sx={{
+                                    position: "absolute",
+                                    inset: 0,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    borderRadius: 1,
+                                    bgcolor: "rgba(0,0,0,0.5)",
+                                    pointerEvents: "none",
+                                  }}
+                                >
+                                  <Typography variant="sectionTitle" sx={{ color: "white" }}>
+                                    {isInCart(toy.id) ? "IN CART" : "UNAVAILABLE"}
+                                  </Typography>
+                                </Box>
+                              ) : null}
+                            </Box>
                           ) : null}
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Typography variant="sectionTitle" component="h2">
-                              {toy.name}
-                            </Typography>
-                            {!toy.is_available ? (
-                              <Typography variant="label" color="text.secondary">
-                                Unavailable
-                              </Typography>
-                            ) : null}
-                          </Stack>
+                          <Typography variant="sectionTitle" component="h2">
+                            {toy.name}
+                          </Typography>
                           <Typography variant="body1">{toy.description}</Typography>
                           <Stack direction="row" spacing={2} flexWrap="wrap">
                             {ageRange !== null ? (

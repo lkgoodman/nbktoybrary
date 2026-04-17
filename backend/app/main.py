@@ -11,7 +11,7 @@ from app.db.base import Base
 from app.db.seed import seed
 from app.db.session import DATABASE_PATH, SessionLocal, engine
 from app.models import *  # noqa: F401,F403  -- register mappers
-from app.routers import auth, borrow_requests, membership_requests, toy_images, toys, users
+from app.routers import auth, borrow_requests, membership_requests, timeframes, toy_images, toys, users
 
 IMAGES_DIR: str = os.getenv("IMAGES_DIR", "/data/images")
 
@@ -41,6 +41,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(membership_requests.router)
 app.include_router(borrow_requests.router)
+app.include_router(timeframes.router)
 app.include_router(toys.router)
 app.include_router(toy_images.router)
 os.makedirs(IMAGES_DIR, exist_ok=True)

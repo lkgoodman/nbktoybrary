@@ -12,27 +12,51 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "../lib/AuthContext";
 import { useCart } from "../lib/CartContext";
-import { useToys, useCreateBorrowRequests, queryKeys } from "../lib/queries";
-import type { Toy, ToyImage } from "../lib/types";
+import { useToys, useCreateBorrowRequests, useTimeframes, queryKeys } from "../lib/queries";
+import type { TimeframeRead, Toy, ToyImage } from "../lib/types";
 
 function getFeaturedImage(toy: Toy): ToyImage | null {
   return toy.images.find((img: ToyImage) => img.is_featured) ?? toy.images[0] ?? null;
+}
+
+function formatTimeframeDate(isoString: string): string {
+  return new Date(isoString).toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function formatTimeframeTime(isoString: string): string {
+  return new Date(isoString).toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 export default function CartPage(): JSX.Element {
   const { token, isMember } = useAuth();
   const { cartIds, removeFromCart, clearCart } = useCart();
   const { data: allToys } = useToys();
+  const { data: allTimeframes } = useTimeframes(token);
   const createBorrowRequests = useCreateBorrowRequests();
   const queryClient = useQueryClient();
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [selectedTimeframeId, setSelectedTimeframeId] = useState<string | null>(null);
 
   const cartToys: Toy[] = (allToys ?? []).filter((toy: Toy) => cartIds.includes(toy.id));
 
+  const now = new Date();
+  const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const availableTimeframes: TimeframeRead[] = (allTimeframes ?? []).filter((tf) => {
+    const start = new Date(tf.start_time);
+    return start > now && start <= oneWeekFromNow;
+  });
+
   function handleSubmit(): void {
-    if (token === null || cartIds.length === 0) return;
+    if (token === null || cartIds.length === 0 || selectedTimeframeId === null) return;
     createBorrowRequests.mutate(
-      { toyIds: cartIds, token },
+      { toyIds: cartIds, timeframeId: selectedTimeframeId, token },
       {
         onSuccess: () => {
           clearCart();
@@ -59,7 +83,7 @@ export default function CartPage(): JSX.Element {
         <Stack spacing={3}>
           <Typography variant="pageTitle" component="h1">Request submitted</Typography>
           <Typography variant="body1" color="text.secondary">
-            Your borrow request has been received. We'll be in touch to arrange pickup.
+            Your borrow request has been received.
           </Typography>
           <Box>
             <Button component={NextLink} href="/" variant="contained">Browse more toys</Button>
@@ -123,6 +147,43 @@ export default function CartPage(): JSX.Element {
 
             <Divider />
 
+            <Stack spacing={2}>
+              <Typography variant="bodyStrong">Choose a pickup time</Typography>
+              {availableTimeframes.length === 0 ? (
+                <Typography variant="body1" color="text.secondary">
+                  No pickup times are available in the next week. Check back soon.
+                </Typography>
+              ) : (
+                <Stack spacing={1}>
+                  {availableTimeframes.map((tf) => (
+                    <Paper
+                      key={tf.id}
+                      elevation={0}
+                      onClick={() => setSelectedTimeframeId(tf.id)}
+                      sx={{
+                        p: 2,
+                        cursor: "pointer",
+                        border: 2,
+                        borderColor: selectedTimeframeId === tf.id ? "primary.main" : "transparent",
+                      }}
+                    >
+                      <Stack spacing={0.5}>
+                        <Typography variant="bodyStrong">{formatTimeframeDate(tf.start_time)}</Typography>
+                        <Typography variant="body1" color="text.secondary">
+                          {formatTimeframeTime(tf.start_time)} – {formatTimeframeTime(tf.end_time)}
+                        </Typography>
+                        {tf.notes !== null ? (
+                          <Typography variant="label" color="text.secondary">{tf.notes}</Typography>
+                        ) : null}
+                      </Stack>
+                    </Paper>
+                  ))}
+                </Stack>
+              )}
+            </Stack>
+
+            <Divider />
+
             <Stack spacing={1}>
               <Typography variant="label" color="text.secondary">
                 {cartIds.length} of 5 toys selected
@@ -135,7 +196,7 @@ export default function CartPage(): JSX.Element {
               <Box>
                 <Button
                   variant="contained"
-                  disabled={createBorrowRequests.isPending}
+                  disabled={createBorrowRequests.isPending || selectedTimeframeId === null || availableTimeframes.length === 0}
                   onClick={handleSubmit}
                 >
                   {createBorrowRequests.isPending ? "Submitting…" : "Submit borrow request"}

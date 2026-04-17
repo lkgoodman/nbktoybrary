@@ -42,9 +42,14 @@ export default function NavBar(): JSX.Element {
               </Button>
             ) : null}
             {isMember ? (
-              <Button component={NextLink} href="/cart" variant="text" size="small">
-                Cart {cartIds.length > 0 ? `(${cartIds.length})` : ""}
-              </Button>
+              <>
+                <Button component={NextLink} href="/requests" variant="text" size="small">
+                  My requests
+                </Button>
+                <Button component={NextLink} href="/cart" variant="text" size="small">
+                  Cart {cartIds.length > 0 ? `(${cartIds.length})` : ""}
+                </Button>
+              </>
             ) : null}
             <Typography variant="label" color="text.secondary">
               {user?.name}

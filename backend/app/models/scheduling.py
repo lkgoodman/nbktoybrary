@@ -23,6 +23,11 @@ class TimeframeStatus(str, enum.Enum):
     cancelled = "cancelled"
 
 
+class RequestStatus(str, enum.Enum):
+    pending = "pending"
+    denied = "denied"
+
+
 class Timeframe(AuditMixin, Base):
     __tablename__ = "timeframes"
 
@@ -46,11 +51,17 @@ class Request(AuditMixin, Base):
     __tablename__ = "requests"
 
     id: Mapped[UuidPK]
+    batch_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
     toy_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("toys.id", ondelete="RESTRICT"), nullable=False
     )
     membership_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("memberships.id", ondelete="CASCADE"), nullable=False
+    )
+    status: Mapped[RequestStatus] = mapped_column(
+        Enum(RequestStatus, name="request_status"),
+        server_default=RequestStatus.pending.value,
+        nullable=False,
     )
 
     toy: Mapped["Toy"] = relationship(back_populates="requests")

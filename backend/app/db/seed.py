@@ -70,7 +70,7 @@ async def seed(db: AsyncSession) -> None:
 
     blocks = Toy(
         name="Wooden Blocks",
-        description="Classic 50-piece wooden block set for open-ended play.",
+        description="Classic 50-piece wooden block set for open-ended building and creative play.",
         brand="Melissa & Doug",
         battery_operated=False,
         shareable=True,
@@ -81,7 +81,7 @@ async def seed(db: AsyncSession) -> None:
     )
     rc_car = Toy(
         name="Remote Control Car",
-        description="Rechargeable RC car with working headlights.",
+        description="Rechargeable RC car with working headlights and full directional control.",
         brand="Hot Wheels",
         battery_operated=True,
         shareable=False,
@@ -91,14 +91,55 @@ async def seed(db: AsyncSession) -> None:
     )
     easel = Toy(
         name="Art Easel",
-        description="Double-sided easel with chalkboard and whiteboard.",
+        description="Double-sided easel with chalkboard and whiteboard surfaces, includes tray for supplies.",
         battery_operated=False,
         shareable=True,
         age_min=3,
         age_max=10,
         created_by=admin.id,
     )
-    db.add_all([blocks, rc_car, easel])
+    kitchen = Toy(
+        name="Play Kitchen",
+        description="Wooden play kitchen with stovetop, oven, sink, and accessories for imaginative cooking play.",
+        brand="KidKraft",
+        battery_operated=False,
+        shareable=True,
+        age_min=2,
+        age_max=6,
+        created_by=admin.id,
+    )
+    duplo = Toy(
+        name="LEGO DUPLO Classic Brick Box",
+        description="Large Duplo bricks in assorted colors and shapes — perfect for toddler hands.",
+        brand="LEGO",
+        battery_operated=False,
+        shareable=True,
+        age_min=1,
+        age_max=5,
+        piece_count=85,
+        created_by=admin.id,
+    )
+    puzzle = Toy(
+        name="Floor Puzzle — World Map",
+        description="Giant 48-piece floor puzzle featuring a colorful illustrated world map with animals.",
+        brand="Melissa & Doug",
+        battery_operated=False,
+        shareable=True,
+        age_min=3,
+        age_max=8,
+        piece_count=48,
+        created_by=admin.id,
+    )
+    balance_bike = Toy(
+        name="Balance Bike",
+        description="Lightweight wooden balance bike to help young children develop coordination before pedaling.",
+        battery_operated=False,
+        shareable=True,
+        age_min=2,
+        age_max=5,
+        created_by=admin.id,
+    )
+    db.add_all([blocks, rc_car, easel, kitchen, duplo, puzzle, balance_bike])
     await db.flush()
 
     db.add_all(
@@ -118,6 +159,26 @@ async def seed(db: AsyncSession) -> None:
                 image_url="https://picsum.photos/seed/arteasel/600/400",
                 is_featured=True,
             ),
+            ToyImage(
+                toy_id=kitchen.id,
+                image_url="https://picsum.photos/seed/playkitchen/600/400",
+                is_featured=True,
+            ),
+            ToyImage(
+                toy_id=duplo.id,
+                image_url="https://picsum.photos/seed/duplobricks/600/400",
+                is_featured=True,
+            ),
+            ToyImage(
+                toy_id=puzzle.id,
+                image_url="https://picsum.photos/seed/worldpuzzle/600/400",
+                is_featured=True,
+            ),
+            ToyImage(
+                toy_id=balance_bike.id,
+                image_url="https://picsum.photos/seed/balancebike/600/400",
+                is_featured=True,
+            ),
         ]
     )
 
@@ -127,7 +188,10 @@ async def seed(db: AsyncSession) -> None:
     tag_outdoor = Tag(name="outdoor")
     tag_electronic = Tag(name="electronic")
     tag_art = Tag(name="art")
-    db.add_all([tag_building, tag_creative, tag_vehicles, tag_outdoor, tag_electronic, tag_art])
+    tag_pretend = Tag(name="pretend play")
+    tag_puzzles = Tag(name="puzzles")
+    tag_gross_motor = Tag(name="gross motor")
+    db.add_all([tag_building, tag_creative, tag_vehicles, tag_outdoor, tag_electronic, tag_art, tag_pretend, tag_puzzles, tag_gross_motor])
     await db.flush()
 
     db.add_all(
@@ -139,6 +203,13 @@ async def seed(db: AsyncSession) -> None:
             ToyTag(toy_id=rc_car.id, tag_id=tag_electronic.id),
             ToyTag(toy_id=easel.id, tag_id=tag_art.id),
             ToyTag(toy_id=easel.id, tag_id=tag_creative.id),
+            ToyTag(toy_id=kitchen.id, tag_id=tag_pretend.id),
+            ToyTag(toy_id=kitchen.id, tag_id=tag_creative.id),
+            ToyTag(toy_id=duplo.id, tag_id=tag_building.id),
+            ToyTag(toy_id=duplo.id, tag_id=tag_creative.id),
+            ToyTag(toy_id=puzzle.id, tag_id=tag_puzzles.id),
+            ToyTag(toy_id=balance_bike.id, tag_id=tag_outdoor.id),
+            ToyTag(toy_id=balance_bike.id, tag_id=tag_gross_motor.id),
         ]
     )
 

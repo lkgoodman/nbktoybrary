@@ -172,7 +172,10 @@ export default function ToyPage({ params }: Props): JSX.Element {
                     ) : inCart ? (
                       <>
                         <Button variant="contained" disabled>In cart</Button>
-                        <Button variant="outlined" size="small" onClick={() => removeFromCart(params.id)}>
+                        <Button component={NextLink} href="/" variant="outlined" size="small">
+                          Keep browsing
+                        </Button>
+                        <Button variant="outlined" size="small" color="error" onClick={() => removeFromCart(params.id)}>
                           Remove
                         </Button>
                       </>

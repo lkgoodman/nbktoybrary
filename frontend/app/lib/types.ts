@@ -102,8 +102,10 @@ export interface ToyUpdate {
 
 export interface BorrowRequestRead {
   id: string;
+  batch_id: string;
   toy_id: string;
   membership_id: string;
+  status: "pending" | "denied";
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -112,6 +114,24 @@ export interface BorrowRequestRead {
 export interface BorrowRequestReadWithDetails extends BorrowRequestRead {
   toy_name: string;
   member_name: string;
+  pickup_start: string | null;
+  pickup_end: string | null;
+}
+
+export interface TimeframeRead {
+  id: string;
+  start_time: string;
+  end_time: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+}
+
+export interface TimeframeCreate {
+  start_time: string;
+  end_time: string;
+  notes: string | null;
 }
 
 export interface HelloResponse {

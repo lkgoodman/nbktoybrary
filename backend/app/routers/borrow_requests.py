@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import uuid
+import uuid as uuid_lib
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
@@ -10,16 +10,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import get_current_user, require_roles
 from app.db.session import get_db
 from app.models.membership import Membership, MembershipUser
-from app.models.scheduling import Request
+from app.models.scheduling import CheckoutTimeframe, Request, Timeframe
 from app.models.toy import Toy
 from app.models.user import User
-from app.schemas.borrow_request import BorrowRequestCreate, BorrowRequestRead, BorrowRequestReadWithDetails
+from app.schemas.borrow_request import BorrowRequestCreate, BorrowRequestRead, BorrowRequestReadWithDetails, BorrowRequestUpdate
 
 router = APIRouter(prefix="/borrow-requests", tags=["borrow-requests"])
 
 _load_options = [
     selectinload(Request.toy),
     selectinload(Request.membership).selectinload(Membership.users).selectinload(MembershipUser.user),
+    selectinload(Request.checkout_timeframes).selectinload(CheckoutTimeframe.timeframe),
 ]
 
 
@@ -44,12 +45,17 @@ def _to_details(req: Request) -> BorrowRequestReadWithDetails:
         (mu.user.name for mu in req.membership.users if mu.user is not None),
         "Unknown",
     )
+    ct = req.checkout_timeframes[0] if req.checkout_timeframes else None
     return BorrowRequestReadWithDetails(
         id=req.id,
+        batch_id=req.batch_id,
         toy_id=req.toy_id,
         membership_id=req.membership_id,
+        status=req.status,
         toy_name=req.toy.name,
         member_name=member_name,
+        pickup_start=ct.timeframe.start_time if ct is not None else None,
+        pickup_end=ct.timeframe.end_time if ct is not None else None,
         created_at=req.created_at,
         updated_at=req.updated_at,
         created_by=req.created_by,
@@ -77,14 +83,27 @@ async def create_borrow_requests(
     current_user: User = Depends(get_current_user),
 ) -> list[Request]:
     membership = await _get_active_membership(current_user, db)
+
+    tf_result = await db.execute(select(Timeframe).where(Timeframe.id == payload.timeframe_id))
+    timeframe = tf_result.scalar_one_or_none()
+    if timeframe is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Timeframe not found")
+
+    batch_id = uuid_lib.uuid4()
     requests: list[Request] = []
     for toy_id in payload.toy_ids:
-        req = Request(toy_id=toy_id, membership_id=membership.id)
+        req = Request(toy_id=toy_id, membership_id=membership.id, batch_id=batch_id, created_by=current_user.id)
         db.add(req)
         requests.append(req)
     await db.commit()
     for req in requests:
         await db.refresh(req)
+
+    for req in requests:
+        ct = CheckoutTimeframe(request_id=req.id, timeframe_id=timeframe.id, created_by=current_user.id)
+        db.add(ct)
+    await db.commit()
+
     return requests
 
 
@@ -102,16 +121,18 @@ async def list_borrow_requests(
     return list(result.scalars().all())
 
 
-@router.delete("/{request_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
-async def delete_borrow_request(
-    request_id: uuid.UUID,
+@router.patch("/{request_id}", response_model=BorrowRequestRead)
+async def update_borrow_request(
+    request_id: uuid_lib.UUID,
+    payload: BorrowRequestUpdate,
     db: AsyncSession = Depends(get_db),
     _current_user: User = Depends(require_roles("admin", "superadmin")),
-) -> Response:
+) -> Request:
     result = await db.execute(select(Request).where(Request.id == request_id))
     req = result.scalar_one_or_none()
     if req is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
-    await db.delete(req)
+    req.status = payload.status
     await db.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    await db.refresh(req)
+    return req

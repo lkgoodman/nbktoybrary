@@ -1,4 +1,4 @@
-import type { BorrowRequestRead, BorrowRequestReadWithDetails, HelloResponse, MembershipRequestRead, RegisterRequest, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
+import type { BorrowRequestRead, BorrowRequestReadWithDetails, HelloResponse, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
 
 const BACKEND_URL: string =
   process.env.NEXT_PUBLIC_BACKEND_URL ?? process.env.BACKEND_URL ?? "http://localhost:8000";
@@ -26,7 +26,12 @@ export const endpoints = {
     list: (): string => `${BACKEND_URL}/borrow-requests`,
     adminList: (): string => `${BACKEND_URL}/borrow-requests/admin`,
     create: (): string => `${BACKEND_URL}/borrow-requests`,
-    delete: (id: string): string => `${BACKEND_URL}/borrow-requests/${id}`,
+    update: (id: string): string => `${BACKEND_URL}/borrow-requests/${id}`,
+  },
+  timeframes: {
+    list: (): string => `${BACKEND_URL}/timeframes`,
+    create: (): string => `${BACKEND_URL}/timeframes`,
+    delete: (id: string): string => `${BACKEND_URL}/timeframes/${id}`,
   },
   toyImages: {
     upload: (toyId: string): string => `${BACKEND_URL}/toys/${toyId}/images`,
@@ -125,12 +130,34 @@ export async function deleteToyImage(imageId: string, token: string): Promise<vo
   if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
 }
 
-export async function createBorrowRequests(toyIds: string[], token: string): Promise<BorrowRequestRead[]> {
+export async function createBorrowRequests(toyIds: string[], timeframeId: string, token: string): Promise<BorrowRequestRead[]> {
   return request<BorrowRequestRead[]>(endpoints.borrowRequests.create(), {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ toy_ids: toyIds }),
+    body: JSON.stringify({ toy_ids: toyIds, timeframe_id: timeframeId }),
   });
+}
+
+export async function listTimeframes(token: string): Promise<TimeframeRead[]> {
+  return request<TimeframeRead[]>(endpoints.timeframes.list(), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function createTimeframe(payload: TimeframeCreate, token: string): Promise<TimeframeRead> {
+  return request<TimeframeRead>(endpoints.timeframes.create(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteTimeframe(id: string, token: string): Promise<void> {
+  const res = await fetch(endpoints.timeframes.delete(id), {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
 }
 
 export async function listBorrowRequests(token: string): Promise<BorrowRequestRead[]> {
@@ -145,12 +172,12 @@ export async function listAdminBorrowRequests(token: string): Promise<BorrowRequ
   });
 }
 
-export async function deleteBorrowRequest(id: string, token: string): Promise<void> {
-  const res = await fetch(endpoints.borrowRequests.delete(id), {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
+export async function updateBorrowRequest(id: string, status: "pending" | "denied", token: string): Promise<BorrowRequestRead> {
+  return request<BorrowRequestRead>(endpoints.borrowRequests.update(id), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ status }),
   });
-  if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
 }
 
 export async function listToys(): Promise<Toy[]> {
