@@ -86,7 +86,7 @@ export default function RequestBatchPage({
                       <Typography variant="bodyStrong">{toy?.name ?? "Unknown toy"}</Typography>
                       {req.status === "denied" && req.denial_note !== null ? (
                         <Typography variant="label" color="error.main">
-                          Note: {req.denial_note}
+                          Admin note: {req.denial_note}
                         </Typography>
                       ) : null}
                     </Stack>

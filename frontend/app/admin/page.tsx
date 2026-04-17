@@ -46,6 +46,7 @@ export default function AdminPage(): JSX.Element {
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
   const [selectedCalendarDay, setSelectedCalendarDay] = useState<{ year: number; month: number; day: number } | null>(null);
+  const [memberSearch, setMemberSearch] = useState<string>("");
 
   const AGE_BUCKETS: { label: string; age: number }[] = [
     { label: "0+", age: 0 },
@@ -429,13 +430,25 @@ export default function AdminPage(): JSX.Element {
           </Stack>
         ) : tab === 3 ? (
           <Stack spacing={2}>
+            <TextField
+              label="Search members"
+              size="small"
+              value={memberSearch}
+              onChange={(e) => setMemberSearch(e.target.value)}
+              fullWidth
+            />
             {usersPending ? (
               <Typography variant="body1" color="text.secondary">Loading…</Typography>
             ) : usersError ? (
               <Typography variant="body1" color="error">Failed to load members.</Typography>
             ) : (
               <Stack spacing={1}>
-                {(users ?? []).filter((u: UserRead) => u.roles.includes("member")).map((u: UserRead) => (
+                {(users ?? []).filter((u: UserRead) => {
+                  if (!u.roles.includes("member")) return false;
+                  const q = memberSearch.trim().toLowerCase();
+                  if (q === "") return true;
+                  return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+                }).map((u: UserRead) => (
                   <Paper key={u.id} elevation={0} sx={{ p: 2 }}>
                     <Stack direction="row" alignItems="center" justifyContent="space-between">
                       <Stack spacing={0.25}>

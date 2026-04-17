@@ -84,7 +84,7 @@ class ToyReadWithImages(ToyRead):
         result["images"] = getattr(data, "images", [])
         requests = getattr(data, "requests", [])
         checkouts = getattr(data, "checkouts", [])
-        has_open_request = len(requests) > 0
+        has_open_request = any(getattr(r, "status", None) in ("pending", "approved") for r in requests)
         has_active_checkout = any(c.returned_at is None for c in checkouts)
         result["is_available"] = not has_open_request and not has_active_checkout
         return result
