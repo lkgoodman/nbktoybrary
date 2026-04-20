@@ -1,9 +1,14 @@
-import type { BorrowRequestRead, BorrowRequestReadWithDetails, HelloResponse, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
+import type { BorrowRequestRead, BorrowRequestReadWithDetails, HelloResponse, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
 
 const BACKEND_URL: string =
   process.env.NEXT_PUBLIC_BACKEND_URL ?? process.env.BACKEND_URL ?? "http://localhost:8000";
 
 export const endpoints = {
+  memberships: {
+    list: (userId?: string): string =>
+      userId !== undefined ? `${BACKEND_URL}/memberships?user_id=${userId}` : `${BACKEND_URL}/memberships`,
+    update: (id: string): string => `${BACKEND_URL}/memberships/${id}`,
+  },
   hello: (): string => `${BACKEND_URL}/hello`,
   auth: {
     token: (): string => `${BACKEND_URL}/auth/token`,
@@ -184,6 +189,24 @@ export async function updateBorrowRequest(id: string, status: "pending" | "appro
     method: "PATCH",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify({ status, denial_note: denialNote ?? null }),
+  });
+}
+
+export async function listMemberships(token: string, userId?: string): Promise<MembershipRead[]> {
+  return request<MembershipRead[]>(endpoints.memberships.list(userId), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function updateMembershipStanding(
+  id: string,
+  accountStanding: "active" | "banned" | "temporary_hold",
+  token: string,
+): Promise<MembershipRead> {
+  return request<MembershipRead>(endpoints.memberships.update(id), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ account_standing: accountStanding }),
   });
 }
 

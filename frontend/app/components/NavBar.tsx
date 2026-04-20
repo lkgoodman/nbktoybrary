@@ -1,6 +1,7 @@
 "use client";
 
 import NextLink from "next/link";
+import { useRouter } from "next/navigation";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -13,6 +14,14 @@ import { useCart } from "../lib/CartContext";
 export default function NavBar(): JSX.Element {
   const { user, logout, isAuthenticated, isAdmin, isMember } = useAuth();
   const { cartIds } = useCart();
+  const router = useRouter();
+
+  function handleSignOut(): void {
+    sessionStorage.removeItem("welcomeName");
+    sessionStorage.setItem("signedOut", "true");
+    logout();
+    router.push("/");
+  }
 
   return (
     <AppBar position="static" elevation={0} sx={{ bgcolor: "header.main" }}>
@@ -54,7 +63,7 @@ export default function NavBar(): JSX.Element {
             <Typography variant="label" sx={{ color: "text.secondary" }}>
               {user?.name}
             </Typography>
-            <Button variant="contained" size="large" onClick={logout} sx={{ px: 4, py: 1.5, fontSize: "1.1rem", bgcolor: "brand.name", "&:hover": { bgcolor: "brand.name" } }}>
+            <Button variant="contained" size="large" onClick={handleSignOut} sx={{ px: 4, py: 1.5, fontSize: "1.1rem", bgcolor: "brand.name", "&:hover": { bgcolor: "brand.name" } }}>
               Sign out
             </Button>
           </Box>

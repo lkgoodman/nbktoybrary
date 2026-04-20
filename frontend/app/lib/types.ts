@@ -123,6 +123,17 @@ export interface BorrowRequestReadWithDetails extends BorrowRequestRead {
   pickup_end: string | null;
 }
 
+export interface MembershipRead {
+  id: string;
+  membership_request_id: string;
+  start_date: string;
+  end_date: string;
+  account_standing: "active" | "banned" | "temporary_hold";
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+}
+
 export interface TimeframeRead {
   id: string;
   start_time: string;

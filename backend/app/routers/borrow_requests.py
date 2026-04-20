@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_current_user, require_roles
 from app.db.session import get_db
-from app.models.membership import Membership, MembershipUser
+from app.models.membership import AccountStanding, Membership, MembershipUser
 from app.models.scheduling import CheckoutTimeframe, Request, RequestStatus, Timeframe
 from app.models.toy import Toy
 from app.models.user import User
@@ -24,7 +24,7 @@ _load_options = [
 ]
 
 
-async def _get_active_membership(user: User, db: AsyncSession) -> Membership:
+async def _get_membership(user: User, db: AsyncSession) -> Membership:
     result = await db.execute(
         select(Membership)
         .join(MembershipUser, MembershipUser.membership_id == Membership.id)
@@ -36,6 +36,16 @@ async def _get_active_membership(user: User, db: AsyncSession) -> Membership:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No active membership found",
+        )
+    return membership
+
+
+async def _get_active_membership(user: User, db: AsyncSession) -> Membership:
+    membership = await _get_membership(user, db)
+    if membership.account_standing != AccountStanding.active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your membership is currently paused. Please contact us for more information.",
         )
     return membership
 
@@ -128,7 +138,7 @@ async def list_borrow_requests(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> list[Request]:
-    membership = await _get_active_membership(current_user, db)
+    membership = await _get_membership(current_user, db)
     result = await db.execute(
         select(Request)
         .where(Request.membership_id == membership.id)

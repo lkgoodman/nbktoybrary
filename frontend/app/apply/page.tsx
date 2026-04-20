@@ -57,8 +57,7 @@ export default function ApplyPage(): JSX.Element {
               Application submitted
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Your membership application is under review. An admin will approve it shortly.
-              Once approved, you can sign in and start borrowing toys.
+              Your membership application is under review. We will be in touch with more information soon.
             </Typography>
             <Button component={NextLink} href="/login" variant="contained">
               Go to sign in

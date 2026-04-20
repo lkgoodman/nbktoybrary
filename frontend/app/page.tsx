@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import NextLink from "next/link";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -73,6 +73,20 @@ export default function Page(): JSX.Element {
     if (name !== null) sessionStorage.removeItem("welcomeName");
     return name;
   });
+  const [signedOut, setSignedOut] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    const flag = sessionStorage.getItem("signedOut");
+    if (flag !== null) sessionStorage.removeItem("signedOut");
+    return flag !== null;
+  });
+  const prevAuthRef = useRef<boolean>(isAuthenticated);
+  useEffect(() => {
+    if (prevAuthRef.current && !isAuthenticated) {
+      setWelcomeName(null);
+      setSignedOut(true);
+    }
+    prevAuthRef.current = isAuthenticated;
+  }, [isAuthenticated]);
   const [activeAgeBucket, setActiveAgeBucket] = useState<AgeBucket | null>(null);
   const [activeLanguage, setActiveLanguage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -241,6 +255,11 @@ export default function Page(): JSX.Element {
         {welcomeName !== null ? (
           <Alert severity="success" onClose={() => setWelcomeName(null)}>
             Welcome, {welcomeName}!
+          </Alert>
+        ) : null}
+        {signedOut ? (
+          <Alert severity="info" onClose={() => setSignedOut(false)}>
+            Signed out.
           </Alert>
         ) : null}
 

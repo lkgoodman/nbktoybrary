@@ -1,10 +1,14 @@
 import { useMutation, useQuery, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 
-import { createBorrowRequests, createTimeframe, createToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, setFeaturedImage, updateMembershipRequest, updateToy, uploadToyImage } from "./api";
-import type { BorrowRequestRead, BorrowRequestReadWithDetails, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
+import { createBorrowRequests, createTimeframe, createToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, setFeaturedImage, updateMembershipRequest, updateMembershipStanding, updateToy, uploadToyImage } from "./api";
+import type { BorrowRequestRead, BorrowRequestReadWithDetails, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
 
 
 export const queryKeys = {
+  memberships: {
+    all: ["memberships"] as const,
+    byUser: (userId: string) => ["memberships", "user", userId] as const,
+  },
   users: {
     all: ["users"] as const,
     list: () => [...queryKeys.users.all, "list"] as const,
@@ -159,6 +163,24 @@ export function useCreateTimeframe(): UseMutationResult<TimeframeRead, Error, { 
 export function useDeleteTimeframe(): UseMutationResult<void, Error, { id: string; token: string }> {
   return useMutation<void, Error, { id: string; token: string }>({
     mutationFn: ({ id, token }) => deleteTimeframe(id, token),
+  });
+}
+
+export function useMembershipsByUser(userId: string, token: string | null): UseQueryResult<MembershipRead[], Error> {
+  return useQuery<MembershipRead[], Error>({
+    queryKey: queryKeys.memberships.byUser(userId),
+    queryFn: () => listMemberships(token!, userId),
+    enabled: token !== null,
+  });
+}
+
+export function useUpdateMembershipStanding(): UseMutationResult<
+  MembershipRead,
+  Error,
+  { id: string; accountStanding: "active" | "banned" | "temporary_hold"; token: string }
+> {
+  return useMutation<MembershipRead, Error, { id: string; accountStanding: "active" | "banned" | "temporary_hold"; token: string }>({
+    mutationFn: ({ id, accountStanding, token }) => updateMembershipStanding(id, accountStanding, token),
   });
 }
 

@@ -40,6 +40,10 @@ class MembershipCreate(BaseModel):
     account_standing: AccountStanding = AccountStanding.active
 
 
+class MembershipUpdate(BaseModel):
+    account_standing: AccountStanding
+
+
 class MembershipRead(AuditRead):
     id: uuid.UUID
     membership_request_id: uuid.UUID

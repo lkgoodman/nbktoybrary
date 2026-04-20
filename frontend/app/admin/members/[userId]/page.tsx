@@ -11,9 +11,10 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../lib/AuthContext";
-import { useUser, useAdminBorrowRequests, useToys } from "../../../lib/queries";
-import type { BorrowRequestReadWithDetails, Toy, ToyImage } from "../../../lib/types";
+import { useUser, useAdminBorrowRequests, useToys, useMembershipsByUser, useUpdateMembershipStanding, queryKeys } from "../../../lib/queries";
+import type { BorrowRequestReadWithDetails, MembershipRead, Toy, ToyImage } from "../../../lib/types";
 
 function getFeaturedImage(toy: Toy): ToyImage | null {
   return toy.images.find((img: ToyImage) => img.is_featured) ?? toy.images[0] ?? null;
@@ -24,11 +25,15 @@ export default function AdminMemberPage({
 }: {
   params: { userId: string };
 }): JSX.Element {
-  const { isAdmin, isAuthenticated, token } = useAuth();
+  const { isAdmin, isSuperadmin, isAuthenticated, token } = useAuth();
+  const queryClient = useQueryClient();
   const router = useRouter();
   const { data: member, isPending: memberPending, isError: memberError } = useUser(params.userId, token);
   const { data: allRequests, isPending: requestsPending } = useAdminBorrowRequests(token);
   const { data: toys } = useToys();
+  const { data: memberships } = useMembershipsByUser(params.userId, isSuperadmin ? token : null);
+  const updateStanding = useUpdateMembershipStanding();
+  const membership: MembershipRead | null = memberships?.[0] ?? null;
 
   useEffect(() => {
     if (!isAuthenticated || !isAdmin) router.replace("/");
@@ -75,8 +80,19 @@ export default function AdminMemberPage({
         ) : member === undefined ? null : (
           <Stack spacing={4}>
             <Paper elevation={0} sx={{ p: 3 }}>
-              <Stack spacing={0.5}>
-                <Typography variant="bodyStrong">{member.name}</Typography>
+              <Stack spacing={1}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                  <Typography variant="bodyStrong">{member.name}</Typography>
+                  {membership !== null ? (
+                    membership.account_standing === "temporary_hold" ? (
+                      <Chip label="Paused" size="small" color="warning" variant="outlined" />
+                    ) : membership.account_standing === "banned" ? (
+                      <Chip label="Banned" size="small" color="error" variant="outlined" />
+                    ) : (
+                      <Chip label="Active" size="small" color="success" variant="outlined" />
+                    )
+                  ) : null}
+                </Stack>
                 <Typography variant="body1" color="text.secondary">{member.email}</Typography>
                 {member.phone !== "" ? (
                   <Typography variant="label" color="text.secondary">{member.phone}</Typography>
@@ -84,6 +100,43 @@ export default function AdminMemberPage({
                 <Typography variant="label" color="text.secondary">
                   {member.address_line1}{member.address_line2 !== null ? `, ${member.address_line2}` : ""}, {member.city}, {member.state} {member.zip}
                 </Typography>
+                {isSuperadmin && membership !== null ? (
+                  <Stack direction="row" spacing={1} sx={{ pt: 1 }}>
+                    {membership.account_standing !== "temporary_hold" ? (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color="warning"
+                        disabled={updateStanding.isPending}
+                        onClick={() => {
+                          if (token === null) return;
+                          updateStanding.mutate(
+                            { id: membership.id, accountStanding: "temporary_hold", token },
+                            { onSuccess: () => { void queryClient.invalidateQueries({ queryKey: queryKeys.memberships.byUser(params.userId) }); } },
+                          );
+                        }}
+                      >
+                        Pause membership
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color="success"
+                        disabled={updateStanding.isPending}
+                        onClick={() => {
+                          if (token === null) return;
+                          updateStanding.mutate(
+                            { id: membership.id, accountStanding: "active", token },
+                            { onSuccess: () => { void queryClient.invalidateQueries({ queryKey: queryKeys.memberships.byUser(params.userId) }); } },
+                          );
+                        }}
+                      >
+                        Resume membership
+                      </Button>
+                    )}
+                  </Stack>
+                ) : null}
               </Stack>
             </Paper>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Alert from "@mui/material/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -47,6 +48,12 @@ export default function AdminPage(): JSX.Element {
   });
   const [selectedCalendarDay, setSelectedCalendarDay] = useState<{ year: number; month: number; day: number } | null>(null);
   const [memberSearch, setMemberSearch] = useState<string>("");
+  const [welcomeName, setWelcomeName] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const name = sessionStorage.getItem("welcomeName");
+    if (name !== null) sessionStorage.removeItem("welcomeName");
+    return name;
+  });
 
   const AGE_BUCKETS: { label: string; age: number }[] = [
     { label: "0+", age: 0 },
@@ -132,6 +139,11 @@ export default function AdminPage(): JSX.Element {
   return (
     <Box component="main" sx={{ p: 4, maxWidth: 1100, mx: "auto" }}>
       <Stack spacing={4}>
+        {welcomeName !== null ? (
+          <Alert severity="success" onClose={() => setWelcomeName(null)}>
+            Welcome, {welcomeName}!
+          </Alert>
+        ) : null}
         <Typography variant="pageTitle" component="h1">
           Admin
         </Typography>
