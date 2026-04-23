@@ -1,4 +1,4 @@
-import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, HelloResponse, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
+import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, HelloResponse, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
 
 const BACKEND_URL: string =
   process.env.NEXT_PUBLIC_BACKEND_URL ?? process.env.BACKEND_URL ?? "http://localhost:8000";
@@ -53,6 +53,11 @@ export const endpoints = {
     upload: (toyId: string): string => `${BACKEND_URL}/toys/${toyId}/images`,
     update: (imageId: string): string => `${BACKEND_URL}/toy-images/${imageId}`,
     delete: (imageId: string): string => `${BACKEND_URL}/toy-images/${imageId}`,
+  },
+  favorites: {
+    list: (): string => `${BACKEND_URL}/favorites`,
+    add: (): string => `${BACKEND_URL}/favorites`,
+    remove: (toyId: string): string => `${BACKEND_URL}/favorites/${toyId}`,
   },
 } as const;
 
@@ -161,9 +166,9 @@ export async function createBorrowRequests(toyIds: string[], timeframeId: string
   });
 }
 
-export async function listTimeframes(token: string): Promise<TimeframeRead[]> {
+export async function listTimeframes(token?: string): Promise<TimeframeRead[]> {
   return request<TimeframeRead[]>(endpoints.timeframes.list(), {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: token !== undefined ? { Authorization: `Bearer ${token}` } : {},
   });
 }
 
@@ -260,4 +265,25 @@ export async function listToys(): Promise<Toy[]> {
 
 export async function getToy(id: string): Promise<Toy> {
   return request<Toy>(endpoints.toys.detail(id));
+}
+
+export async function listFavorites(token: string): Promise<FavoriteRead[]> {
+  return request<FavoriteRead[]>(endpoints.favorites.list(), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function addFavorite(toyId: string, token: string): Promise<FavoriteRead> {
+  return request<FavoriteRead>(`${endpoints.favorites.add()}?toy_id=${toyId}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function removeFavorite(toyId: string, token: string): Promise<void> {
+  const res = await fetch(endpoints.favorites.remove(toyId), {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`Remove favorite failed: ${res.status}`);
 }

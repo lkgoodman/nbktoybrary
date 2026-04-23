@@ -49,7 +49,7 @@ export default function RequestBatchPage({
             size="small"
             sx={{ alignSelf: "flex-start", pl: 0 }}
           >
-            ← My requests
+            ← Checkout history
           </Button>
           <Typography variant="pageTitle" component="h1">Request detail</Typography>
         </Stack>

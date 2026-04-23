@@ -7,6 +7,7 @@ import Box from "@mui/material/Box";
 import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -17,8 +18,10 @@ import Paper from "@mui/material/Paper";
 import Select, { type SelectChangeEvent } from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useQueryClient } from "@tanstack/react-query";
 
-import { useToys } from "./lib/queries";
+import { useToys, useFavorites, useAddFavorite, useRemoveFavorite } from "./lib/queries";
+import { queryKeys } from "./lib/queries";
 import { useCart } from "./lib/CartContext";
 import { useAuth } from "./lib/AuthContext";
 import type { Toy, ToyImage } from "./lib/types";
@@ -65,7 +68,13 @@ function toyMatchesAgeBucket(toy: Toy, bucket: AgeBucket): boolean {
 export default function Page(): JSX.Element {
   const { data, isPending, isError, error } = useToys();
   const { isInCart } = useCart();
-  const { isAuthenticated, isMember } = useAuth();
+  const { isAuthenticated, isMember, token } = useAuth();
+  const queryClient = useQueryClient();
+  const { data: favorites } = useFavorites(isMember ? token : null);
+  const addFavoriteMut = useAddFavorite();
+  const removeFavoriteMut = useRemoveFavorite();
+  const favoriteIds = useMemo(() => new Set((favorites ?? []).map((f) => f.toy_id)), [favorites]);
+  const [favoritesOnly, setFavoritesOnly] = useState<boolean>(false);
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
   const [welcomeName, setWelcomeName] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
@@ -125,7 +134,8 @@ export default function Page(): JSX.Element {
         const languageMatch =
           activeLanguage === null || toy.language === activeLanguage;
         const availabilityMatch = !availableOnly || toy.is_available;
-        return searchMatch && tagMatch && ageMatch && languageMatch && availabilityMatch;
+        const favoriteMatch = !favoritesOnly || favoriteIds.has(toy.id);
+        return searchMatch && tagMatch && ageMatch && languageMatch && availabilityMatch && favoriteMatch;
       })
     : [];
 
@@ -139,7 +149,24 @@ export default function Page(): JSX.Element {
     setActiveAgeBucket(val === "" ? null : AGE_BUCKETS.find((b) => b.label === val) ?? null);
   }
 
-  const hasFilters = searchQuery.trim() !== "" || activeTags.size > 0 || activeAgeBucket !== null || activeLanguage !== null || availableOnly;
+  function handleToggleFavorite(e: React.MouseEvent, toyId: string): void {
+    e.preventDefault();
+    e.stopPropagation();
+    if (token === null) return;
+    if (favoriteIds.has(toyId)) {
+      removeFavoriteMut.mutate(
+        { toyId, token },
+        { onSuccess: () => { void queryClient.invalidateQueries({ queryKey: queryKeys.favorites.list() }); } },
+      );
+    } else {
+      addFavoriteMut.mutate(
+        { toyId, token },
+        { onSuccess: () => { void queryClient.invalidateQueries({ queryKey: queryKeys.favorites.list() }); } },
+      );
+    }
+  }
+
+  const hasFilters = searchQuery.trim() !== "" || activeTags.size > 0 || activeAgeBucket !== null || activeLanguage !== null || availableOnly || favoritesOnly;
 
   const sidebarContent = (
     <Stack spacing={2}>
@@ -154,6 +181,7 @@ export default function Page(): JSX.Element {
             setActiveAgeBucket(null);
             setActiveLanguage(null);
             setAvailableOnly(false);
+            setFavoritesOnly(false);
           }}
         />
       ) : null}
@@ -178,6 +206,21 @@ export default function Page(): JSX.Element {
           }
           label={
             <Typography variant="body1">Available only</Typography>
+          }
+        />
+      ) : null}
+
+      {isMember ? (
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={favoritesOnly}
+              onChange={(e) => setFavoritesOnly(e.target.checked)}
+              size="small"
+            />
+          }
+          label={
+            <Typography variant="body1">Favorites only</Typography>
           }
         />
       ) : null}
@@ -371,7 +414,26 @@ export default function Page(): JSX.Element {
                       href={`/toys/${toy.id}`}
                       sx={{ textDecoration: "none", color: "inherit", display: "block" }}
                     >
-                      <Paper sx={{ p: 3, height: "100%", bgcolor: "toyCard.main" }} elevation={0}>
+                      <Paper sx={{ p: 3, height: "100%", bgcolor: "toyCard.main", position: "relative" }} elevation={0}>
+                        {isMember ? (
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleToggleFavorite(e, toy.id)}
+                            sx={{
+                              position: "absolute",
+                              top: 8,
+                              right: 8,
+                              zIndex: 1,
+                              color: favoriteIds.has(toy.id) ? "error.main" : "text.disabled",
+                              bgcolor: "background.paper",
+                              "&:hover": { bgcolor: "background.paper" },
+                              fontSize: "1.1rem",
+                              lineHeight: 1,
+                            }}
+                          >
+                            {favoriteIds.has(toy.id) ? "♥" : "♡"}
+                          </IconButton>
+                        ) : null}
                         <Stack spacing={1}>
                           {featuredImage !== null ? (
                             <Box sx={{ position: "relative" }}>

@@ -18,7 +18,6 @@ router = APIRouter(prefix="/timeframes", tags=["timeframes"])
 @router.get("", response_model=list[TimeframeRead])
 async def list_timeframes(
     db: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(get_current_user),
 ) -> list[Timeframe]:
     result = await db.execute(select(Timeframe).order_by(Timeframe.start_time))
     return list(result.scalars().all())

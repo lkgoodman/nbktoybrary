@@ -81,7 +81,7 @@ export default function RequestsPage(): JSX.Element {
   return (
     <Box component="main" sx={{ p: 4, maxWidth: 600, mx: "auto" }}>
       <Stack spacing={4}>
-        <Typography variant="pageTitle" component="h1">My requests</Typography>
+        <Typography variant="pageTitle" component="h1">Checkout history</Typography>
 
         {isPending ? (
           <Typography variant="body1" color="text.secondary">Loading…</Typography>

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 
-import { checkinCheckout, createBorrowRequests, createCheckout, createTimeframe, createToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, setFeaturedImage, updateMembershipRequest, updateMembershipStanding, updateToy, uploadToyImage } from "./api";
-import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
+import { addFavorite, checkinCheckout, createBorrowRequests, createCheckout, createTimeframe, createToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listFavorites, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, removeFavorite, setFeaturedImage, updateMembershipRequest, updateMembershipStanding, updateToy, uploadToyImage } from "./api";
+import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
 
 
 export const queryKeys = {
@@ -35,6 +35,10 @@ export const queryKeys = {
   timeframes: {
     all: ["timeframes"] as const,
     list: () => [...queryKeys.timeframes.all, "list"] as const,
+  },
+  favorites: {
+    all: ["favorites"] as const,
+    list: () => [...queryKeys.favorites.all, "list"] as const,
   },
 } as const;
 
@@ -150,11 +154,10 @@ export function useCreateBorrowRequests(): UseMutationResult<BorrowRequestRead[]
   });
 }
 
-export function useTimeframes(token: string | null): UseQueryResult<TimeframeRead[], Error> {
+export function useTimeframes(token?: string | null): UseQueryResult<TimeframeRead[], Error> {
   return useQuery<TimeframeRead[], Error>({
     queryKey: queryKeys.timeframes.list(),
-    queryFn: () => listTimeframes(token!),
-    enabled: token !== null,
+    queryFn: () => listTimeframes(token ?? undefined),
   });
 }
 
@@ -215,5 +218,25 @@ export function useUpdateMembershipRequest(): UseMutationResult<
 > {
   return useMutation<MembershipRequestRead, Error, { id: string; status: "approved" | "denied"; token: string }>({
     mutationFn: ({ id, status, token }) => updateMembershipRequest(id, status, token),
+  });
+}
+
+export function useFavorites(token: string | null): UseQueryResult<FavoriteRead[], Error> {
+  return useQuery<FavoriteRead[], Error>({
+    queryKey: queryKeys.favorites.list(),
+    queryFn: () => listFavorites(token!),
+    enabled: token !== null,
+  });
+}
+
+export function useAddFavorite(): UseMutationResult<FavoriteRead, Error, { toyId: string; token: string }> {
+  return useMutation<FavoriteRead, Error, { toyId: string; token: string }>({
+    mutationFn: ({ toyId, token }) => addFavorite(toyId, token),
+  });
+}
+
+export function useRemoveFavorite(): UseMutationResult<void, Error, { toyId: string; token: string }> {
+  return useMutation<void, Error, { toyId: string; token: string }>({
+    mutationFn: ({ toyId, token }) => removeFavorite(toyId, token),
   });
 }

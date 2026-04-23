@@ -318,7 +318,7 @@ export default function AdminPage(): JSX.Element {
                   <MenuItem value="checked_out">Checked out</MenuItem>
                 </Select>
               </FormControl>
-              <Button component={NextLink} href="/admin/toys/new" variant="contained">
+              <Button component={NextLink} href="/admin/toys/new" variant="contained" sx={{ whiteSpace: "nowrap" }}>
                 Create toy
               </Button>
             </Stack>

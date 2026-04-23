@@ -3,13 +3,14 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, ForeignKey, Integer, JSON, String, Uuid
+from sqlalchemy import Boolean, ForeignKey, Integer, JSON, String, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import AuditMixin, Base, UuidPK
+from app.db.base import AuditMixin, Base, TimestampMixin, UuidPK
 
 if TYPE_CHECKING:
     from app.models.scheduling import Checkout, Request
+    from app.models.user import User
 
 
 class Toy(AuditMixin, Base):
@@ -72,3 +73,19 @@ class ToyTag(Base):
 
     toy: Mapped["Toy"] = relationship(back_populates="tags")
     tag: Mapped["Tag"] = relationship(back_populates="toys")
+
+
+class Favorite(TimestampMixin, Base):
+    __tablename__ = "favorites"
+    __table_args__ = (UniqueConstraint("user_id", "toy_id", name="uq_favorites_user_toy"),)
+
+    id: Mapped[UuidPK]
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    toy_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("toys.id", ondelete="CASCADE"), nullable=False
+    )
+
+    user: Mapped["User"] = relationship()
+    toy: Mapped["Toy"] = relationship()

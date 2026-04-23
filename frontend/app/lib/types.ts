@@ -172,6 +172,14 @@ export interface CheckoutRead {
   created_by: string | null;
 }
 
+export interface FavoriteRead {
+  id: string;
+  user_id: string;
+  toy_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface HelloResponse {
   message: string;
 }

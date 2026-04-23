@@ -176,7 +176,15 @@ async def list_borrow_requests(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> list[BorrowRequestRead]:
-    membership = await _get_membership(current_user, db)
+    mem_result = await db.execute(
+        select(Membership)
+        .join(MembershipUser, MembershipUser.membership_id == Membership.id)
+        .where(MembershipUser.user_id == current_user.id)
+        .order_by(Membership.end_date.desc())
+    )
+    membership = mem_result.scalars().first()
+    if membership is None:
+        return []
     result = await db.execute(
         select(Request)
         .options(selectinload(Request.return_timeframe))
