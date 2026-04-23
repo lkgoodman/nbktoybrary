@@ -14,8 +14,8 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import NextLink from "next/link";
 import { useAuth } from "../../../lib/AuthContext";
-import { useAdminBorrowRequests, useUpdateBorrowRequest, useToys, queryKeys } from "../../../lib/queries";
-import type { BorrowRequestReadWithDetails, Toy, ToyImage } from "../../../lib/types";
+import { useAdminBorrowRequests, useUpdateBorrowRequest, useToys, useCheckouts, useCreateCheckout, useCheckinCheckout, queryKeys } from "../../../lib/queries";
+import type { BorrowRequestReadWithDetails, CheckoutRead, Toy, ToyImage } from "../../../lib/types";
 
 export default function BorrowRequestDetailPage({
   params,
@@ -29,6 +29,9 @@ export default function BorrowRequestDetailPage({
   const { data: allRequests, isPending, isError } = useAdminBorrowRequests(token);
   const { data: toys } = useToys();
   const updateBorrowRequest = useUpdateBorrowRequest();
+  const { data: activeCheckouts } = useCheckouts(token, { returned: false });
+  const createCheckout = useCreateCheckout();
+  const checkinCheckout = useCheckinCheckout();
   const [denyingId, setDenyingId] = useState<string | null>(null);
   const [denyNote, setDenyNote] = useState<string>("");
 
@@ -74,6 +77,32 @@ export default function BorrowRequestDetailPage({
       {
         onSuccess: () => {
           void queryClient.invalidateQueries({ queryKey: queryKeys.borrowRequests.adminList() });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.toys.list() });
+        },
+      },
+    );
+  }
+
+  function handleCheckout(requestId: string): void {
+    if (token === null) return;
+    createCheckout.mutate(
+      { requestId, token },
+      {
+        onSuccess: () => {
+          void queryClient.invalidateQueries({ queryKey: queryKeys.checkouts.list({ returned: false }) });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.toys.list() });
+        },
+      },
+    );
+  }
+
+  function handleCheckin(checkoutId: string): void {
+    if (token === null) return;
+    checkinCheckout.mutate(
+      { id: checkoutId, token },
+      {
+        onSuccess: () => {
+          void queryClient.invalidateQueries({ queryKey: queryKeys.checkouts.list({ returned: false }) });
           void queryClient.invalidateQueries({ queryKey: queryKeys.toys.list() });
         },
       },
@@ -140,6 +169,18 @@ export default function BorrowRequestDetailPage({
               {pickupStart !== null && pickupEnd !== null ? (
                 <Typography variant="label" color="text.secondary">
                   Pickup: {formatPickup(pickupStart, pickupEnd)}
+                </Typography>
+              ) : null}
+              {batch[0].return_start !== null && batch[0].return_end !== null ? (
+                <Typography variant="label" color="text.secondary">
+                  Return: {new Date(batch[0].return_start).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{" "}
+                  {new Date(batch[0].return_start).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                  {" – "}
+                  {new Date(batch[0].return_end).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                </Typography>
+              ) : batch[0].return_date !== null ? (
+                <Typography variant="label" color="text.secondary">
+                  Return by: {new Date(batch[0].return_date).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
                 </Typography>
               ) : null}
             </Stack>
@@ -244,8 +285,10 @@ export default function BorrowRequestDetailPage({
                 <Typography variant="label" color="text.secondary">Approved</Typography>
                 {approved.map((req) => {
                   const imageUrl = getFeaturedImage(req.toy_id);
+                  const checkout: CheckoutRead | undefined = (activeCheckouts ?? []).find((c) => c.request_id === req.id);
+                  const isCheckedOut = checkout !== undefined;
                   return (
-                    <Paper key={req.id} elevation={0} sx={{ p: 2, opacity: 0.6 }}>
+                    <Paper key={req.id} elevation={0} sx={{ p: 2 }}>
                       <Stack direction="row" alignItems="center" spacing={2} justifyContent="space-between">
                         <Stack direction="row" alignItems="center" spacing={2}>
                           <Box sx={{ width: 64, height: 64, flexShrink: 0, bgcolor: "grey.100", borderRadius: 1, overflow: "hidden" }}>
@@ -253,9 +296,43 @@ export default function BorrowRequestDetailPage({
                               <Box component="img" src={imageUrl} alt={req.toy_name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             ) : null}
                           </Box>
-                          <Typography variant="body1">{req.toy_name}</Typography>
+                          <Stack spacing={0.25}>
+                            <Typography variant="body1">{req.toy_name}</Typography>
+                            {isCheckedOut ? (
+                              <Typography variant="label" color="text.secondary">
+                                Checked out {new Date(checkout.checked_out_at).toLocaleDateString()}
+                              </Typography>
+                            ) : null}
+                          </Stack>
                         </Stack>
-                        <Chip label="Approved" size="small" color="success" variant="outlined" />
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          {isCheckedOut ? (
+                            <>
+                              <Chip label="Checked out" size="small" color="warning" variant="outlined" />
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="success"
+                                disabled={checkinCheckout.isPending}
+                                onClick={() => handleCheckin(checkout.id)}
+                              >
+                                Check in
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Chip label="Approved" size="small" color="success" variant="outlined" />
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                disabled={createCheckout.isPending}
+                                onClick={() => handleCheckout(req.id)}
+                              >
+                                Check out
+                              </Button>
+                            </>
+                          )}
+                        </Stack>
                       </Stack>
                     </Paper>
                   );

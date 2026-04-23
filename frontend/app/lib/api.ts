@@ -1,4 +1,4 @@
-import type { BorrowRequestRead, BorrowRequestReadWithDetails, HelloResponse, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
+import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, HelloResponse, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
 
 const BACKEND_URL: string =
   process.env.NEXT_PUBLIC_BACKEND_URL ?? process.env.BACKEND_URL ?? "http://localhost:8000";
@@ -8,6 +8,17 @@ export const endpoints = {
     list: (userId?: string): string =>
       userId !== undefined ? `${BACKEND_URL}/memberships?user_id=${userId}` : `${BACKEND_URL}/memberships`,
     update: (id: string): string => `${BACKEND_URL}/memberships/${id}`,
+  },
+  checkouts: {
+    list: (params?: { toyId?: string; returned?: boolean }): string => {
+      const qs = new URLSearchParams();
+      if (params?.toyId !== undefined) qs.set("toy_id", params.toyId);
+      if (params?.returned !== undefined) qs.set("returned", String(params.returned));
+      const q = qs.toString();
+      return q !== "" ? `${BACKEND_URL}/checkouts?${q}` : `${BACKEND_URL}/checkouts`;
+    },
+    create: (): string => `${BACKEND_URL}/checkouts`,
+    update: (id: string): string => `${BACKEND_URL}/checkouts/${id}`,
   },
   hello: (): string => `${BACKEND_URL}/hello`,
   auth: {
@@ -142,11 +153,11 @@ export async function deleteToyImage(imageId: string, token: string): Promise<vo
   if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
 }
 
-export async function createBorrowRequests(toyIds: string[], timeframeId: string, token: string): Promise<BorrowRequestRead[]> {
+export async function createBorrowRequests(toyIds: string[], timeframeId: string, returnDate: string, returnTimeframeId: string, token: string): Promise<BorrowRequestRead[]> {
   return request<BorrowRequestRead[]>(endpoints.borrowRequests.create(), {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ toy_ids: toyIds, timeframe_id: timeframeId }),
+    body: JSON.stringify({ toy_ids: toyIds, timeframe_id: timeframeId, return_date: returnDate, return_timeframe_id: returnTimeframeId }),
   });
 }
 
@@ -218,6 +229,27 @@ export async function listUsers(token: string): Promise<UserRead[]> {
 
 export async function getUser(id: string, token: string): Promise<UserRead> {
   return request<UserRead>(endpoints.users.detail(id), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function listCheckouts(token: string, params?: { toyId?: string; returned?: boolean }): Promise<CheckoutRead[]> {
+  return request<CheckoutRead[]>(endpoints.checkouts.list(params), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function createCheckout(requestId: string, token: string): Promise<CheckoutRead> {
+  return request<CheckoutRead>(endpoints.checkouts.create(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ request_id: requestId }),
+  });
+}
+
+export async function checkinCheckout(id: string, token: string): Promise<CheckoutRead> {
+  return request<CheckoutRead>(endpoints.checkouts.update(id), {
+    method: "PATCH",
     headers: { Authorization: `Bearer ${token}` },
   });
 }

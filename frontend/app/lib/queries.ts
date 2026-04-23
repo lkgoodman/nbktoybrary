@@ -1,10 +1,14 @@
 import { useMutation, useQuery, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 
-import { createBorrowRequests, createTimeframe, createToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, setFeaturedImage, updateMembershipRequest, updateMembershipStanding, updateToy, uploadToyImage } from "./api";
-import type { BorrowRequestRead, BorrowRequestReadWithDetails, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
+import { checkinCheckout, createBorrowRequests, createCheckout, createTimeframe, createToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, setFeaturedImage, updateMembershipRequest, updateMembershipStanding, updateToy, uploadToyImage } from "./api";
+import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
 
 
 export const queryKeys = {
+  checkouts: {
+    all: ["checkouts"] as const,
+    list: (params?: { toyId?: string; returned?: boolean }) => ["checkouts", "list", params] as const,
+  },
   memberships: {
     all: ["memberships"] as const,
     byUser: (userId: string) => ["memberships", "user", userId] as const,
@@ -140,9 +144,9 @@ export function useUpdateBorrowRequest(): UseMutationResult<BorrowRequestRead, E
   });
 }
 
-export function useCreateBorrowRequests(): UseMutationResult<BorrowRequestRead[], Error, { toyIds: string[]; timeframeId: string; token: string }> {
-  return useMutation<BorrowRequestRead[], Error, { toyIds: string[]; timeframeId: string; token: string }>({
-    mutationFn: ({ toyIds, timeframeId, token }) => createBorrowRequests(toyIds, timeframeId, token),
+export function useCreateBorrowRequests(): UseMutationResult<BorrowRequestRead[], Error, { toyIds: string[]; timeframeId: string; returnDate: string; returnTimeframeId: string; token: string }> {
+  return useMutation<BorrowRequestRead[], Error, { toyIds: string[]; timeframeId: string; returnDate: string; returnTimeframeId: string; token: string }>({
+    mutationFn: ({ toyIds, timeframeId, returnDate, returnTimeframeId, token }) => createBorrowRequests(toyIds, timeframeId, returnDate, returnTimeframeId, token),
   });
 }
 
@@ -181,6 +185,26 @@ export function useUpdateMembershipStanding(): UseMutationResult<
 > {
   return useMutation<MembershipRead, Error, { id: string; accountStanding: "active" | "banned" | "temporary_hold"; token: string }>({
     mutationFn: ({ id, accountStanding, token }) => updateMembershipStanding(id, accountStanding, token),
+  });
+}
+
+export function useCheckouts(token: string | null, params?: { toyId?: string; returned?: boolean }): UseQueryResult<CheckoutRead[], Error> {
+  return useQuery<CheckoutRead[], Error>({
+    queryKey: queryKeys.checkouts.list(params),
+    queryFn: () => listCheckouts(token!, params),
+    enabled: token !== null,
+  });
+}
+
+export function useCreateCheckout(): UseMutationResult<CheckoutRead, Error, { requestId: string; token: string }> {
+  return useMutation<CheckoutRead, Error, { requestId: string; token: string }>({
+    mutationFn: ({ requestId, token }) => createCheckout(requestId, token),
+  });
+}
+
+export function useCheckinCheckout(): UseMutationResult<CheckoutRead, Error, { id: string; token: string }> {
+  return useMutation<CheckoutRead, Error, { id: string; token: string }>({
+    mutationFn: ({ id, token }) => checkinCheckout(id, token),
   });
 }
 

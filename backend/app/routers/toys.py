@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import require_roles
 from app.db.session import get_db
-from app.models.scheduling import Request
+from app.models.scheduling import Checkout, Request
 from app.models.toy import Toy, ToyTag
 from app.models.user import User
 from app.schemas.toy import ToyCreate, ToyReadWithImages, ToyUpdate
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/toys", tags=["toys"])
 _load_options = [
     selectinload(Toy.images),
     selectinload(Toy.tags).selectinload(ToyTag.tag),
-    selectinload(Toy.requests),
+    selectinload(Toy.requests).selectinload(Request.checkout),
     selectinload(Toy.checkouts),
 ]
 

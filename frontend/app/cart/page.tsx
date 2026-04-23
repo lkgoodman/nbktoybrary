@@ -43,20 +43,76 @@ export default function CartPage(): JSX.Element {
   const queryClient = useQueryClient();
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [selectedTimeframeId, setSelectedTimeframeId] = useState<string | null>(null);
+  const [pickupCalendarMonth, setPickupCalendarMonth] = useState<Date>(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
+  const [selectedPickupDay, setSelectedPickupDay] = useState<{ year: number; month: number; day: number } | null>(null);
+  const [returnDate, setReturnDate] = useState<string>("");
+  const [selectedReturnTimeframeId, setSelectedReturnTimeframeId] = useState<string | null>(null);
+  const [returnCalendarMonth, setReturnCalendarMonth] = useState<Date>(() => new Date());
+  const [selectedReturnDay, setSelectedReturnDay] = useState<{ year: number; month: number; day: number } | null>(null);
 
   const cartToys: Toy[] = (allToys ?? []).filter((toy: Toy) => cartIds.includes(toy.id));
 
   const now = new Date();
-  const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-  const availableTimeframes: TimeframeRead[] = (allTimeframes ?? []).filter((tf) => {
-    const start = new Date(tf.start_time);
-    return start > now && start <= oneWeekFromNow;
-  });
+  const availableTimeframes: TimeframeRead[] = (allTimeframes ?? []).filter((tf) => new Date(tf.start_time) > now);
+
+  const selectedTimeframe = availableTimeframes.find((tf) => tf.id === selectedTimeframeId) ?? null;
+  const pickupDate = selectedTimeframe !== null ? new Date(selectedTimeframe.start_time) : null;
+  const maxReturnDate = pickupDate !== null
+    ? new Date(pickupDate.getTime() + 28 * 24 * 60 * 60 * 1000)
+    : null;
+  const returnTimeframes: TimeframeRead[] = pickupDate !== null && maxReturnDate !== null
+    ? (allTimeframes ?? []).filter((tf) => {
+        const start = new Date(tf.start_time);
+        return start > pickupDate && start <= maxReturnDate;
+      })
+    : [];
+
+  // Pickup calendar
+  const pickupDayKeys = new Set(availableTimeframes.map((tf) => {
+    const d = new Date(tf.start_time);
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  }));
+  const selectedDayPickupTimeframes: TimeframeRead[] = selectedPickupDay !== null
+    ? availableTimeframes.filter((tf) => {
+        const d = new Date(tf.start_time);
+        return d.getFullYear() === selectedPickupDay.year &&
+          d.getMonth() === selectedPickupDay.month &&
+          d.getDate() === selectedPickupDay.day;
+      })
+    : [];
+
+  // Build a set of date keys that have return timeframes available
+  const returnDayKeys = new Set(returnTimeframes.map((tf) => {
+    const d = new Date(tf.start_time);
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  }));
+
+  // Timeframes for the selected return day
+  const selectedDayReturnTimeframes: TimeframeRead[] = selectedReturnDay !== null
+    ? returnTimeframes.filter((tf) => {
+        const d = new Date(tf.start_time);
+        return d.getFullYear() === selectedReturnDay.year &&
+          d.getMonth() === selectedReturnDay.month &&
+          d.getDate() === selectedReturnDay.day;
+      })
+    : [];
+
+  function handlePickupSelect(id: string): void {
+    setSelectedTimeframeId(id);
+    setReturnDate("");
+    setSelectedReturnTimeframeId(null);
+    setSelectedReturnDay(null);
+    const pickup = availableTimeframes.find((tf) => tf.id === id);
+    if (pickup !== undefined) {
+      const d = new Date(pickup.start_time);
+      setReturnCalendarMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+    }
+  }
 
   function handleSubmit(): void {
-    if (token === null || cartIds.length === 0 || selectedTimeframeId === null) return;
+    if (token === null || cartIds.length === 0 || selectedTimeframeId === null || selectedReturnTimeframeId === null || returnDate === "") return;
     createBorrowRequests.mutate(
-      { toyIds: cartIds, timeframeId: selectedTimeframeId, token },
+      { toyIds: cartIds, timeframeId: selectedTimeframeId, returnDate, returnTimeframeId: selectedReturnTimeframeId, token },
       {
         onSuccess: () => {
           clearCart();
@@ -92,6 +148,28 @@ export default function CartPage(): JSX.Element {
       </Box>
     );
   }
+
+  // Pickup calendar rendering
+  const pickupCalYear = pickupCalendarMonth.getFullYear();
+  const pickupCalMonth = pickupCalendarMonth.getMonth();
+  const pickupFirstDayOfWeek = new Date(pickupCalYear, pickupCalMonth, 1).getDay();
+  const pickupDaysInMonth = new Date(pickupCalYear, pickupCalMonth + 1, 0).getDate();
+  const pickupCalCells: (number | null)[] = [
+    ...Array<null>(pickupFirstDayOfWeek).fill(null),
+    ...Array.from({ length: pickupDaysInMonth }, (_, i) => i + 1),
+  ];
+  while (pickupCalCells.length % 7 !== 0) pickupCalCells.push(null);
+
+  // Return calendar rendering
+  const calYear = returnCalendarMonth.getFullYear();
+  const calMonth = returnCalendarMonth.getMonth();
+  const firstDayOfWeek = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const calCells: (number | null)[] = [
+    ...Array<null>(firstDayOfWeek).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  while (calCells.length % 7 !== 0) calCells.push(null);
 
   return (
     <Box component="main" sx={{ p: 4, maxWidth: 600, mx: "auto" }}>
@@ -149,35 +227,207 @@ export default function CartPage(): JSX.Element {
 
             <Stack spacing={2}>
               <Typography variant="bodyStrong">Choose a pickup time</Typography>
+              <Typography variant="label" color="text.secondary">
+                Toys should be picked up within 1 week of making the reservation.
+              </Typography>
               {availableTimeframes.length === 0 ? (
                 <Typography variant="body1" color="text.secondary">
-                  No pickup times are available in the next week. Check back soon.
+                  No pickup times are currently scheduled. Check back soon.
                 </Typography>
               ) : (
                 <Stack spacing={1}>
-                  {availableTimeframes.map((tf) => (
-                    <Paper
-                      key={tf.id}
-                      elevation={0}
-                      onClick={() => setSelectedTimeframeId(tf.id)}
-                      sx={{
-                        p: 2,
-                        cursor: "pointer",
-                        border: 2,
-                        borderColor: selectedTimeframeId === tf.id ? "primary.main" : "transparent",
-                      }}
-                    >
-                      <Stack spacing={0.5}>
-                        <Typography variant="bodyStrong">{formatTimeframeDate(tf.start_time)}</Typography>
-                        <Typography variant="body1" color="text.secondary">
-                          {formatTimeframeTime(tf.start_time)} – {formatTimeframeTime(tf.end_time)}
-                        </Typography>
-                        {tf.notes !== null ? (
-                          <Typography variant="label" color="text.secondary">{tf.notes}</Typography>
-                        ) : null}
-                      </Stack>
-                    </Paper>
-                  ))}
+                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Button size="small" onClick={() => setPickupCalendarMonth(new Date(pickupCalYear, pickupCalMonth - 1, 1))}>← Prev</Button>
+                    <Typography variant="bodyStrong">
+                      {pickupCalendarMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+                    </Typography>
+                    <Button size="small" onClick={() => setPickupCalendarMonth(new Date(pickupCalYear, pickupCalMonth + 1, 1))}>Next →</Button>
+                  </Stack>
+                  <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.5 }}>
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                      <Typography key={d} variant="label" color="text.secondary" sx={{ textAlign: "center", py: 0.5 }}>{d}</Typography>
+                    ))}
+                    {pickupCalCells.map((day, i) => {
+                      if (day === null) return <Box key={`pickup-empty-${i}`} />;
+                      const key = `${pickupCalYear}-${pickupCalMonth}-${day}`;
+                      const hasSlots = pickupDayKeys.has(key);
+                      const isSelected = selectedPickupDay !== null &&
+                        selectedPickupDay.year === pickupCalYear &&
+                        selectedPickupDay.month === pickupCalMonth &&
+                        selectedPickupDay.day === day;
+                      return (
+                        <Box
+                          key={key}
+                          onClick={() => {
+                            if (!hasSlots) return;
+                            setSelectedPickupDay(isSelected ? null : { year: pickupCalYear, month: pickupCalMonth, day });
+                            setSelectedTimeframeId(null);
+                            setReturnDate("");
+                            setSelectedReturnTimeframeId(null);
+                            setSelectedReturnDay(null);
+                          }}
+                          sx={{
+                            minHeight: 44,
+                            p: 0.75,
+                            border: 1,
+                            borderColor: isSelected ? "primary.main" : "divider",
+                            borderRadius: 1,
+                            bgcolor: isSelected ? "primary.light" : hasSlots ? "grey.50" : "grey.200",
+                            cursor: hasSlots ? "pointer" : "default",
+                            opacity: hasSlots ? 1 : 0.5,
+                            "&:hover": hasSlots ? { borderColor: "primary.main" } : {},
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Typography variant="label" color={hasSlots ? "text.primary" : "text.disabled"} sx={{ fontWeight: isSelected ? 700 : 400 }}>
+                            {day}
+                          </Typography>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                  {selectedPickupDay !== null && selectedDayPickupTimeframes.length > 0 ? (
+                    <Stack spacing={1} sx={{ pt: 1 }}>
+                      <Typography variant="label" color="text.secondary">
+                        Available times on {new Date(selectedPickupDay.year, selectedPickupDay.month, selectedPickupDay.day).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}:
+                      </Typography>
+                      {selectedDayPickupTimeframes.map((tf) => (
+                        <Paper
+                          key={tf.id}
+                          elevation={0}
+                          onClick={() => handlePickupSelect(tf.id)}
+                          sx={{
+                            p: 2,
+                            cursor: "pointer",
+                            border: 2,
+                            borderColor: selectedTimeframeId === tf.id ? "primary.main" : "transparent",
+                          }}
+                        >
+                          <Typography variant="body1">
+                            {formatTimeframeTime(tf.start_time)} – {formatTimeframeTime(tf.end_time)}
+                          </Typography>
+                          {tf.notes !== null ? (
+                            <Typography variant="label" color="text.secondary">{tf.notes}</Typography>
+                          ) : null}
+                        </Paper>
+                      ))}
+                    </Stack>
+                  ) : null}
+                </Stack>
+              )}
+            </Stack>
+
+            <Divider />
+
+            <Stack spacing={2}>
+              <Typography variant="bodyStrong">Choose a return time</Typography>
+              <Typography variant="label" color="text.secondary">
+                Toys should be returned within 4 weeks of when they are picked up.
+              </Typography>
+              {selectedTimeframeId === null ? (
+                <Typography variant="label" color="text.secondary">Select a pickup time above first.</Typography>
+              ) : returnTimeframes.length === 0 ? (
+                <Typography variant="label" color="text.secondary">No return times available within 28 days of your pickup. Check back soon.</Typography>
+              ) : (
+                <Stack spacing={1}>
+                  {/* Calendar navigation */}
+                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Button size="small" onClick={() => setReturnCalendarMonth(new Date(calYear, calMonth - 1, 1))}>
+                      ← Prev
+                    </Button>
+                    <Typography variant="bodyStrong">
+                      {returnCalendarMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+                    </Typography>
+                    <Button size="small" onClick={() => setReturnCalendarMonth(new Date(calYear, calMonth + 1, 1))}>
+                      Next →
+                    </Button>
+                  </Stack>
+
+                  {/* Day-of-week headers */}
+                  <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.5 }}>
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                      <Typography key={d} variant="label" color="text.secondary" sx={{ textAlign: "center", py: 0.5 }}>
+                        {d}
+                      </Typography>
+                    ))}
+                    {calCells.map((day, i) => {
+                      if (day === null) return <Box key={`empty-${i}`} />;
+                      const key = `${calYear}-${calMonth}-${day}`;
+                      const hasSlots = returnDayKeys.has(key);
+                      const isSelected =
+                        selectedReturnDay !== null &&
+                        selectedReturnDay.year === calYear &&
+                        selectedReturnDay.month === calMonth &&
+                        selectedReturnDay.day === day;
+                      return (
+                        <Box
+                          key={key}
+                          onClick={() => {
+                            if (!hasSlots) return;
+                            setSelectedReturnDay(isSelected ? null : { year: calYear, month: calMonth, day });
+                            setSelectedReturnTimeframeId(null);
+                            setReturnDate("");
+                          }}
+                          sx={{
+                            minHeight: 44,
+                            p: 0.75,
+                            border: 1,
+                            borderColor: isSelected ? "primary.main" : "divider",
+                            borderRadius: 1,
+                            bgcolor: isSelected ? "primary.light" : hasSlots ? "grey.50" : "grey.200",
+                            cursor: hasSlots ? "pointer" : "default",
+                            opacity: hasSlots ? 1 : 0.5,
+                            "&:hover": hasSlots ? { borderColor: "primary.main" } : {},
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Typography
+                            variant="label"
+                            color={hasSlots ? "text.primary" : "text.disabled"}
+                            sx={{ fontWeight: isSelected ? 700 : 400 }}
+                          >
+                            {day}
+                          </Typography>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+
+                  {/* Time slots for selected day */}
+                  {selectedReturnDay !== null && selectedDayReturnTimeframes.length > 0 ? (
+                    <Stack spacing={1} sx={{ pt: 1 }}>
+                      <Typography variant="label" color="text.secondary">
+                        Available times on {new Date(selectedReturnDay.year, selectedReturnDay.month, selectedReturnDay.day).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}:
+                      </Typography>
+                      {selectedDayReturnTimeframes.map((tf) => (
+                        <Paper
+                          key={tf.id}
+                          elevation={0}
+                          onClick={() => {
+                            setSelectedReturnTimeframeId(tf.id);
+                            setReturnDate(new Date(tf.start_time).toISOString().slice(0, 10));
+                          }}
+                          sx={{
+                            p: 2,
+                            cursor: "pointer",
+                            border: 2,
+                            borderColor: selectedReturnTimeframeId === tf.id ? "primary.main" : "transparent",
+                          }}
+                        >
+                          <Typography variant="body1">
+                            {formatTimeframeTime(tf.start_time)} – {formatTimeframeTime(tf.end_time)}
+                          </Typography>
+                          {tf.notes !== null ? (
+                            <Typography variant="label" color="text.secondary">{tf.notes}</Typography>
+                          ) : null}
+                        </Paper>
+                      ))}
+                    </Stack>
+                  ) : null}
                 </Stack>
               )}
             </Stack>
@@ -196,7 +446,7 @@ export default function CartPage(): JSX.Element {
               <Box>
                 <Button
                   variant="contained"
-                  disabled={createBorrowRequests.isPending || selectedTimeframeId === null || availableTimeframes.length === 0}
+                  disabled={createBorrowRequests.isPending || selectedTimeframeId === null || selectedReturnTimeframeId === null || availableTimeframes.length === 0}
                   onClick={handleSubmit}
                 >
                   {createBorrowRequests.isPending ? "Submitting…" : "Submit borrow request"}

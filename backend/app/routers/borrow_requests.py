@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid as uuid_lib
+from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import func, select
@@ -21,6 +22,7 @@ _load_options = [
     selectinload(Request.toy),
     selectinload(Request.membership).selectinload(Membership.users).selectinload(MembershipUser.user),
     selectinload(Request.checkout_timeframes).selectinload(CheckoutTimeframe.timeframe),
+    selectinload(Request.return_timeframe),
 ]
 
 
@@ -63,11 +65,14 @@ def _to_details(req: Request) -> BorrowRequestReadWithDetails:
         membership_id=req.membership_id,
         status=req.status,
         denial_note=req.denial_note,
+        return_date=req.return_date,
         toy_name=req.toy.name,
         member_name=member_user.name if member_user is not None else "Unknown",
         member_user_id=member_user.id if member_user is not None else None,
         pickup_start=ct.timeframe.start_time if ct is not None else None,
         pickup_end=ct.timeframe.end_time if ct is not None else None,
+        return_start=req.return_timeframe.start_time if req.return_timeframe is not None else None,
+        return_end=req.return_timeframe.end_time if req.return_timeframe is not None else None,
         created_at=req.created_at,
         updated_at=req.updated_at,
         created_by=req.created_by,
@@ -93,13 +98,18 @@ async def create_borrow_requests(
     payload: BorrowRequestCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> list[Request]:
+) -> list[BorrowRequestRead]:
     membership = await _get_active_membership(current_user, db)
 
     tf_result = await db.execute(select(Timeframe).where(Timeframe.id == payload.timeframe_id))
     timeframe = tf_result.scalar_one_or_none()
     if timeframe is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Timeframe not found")
+
+    return_tf_result = await db.execute(select(Timeframe).where(Timeframe.id == payload.return_timeframe_id))
+    return_timeframe = return_tf_result.scalar_one_or_none()
+    if return_timeframe is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Return timeframe not found")
 
     MAX_TOYS = 5
     count_result = await db.execute(
@@ -115,36 +125,82 @@ async def create_borrow_requests(
             detail=f"You already have {active_count} pending or approved request(s). You can have at most {MAX_TOYS} toys out at a time.",
         )
 
+    pickup_date = timeframe.start_time.date()
+    if payload.return_date < pickup_date:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Return date must be on or after the pickup date.",
+        )
+    if payload.return_date > pickup_date + timedelta(days=28):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Return date must be within 28 days of the pickup date.",
+        )
+
     batch_id = uuid_lib.uuid4()
-    requests: list[Request] = []
+    created: list[Request] = []
     for toy_id in payload.toy_ids:
-        req = Request(toy_id=toy_id, membership_id=membership.id, batch_id=batch_id, created_by=current_user.id)
+        req = Request(toy_id=toy_id, membership_id=membership.id, batch_id=batch_id, created_by=current_user.id, return_date=payload.return_date, return_timeframe_id=payload.return_timeframe_id)
         db.add(req)
-        requests.append(req)
+        created.append(req)
     await db.commit()
-    for req in requests:
+    for req in created:
         await db.refresh(req)
 
-    for req in requests:
+    for req in created:
         ct = CheckoutTimeframe(request_id=req.id, timeframe_id=timeframe.id, created_by=current_user.id)
         db.add(ct)
     await db.commit()
 
-    return requests
+    return [
+        BorrowRequestRead(
+            id=r.id,
+            batch_id=r.batch_id,
+            toy_id=r.toy_id,
+            membership_id=r.membership_id,
+            status=r.status,
+            denial_note=r.denial_note,
+            return_date=r.return_date,
+            return_start=return_timeframe.start_time,
+            return_end=return_timeframe.end_time,
+            created_at=r.created_at,
+            updated_at=r.updated_at,
+            created_by=r.created_by,
+        )
+        for r in created
+    ]
 
 
 @router.get("", response_model=list[BorrowRequestRead])
 async def list_borrow_requests(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> list[Request]:
+) -> list[BorrowRequestRead]:
     membership = await _get_membership(current_user, db)
     result = await db.execute(
         select(Request)
+        .options(selectinload(Request.return_timeframe))
         .where(Request.membership_id == membership.id)
         .order_by(Request.created_at.desc())
     )
-    return list(result.scalars().all())
+    requests = list(result.scalars().all())
+    return [
+        BorrowRequestRead(
+            id=r.id,
+            batch_id=r.batch_id,
+            toy_id=r.toy_id,
+            membership_id=r.membership_id,
+            status=r.status,
+            denial_note=r.denial_note,
+            return_date=r.return_date,
+            return_start=r.return_timeframe.start_time if r.return_timeframe is not None else None,
+            return_end=r.return_timeframe.end_time if r.return_timeframe is not None else None,
+            created_at=r.created_at,
+            updated_at=r.updated_at,
+            created_by=r.created_by,
+        )
+        for r in requests
+    ]
 
 
 @router.patch("/{request_id}", response_model=BorrowRequestRead)
@@ -153,8 +209,12 @@ async def update_borrow_request(
     payload: BorrowRequestUpdate,
     db: AsyncSession = Depends(get_db),
     _current_user: User = Depends(require_roles("admin", "superadmin")),
-) -> Request:
-    result = await db.execute(select(Request).where(Request.id == request_id))
+) -> BorrowRequestRead:
+    result = await db.execute(
+        select(Request)
+        .options(selectinload(Request.return_timeframe))
+        .where(Request.id == request_id)
+    )
     req = result.scalar_one_or_none()
     if req is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
@@ -162,4 +222,18 @@ async def update_borrow_request(
     req.denial_note = payload.denial_note if payload.status == RequestStatus.denied else None
     await db.commit()
     await db.refresh(req)
-    return req
+    await db.refresh(req, attribute_names=["return_timeframe"])
+    return BorrowRequestRead(
+        id=req.id,
+        batch_id=req.batch_id,
+        toy_id=req.toy_id,
+        membership_id=req.membership_id,
+        status=req.status,
+        denial_note=req.denial_note,
+        return_date=req.return_date,
+        return_start=req.return_timeframe.start_time if req.return_timeframe is not None else None,
+        return_end=req.return_timeframe.end_time if req.return_timeframe is not None else None,
+        created_at=req.created_at,
+        updated_at=req.updated_at,
+        created_by=req.created_by,
+    )

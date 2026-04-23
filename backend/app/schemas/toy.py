@@ -66,6 +66,8 @@ class ToyReadWithImages(ToyRead):
     images: list[ToyImageRead] = []
     tags: list[str] = []
     is_available: bool = True
+    is_checked_out: bool = False
+    is_requested: bool = False
 
     @model_validator(mode="before")
     @classmethod
@@ -84,9 +86,15 @@ class ToyReadWithImages(ToyRead):
         result["images"] = getattr(data, "images", [])
         requests = getattr(data, "requests", [])
         checkouts = getattr(data, "checkouts", [])
-        has_open_request = any(getattr(r, "status", None) in ("pending", "approved") for r in requests)
+        has_open_request = any(
+            getattr(r, "status", None) in ("pending", "approved")
+            and (getattr(r, "checkout", None) is None or r.checkout.returned_at is None)
+            for r in requests
+        )
         has_active_checkout = any(c.returned_at is None for c in checkouts)
         result["is_available"] = not has_open_request and not has_active_checkout
+        result["is_checked_out"] = has_active_checkout
+        result["is_requested"] = has_open_request and not has_active_checkout
         return result
 
 

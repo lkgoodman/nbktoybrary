@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
+import Badge from "@mui/material/Badge";
 import { useRouter, useSearchParams } from "next/navigation";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -31,13 +32,13 @@ export default function AdminPage(): JSX.Element {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<number>(
-    searchParams.get("tab") === "borrow" ? 1 : searchParams.get("tab") === "membership" ? 2 : searchParams.get("tab") === "members" ? 3 : searchParams.get("tab") === "pickup" ? 4 : 0
+    searchParams.get("tab") === "schedule" ? 1 : searchParams.get("tab") === "borrow" ? 2 : searchParams.get("tab") === "membership" ? 3 : searchParams.get("tab") === "members" ? 4 : searchParams.get("tab") === "pickup" ? 5 : 0
   );
   const [inventorySearch, setInventorySearch] = useState<string>("");
   const [inventoryTags, setInventoryTags] = useState<Set<string>>(new Set());
   const [inventoryAge, setInventoryAge] = useState<number | null>(null);
   const [inventoryLanguage, setInventoryLanguage] = useState<string | null>(null);
-  const [inventoryAvailability, setInventoryAvailability] = useState<"available" | "checked_out" | null>(null);
+  const [inventoryAvailability, setInventoryAvailability] = useState<"available" | "requested" | "checked_out" | null>(null);
   const [newTfDate, setNewTfDate] = useState<string>("");
   const [newTfStartHour, setNewTfStartHour] = useState<string>("");
   const [newTfEndHour, setNewTfEndHour] = useState<string>("");
@@ -47,6 +48,11 @@ export default function AdminPage(): JSX.Element {
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
   const [selectedCalendarDay, setSelectedCalendarDay] = useState<{ year: number; month: number; day: number } | null>(null);
+  const [scheduleCalendarMonth, setScheduleCalendarMonth] = useState<Date>(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  const [selectedScheduleDay, setSelectedScheduleDay] = useState<{ year: number; month: number; day: number } | null>(null);
   const [memberSearch, setMemberSearch] = useState<string>("");
   const [welcomeName, setWelcomeName] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
@@ -115,12 +121,15 @@ export default function AdminPage(): JSX.Element {
     const availabilityMatch =
       inventoryAvailability === null ||
       (inventoryAvailability === "available" && toy.is_available) ||
-      (inventoryAvailability === "checked_out" && !toy.is_available);
+      (inventoryAvailability === "requested" && toy.is_requested) ||
+      (inventoryAvailability === "checked_out" && toy.is_checked_out);
     return searchMatch && tagMatch && ageMatch && languageMatch && availabilityMatch;
   });
 
   const pending = requests?.filter((r: MembershipRequestRead) => r.status === "pending") ?? [];
   const reviewed = requests?.filter((r: MembershipRequestRead) => r.status !== "pending") ?? [];
+  const pendingBorrowCount = (borrowRequests ?? []).filter((r) => r.status === "pending").length;
+  const pendingMembershipCount = pending.length;
 
   function handleReview(id: string, status: "approved" | "denied"): void {
     if (token === null) return;
@@ -156,14 +165,23 @@ export default function AdminPage(): JSX.Element {
             sx={{ borderRight: 1, borderColor: "divider", minWidth: 180, flexShrink: 0 }}
           >
             <Tab label="Inventory" sx={{ alignItems: "flex-start" }} />
-            <Tab label="Borrow requests" sx={{ alignItems: "flex-start" }} />
-            <Tab label="Membership requests" sx={{ alignItems: "flex-start" }} />
+            <Tab label="Schedule" sx={{ alignItems: "flex-start" }} />
+            <Tab sx={{ alignItems: "flex-start" }} label={
+              <Badge badgeContent={pendingBorrowCount} color="error" sx={{ pr: pendingBorrowCount > 0 ? 2 : 0 }}>
+                Borrow requests
+              </Badge>
+            } />
+            <Tab sx={{ alignItems: "flex-start" }} label={
+              <Badge badgeContent={pendingMembershipCount} color="error" sx={{ pr: pendingMembershipCount > 0 ? 2 : 0 }}>
+                Membership requests
+              </Badge>
+            } />
             <Tab label="Members" sx={{ alignItems: "flex-start" }} />
             <Tab label="Open hours" sx={{ alignItems: "flex-start" }} />
           </Tabs>
           <Box sx={{ flex: 1, minWidth: 0 }}>
 
-        {tab === 2 ? (
+        {tab === 3 ? (
           <Stack spacing={2}>
             {requestsPending ? (
               <Typography variant="body1" color="text.secondary">Loading…</Typography>
@@ -291,11 +309,12 @@ export default function AdminPage(): JSX.Element {
                   value={inventoryAvailability ?? ""}
                   onChange={(e) => {
                     const val = e.target.value;
-                    setInventoryAvailability(val === "" ? null : val as "available" | "checked_out");
+                    setInventoryAvailability(val === "" ? null : val as "available" | "requested" | "checked_out");
                   }}
                 >
                   <MenuItem value="">Any</MenuItem>
                   <MenuItem value="available">Available</MenuItem>
+                  <MenuItem value="requested">Requested</MenuItem>
                   <MenuItem value="checked_out">Checked out</MenuItem>
                 </Select>
               </FormControl>
@@ -337,15 +356,26 @@ export default function AdminPage(): JSX.Element {
                           <Box sx={{ width: "100%", aspectRatio: "1/1", bgcolor: "grey.100", borderRadius: 1 }} />
                         )}
                         <Typography variant="bodyStrong" sx={{ flex: 1 }}>{toy.name}</Typography>
-                        <Button
-                          component={NextLink}
-                          href={`/admin/toys/${toy.id}/edit`}
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                        >
-                          Edit
-                        </Button>
+                        <Stack direction="row" spacing={1}>
+                          <Button
+                            component={NextLink}
+                            href={`/admin/toys/${toy.id}`}
+                            variant="contained"
+                            size="small"
+                            sx={{ flex: 1 }}
+                          >
+                            View
+                          </Button>
+                          <Button
+                            component={NextLink}
+                            href={`/admin/toys/${toy.id}/edit`}
+                            variant="outlined"
+                            size="small"
+                            sx={{ flex: 1 }}
+                          >
+                            Edit
+                          </Button>
+                        </Stack>
                       </Stack>
                     </Paper>
                   );
@@ -353,7 +383,7 @@ export default function AdminPage(): JSX.Element {
               </Box>
             )}
           </Stack>
-        ) : tab === 1 ? (
+        ) : tab === 2 ? (
           <Stack spacing={2}>
             {borrowPending ? (
               <Typography variant="body1" color="text.secondary">Loading…</Typography>
@@ -440,7 +470,7 @@ export default function AdminPage(): JSX.Element {
               );
             })()}
           </Stack>
-        ) : tab === 3 ? (
+        ) : tab === 4 ? (
           <Stack spacing={2}>
             <TextField
               label="Search members"
@@ -481,7 +511,7 @@ export default function AdminPage(): JSX.Element {
               </Stack>
             )}
           </Stack>
-        ) : tab === 4 ? (
+        ) : tab === 5 ? (
           <Stack spacing={3}>
             <Stack spacing={2}>
               <Typography variant="bodyStrong">Add open hours</Typography>
@@ -703,61 +733,69 @@ export default function AdminPage(): JSX.Element {
                   </Box>
 
                   {selectedCalendarDay !== null ? (() => {
-                    const dayRequests = (borrowRequests ?? []).filter((r) => {
-                      if (r.pickup_start === null) return false;
-                      const d = new Date(r.pickup_start);
-                      return d.getFullYear() === selectedCalendarDay.year &&
-                        d.getMonth() === selectedCalendarDay.month &&
-                        d.getDate() === selectedCalendarDay.day;
-                    });
-                    const batches = Object.values(
-                      dayRequests.reduce<Record<string, BorrowRequestReadWithDetails[]>>(
-                        (groups, req) => {
-                          const k = req.batch_id;
-                          return { ...groups, [k]: [...(groups[k] ?? []), req] };
-                        },
-                        {},
-                      )
-                    );
+                    const dayKey = `${selectedCalendarDay.year}-${selectedCalendarDay.month}-${selectedCalendarDay.day}`;
+                    const dayTimeframes = tfByDay.get(dayKey) ?? [];
                     const label = new Date(
                       selectedCalendarDay.year,
                       selectedCalendarDay.month,
                       selectedCalendarDay.day,
                     ).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
                     return (
-                      <Stack spacing={1} sx={{ mt: 1 }}>
+                      <Stack spacing={2} sx={{ mt: 1 }}>
                         <Divider />
-                        <Typography variant="bodyStrong">{label}</Typography>
-                        {batches.length === 0 ? (
-                          <Typography variant="body1" color="text.secondary">No pickup requests for this day.</Typography>
+                        <Stack direction="row" alignItems="center" justifyContent="space-between">
+                          <Typography variant="bodyStrong">{label}</Typography>
+                          {dayTimeframes.length > 0 ? (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                              disabled={deleteTimeframe.isPending}
+                              onClick={() => {
+                                if (token === null) return;
+                                dayTimeframes.forEach((tf) => {
+                                  deleteTimeframe.mutate(
+                                    { id: tf.id, token },
+                                    { onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.timeframes.list() }) },
+                                  );
+                                });
+                              }}
+                            >
+                              Close this day
+                            </Button>
+                          ) : null}
+                        </Stack>
+                        {dayTimeframes.length === 0 ? (
+                          <Typography variant="body1" color="text.secondary">No open hours scheduled.</Typography>
                         ) : (
-                          <Stack spacing={1}>
-                            {batches.map((batch) => (
-                              <Paper key={batch[0].batch_id} elevation={0} sx={{ p: 2 }}>
-                                <Stack direction="row" alignItems="center" justifyContent="space-between">
-                                  <Stack spacing={0.5}>
-                                    <Typography variant="bodyStrong">{batch[0].member_name}</Typography>
-                                    <Typography variant="label" color="text.secondary">
-                                      {batch.map((r) => r.toy_name).join(", ")}
-                                    </Typography>
-                                    <Typography variant="label" color="text.secondary">
-                                      {batch.filter((r) => r.status === "pending").length > 0
-                                        ? `${batch.filter((r) => r.status === "pending").length} pending`
-                                        : batch.every((r) => r.status === "approved")
-                                        ? "all approved"
-                                        : "resolved"}
-                                    </Typography>
-                                  </Stack>
-                                  <Button
-                                    component={NextLink}
-                                    href={`/admin/borrow-requests/${batch[0].batch_id}`}
-                                    variant="outlined"
-                                    size="small"
-                                  >
-                                    View
-                                  </Button>
-                                </Stack>
-                              </Paper>
+                          <Stack spacing={0.5}>
+                            {dayTimeframes.map((tf) => (
+                              <Stack key={tf.id} direction="row" alignItems="center" justifyContent="space-between">
+                                <Typography variant="label">
+                                  {new Date(tf.start_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                                  {" – "}
+                                  {new Date(tf.end_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                                  {tf.notes !== null ? ` · ${tf.notes}` : ""}
+                                </Typography>
+                                <Box
+                                  component="button"
+                                  disabled={deleteTimeframe.isPending}
+                                  onClick={() => {
+                                    if (token === null) return;
+                                    deleteTimeframe.mutate(
+                                      { id: tf.id, token },
+                                      { onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.timeframes.list() }) },
+                                    );
+                                  }}
+                                  sx={{
+                                    background: "none", border: "none", cursor: "pointer",
+                                    color: "error.main", fontSize: "0.85rem", p: 0,
+                                    "&:disabled": { opacity: 0.4, cursor: "default" },
+                                  }}
+                                >
+                                  ×
+                                </Box>
+                              </Stack>
                             ))}
                           </Stack>
                         )}
@@ -768,7 +806,151 @@ export default function AdminPage(): JSX.Element {
               );
             })()}
           </Stack>
-        ) : null}
+        ) : tab === 1 ? (() => {
+          const schedYear = scheduleCalendarMonth.getFullYear();
+          const schedMonth = scheduleCalendarMonth.getMonth();
+          const schedFirstDay = new Date(schedYear, schedMonth, 1).getDay();
+          const schedDaysInMonth = new Date(schedYear, schedMonth + 1, 0).getDate();
+          const schedCells: (number | null)[] = [
+            ...Array<null>(schedFirstDay).fill(null),
+            ...Array.from({ length: schedDaysInMonth }, (_, i) => i + 1),
+          ];
+          while (schedCells.length % 7 !== 0) schedCells.push(null);
+
+          // Build sets of days that have pickups or returns
+          const pickupDayKeys = new Set<string>();
+          const returnDayKeys = new Set<string>();
+          (borrowRequests ?? []).forEach((r) => {
+            if (r.pickup_start !== null) {
+              const d = new Date(r.pickup_start);
+              pickupDayKeys.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+            }
+            const ret = r.return_start ?? r.return_date;
+            if (ret !== null) {
+              const d = new Date(ret);
+              returnDayKeys.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+            }
+          });
+
+          const schedToday = new Date();
+
+          function matchesSchedDay(iso: string | null, sel: { year: number; month: number; day: number }): boolean {
+            if (iso === null) return false;
+            const d = new Date(iso);
+            return d.getFullYear() === sel.year && d.getMonth() === sel.month && d.getDate() === sel.day;
+          }
+
+          function toBatches(reqs: BorrowRequestReadWithDetails[]): BorrowRequestReadWithDetails[][] {
+            return Object.values(
+              reqs.reduce<Record<string, BorrowRequestReadWithDetails[]>>((groups, req) => {
+                const k = req.batch_id;
+                return { ...groups, [k]: [...(groups[k] ?? []), req] };
+              }, {})
+            );
+          }
+
+          return (
+            <Stack spacing={2}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Button size="small" onClick={() => setScheduleCalendarMonth(new Date(schedYear, schedMonth - 1, 1))}>← Prev</Button>
+                <Typography variant="bodyStrong">
+                  {scheduleCalendarMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+                </Typography>
+                <Button size="small" onClick={() => setScheduleCalendarMonth(new Date(schedYear, schedMonth + 1, 1))}>Next →</Button>
+              </Stack>
+
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.5 }}>
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                  <Typography key={d} variant="label" color="text.secondary" sx={{ textAlign: "center", py: 0.5 }}>{d}</Typography>
+                ))}
+                {schedCells.map((day, i) => {
+                  if (day === null) return <Box key={`sched-empty-${i}`} />;
+                  const key = `${schedYear}-${schedMonth}-${day}`;
+                  const hasPickup = pickupDayKeys.has(key);
+                  const hasReturn = returnDayKeys.has(key);
+                  const isToday = schedToday.getFullYear() === schedYear && schedToday.getMonth() === schedMonth && schedToday.getDate() === day;
+                  const isSelected = selectedScheduleDay !== null && selectedScheduleDay.year === schedYear && selectedScheduleDay.month === schedMonth && selectedScheduleDay.day === day;
+                  return (
+                    <Box
+                      key={key}
+                      onClick={() => setSelectedScheduleDay(isSelected ? null : { year: schedYear, month: schedMonth, day })}
+                      sx={{
+                        minHeight: 60,
+                        p: 0.75,
+                        border: 1,
+                        borderColor: isSelected ? "secondary.main" : isToday ? "primary.main" : "divider",
+                        borderRadius: 1,
+                        bgcolor: isSelected ? "secondary.light" : "grey.50",
+                        cursor: "pointer",
+                        "&:hover": { borderColor: "secondary.main" },
+                      }}
+                    >
+                      <Typography variant="label" color={isToday ? "primary.main" : "text.primary"} sx={{ fontWeight: isToday ? 700 : 400 }}>
+                        {day}
+                      </Typography>
+                      <Stack spacing={0.25} sx={{ mt: 0.25 }}>
+                        {hasPickup ? (
+                          <Typography variant="label" sx={{ fontSize: "0.6rem", color: "success.main", lineHeight: 1.2 }}>↓ pickup</Typography>
+                        ) : null}
+                        {hasReturn ? (
+                          <Typography variant="label" sx={{ fontSize: "0.6rem", color: "warning.main", lineHeight: 1.2 }}>↑ return</Typography>
+                        ) : null}
+                      </Stack>
+                    </Box>
+                  );
+                })}
+              </Box>
+
+              {selectedScheduleDay !== null ? (() => {
+                const sel = selectedScheduleDay;
+                const pickupReqs = (borrowRequests ?? []).filter((r) => matchesSchedDay(r.pickup_start, sel));
+                const returnReqs = (borrowRequests ?? []).filter((r) =>
+                  matchesSchedDay(r.return_start, sel) || (!r.return_start && matchesSchedDay(r.return_date, sel))
+                );
+                const pickupBatches = toBatches(pickupReqs);
+                const returnBatches = toBatches(returnReqs);
+                const dayLabel = new Date(sel.year, sel.month, sel.day).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+
+                function BatchCard({ batch }: { batch: BorrowRequestReadWithDetails[] }): JSX.Element {
+                  const pendingCount = batch.filter((r) => r.status === "pending").length;
+                  return (
+                    <Paper elevation={0} sx={{ p: 2 }}>
+                      <Stack direction="row" alignItems="center" justifyContent="space-between">
+                        <Stack spacing={0.5}>
+                          <Typography variant="bodyStrong">{batch[0].member_name}</Typography>
+                          <Typography variant="label" color="text.secondary">{batch.map((r) => r.toy_name).join(", ")}</Typography>
+                          <Typography variant="label" color="text.secondary">
+                            {pendingCount > 0 ? `${pendingCount} pending` : batch.every((r) => r.status === "approved") ? "all approved" : "resolved"}
+                          </Typography>
+                        </Stack>
+                        <Button component={NextLink} href={`/admin/borrow-requests/${batch[0].batch_id}`} variant="outlined" size="small">View</Button>
+                      </Stack>
+                    </Paper>
+                  );
+                }
+
+                return (
+                  <Stack spacing={2} sx={{ mt: 1 }}>
+                    <Divider />
+                    <Typography variant="bodyStrong">{dayLabel}</Typography>
+                    <Stack spacing={1}>
+                      <Typography variant="label" color="text.secondary">Pickups</Typography>
+                      {pickupBatches.length === 0
+                        ? <Typography variant="body1" color="text.secondary">No pickups scheduled.</Typography>
+                        : <Stack spacing={1}>{pickupBatches.map((b) => <BatchCard key={b[0].batch_id} batch={b} />)}</Stack>}
+                    </Stack>
+                    <Stack spacing={1}>
+                      <Typography variant="label" color="text.secondary">Returns</Typography>
+                      {returnBatches.length === 0
+                        ? <Typography variant="body1" color="text.secondary">No returns scheduled.</Typography>
+                        : <Stack spacing={1}>{returnBatches.map((b) => <BatchCard key={b[0].batch_id} batch={b} />)}</Stack>}
+                    </Stack>
+                  </Stack>
+                );
+              })() : null}
+            </Stack>
+          );
+        })() : null}
 
           </Box>
         </Stack>

@@ -64,6 +64,9 @@ export default function RequestBatchPage({
           <Stack spacing={2}>
             <Typography variant="label" color="text.secondary">
               Submitted {new Date(batch[0].created_at).toLocaleDateString()}
+              {batch[0].return_start !== null && batch[0].return_end !== null
+                ? ` · Return ${new Date(batch[0].return_start).toLocaleDateString(undefined, { month: "long", day: "numeric" })} ${new Date(batch[0].return_start).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })} – ${new Date(batch[0].return_end).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`
+                : batch[0].return_date !== null ? ` · Return by ${new Date(batch[0].return_date).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}` : ""}
             </Typography>
 
             {batch.map((req: BorrowRequestRead) => {

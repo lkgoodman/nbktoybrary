@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import enum
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum, ForeignKey, String, Uuid
+from sqlalchemy import Date, DateTime, Enum, ForeignKey, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import AuditMixin, Base, UuidPK
@@ -65,6 +65,10 @@ class Request(AuditMixin, Base):
         nullable=False,
     )
     denial_note: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    return_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    return_timeframe_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("timeframes.id", ondelete="SET NULL"), nullable=True
+    )
 
     toy: Mapped["Toy"] = relationship(back_populates="requests")
     membership: Mapped["Membership"] = relationship(back_populates="borrow_requests")
@@ -72,6 +76,7 @@ class Request(AuditMixin, Base):
         back_populates="request", cascade="all, delete-orphan"
     )
     checkout: Mapped["Checkout | None"] = relationship(back_populates="request", uselist=False)
+    return_timeframe: Mapped["Timeframe | None"] = relationship(foreign_keys=[return_timeframe_id])
 
 
 class CheckoutTimeframe(AuditMixin, Base):
