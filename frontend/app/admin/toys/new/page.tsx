@@ -11,7 +11,7 @@ import Typography from "@mui/material/Typography";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "../../../lib/AuthContext";
-import { useCreateToy, useUploadToyImage, useSetFeaturedImage, queryKeys } from "../../../lib/queries";
+import { useCreateToy, useUploadToyImage, useSetFeaturedImage, useToys, queryKeys } from "../../../lib/queries";
 import ToyForm from "../../../components/ToyForm";
 import type { ToyCreate } from "../../../lib/types";
 
@@ -27,15 +27,19 @@ const EMPTY: ToyCreate = {
   age_max: null,
   piece_count: null,
   materials: [],
+  keywords: [],
+  tags: [],
 };
 
 export default function NewToyPage(): JSX.Element {
-  const { isAdmin, isAuthenticated, token } = useAuth();
+  const { isAdmin, isAuthenticated, token, authReady } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
   const createToy = useCreateToy();
   const uploadImage = useUploadToyImage();
   const setFeatured = useSetFeaturedImage();
+  const { data: allToys } = useToys(token, { enabled: authReady });
+  const tagOptions = [...new Set((allToys ?? []).flatMap((t) => t.tags))].sort();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [values, setValues] = useState<ToyCreate>(EMPTY);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -129,6 +133,7 @@ export default function NewToyPage(): JSX.Element {
             isLoading={isSubmitting}
             error={createToy.isError ? createToy.error.message : uploadError}
             submitLabel={isSubmitting ? (uploadImage.isPending ? "Uploading photos…" : "Creating…") : "Create toy"}
+            tagOptions={tagOptions}
           />
         </Paper>
 

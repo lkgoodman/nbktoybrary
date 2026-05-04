@@ -126,7 +126,8 @@ export default function Page(): JSX.Element {
         const searchMatch =
           normalizedQuery === "" ||
           toy.name.toLowerCase().includes(normalizedQuery) ||
-          toy.description.toLowerCase().includes(normalizedQuery);
+          toy.description.toLowerCase().includes(normalizedQuery) ||
+          toy.keywords.some((k) => k.includes(normalizedQuery));
         const tagMatch =
           activeTags.size === 0 || toy.tags.some((t: string) => activeTags.has(t));
         const ageMatch =
@@ -308,10 +309,10 @@ export default function Page(): JSX.Element {
 
         <Stack spacing={0.5} sx={{ alignItems: "center" }}>
           <Typography variant="pageTitle" component="h1" sx={{ textAlign: "center" }}>
-            our toys
+            OUR TOYS
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ textAlign: "center" }}>
-            everyone can browse, only members can borrow
+            Everyone can browse, only members can borrow.
           </Typography>
         </Stack>
 

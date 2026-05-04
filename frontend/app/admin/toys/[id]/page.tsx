@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import NextLink from "next/link";
 import Box from "@mui/material/Box";
@@ -13,7 +13,7 @@ import Typography from "@mui/material/Typography";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "../../../lib/AuthContext";
-import { useToy, useAdminBorrowRequests, useCheckouts, useCreateCheckout, useCheckinCheckout, queryKeys } from "../../../lib/queries";
+import { useToy, useAdminBorrowRequests, useCheckouts, useCreateCheckout, useCheckinCheckout, useUploadToyImage, useSetFeaturedImage, useDeleteToyImage, queryKeys } from "../../../lib/queries";
 import type { BorrowRequestReadWithDetails, CheckoutRead, Toy, ToyImage } from "../../../lib/types";
 
 function getFeaturedImage(toy: Toy): ToyImage | null {
@@ -40,12 +40,57 @@ export default function AdminToyDetailPage({
   const { isAdmin, token, isAuthenticated } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: toy, isPending: toyPending, isError: toyError } = useToy(params.id);
   const { data: allRequests } = useAdminBorrowRequests(token);
   const { data: activeCheckouts, isPending: checkoutsPending } = useCheckouts(token, { toyId: params.id, returned: false });
   const createCheckout = useCreateCheckout();
   const checkinCheckout = useCheckinCheckout();
+  const uploadImage = useUploadToyImage();
+  const setFeatured = useSetFeaturedImage();
+  const deleteImage = useDeleteToyImage();
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>): void {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0 || token === null) return;
+    e.target.value = "";
+    files.reduce<Promise<void>>(
+      (chain, file) =>
+        chain.then(
+          () =>
+            new Promise<void>((resolve) => {
+              uploadImage.mutate(
+                { toyId: params.id, file, token },
+                {
+                  onSuccess: () => {
+                    void queryClient.invalidateQueries({ queryKey: queryKeys.toys.detail(params.id) });
+                    resolve();
+                  },
+                  onError: () => resolve(),
+                },
+              );
+            }),
+        ),
+      Promise.resolve(),
+    );
+  }
+
+  function handleSetFeatured(imageId: string): void {
+    if (token === null) return;
+    setFeatured.mutate(
+      { imageId, token },
+      { onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.toys.detail(params.id) }) },
+    );
+  }
+
+  function handleDeleteImage(imageId: string): void {
+    if (token === null) return;
+    deleteImage.mutate(
+      { imageId, token },
+      { onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.toys.detail(params.id) }) },
+    );
+  }
 
   useEffect(() => {
     if (!isAuthenticated || !isAdmin) {
@@ -146,7 +191,7 @@ export default function AdminToyDetailPage({
                   {toy.piece_count !== null ? (
                     <Typography variant="body1">
                       <Typography variant="bodyStrong" component="span">Pieces: </Typography>
-                      {toy.piece_count}
+                      {toy.piece_count > 99 ? "100+" : toy.piece_count}
                     </Typography>
                   ) : null}
                   {toy.brand !== null ? (
@@ -163,8 +208,8 @@ export default function AdminToyDetailPage({
                   ) : null}
                 </Stack>
 
-                {toy.description.length > 0 ? (
-                  <Typography variant="body1">{toy.description}</Typography>
+                {toy.description.trim().length > 0 ? (
+                  <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>{toy.description}</Typography>
                 ) : null}
               </Stack>
             </Stack>
@@ -268,6 +313,79 @@ export default function AdminToyDetailPage({
               ) : null}
               {checkinCheckout.isError ? (
                 <Typography variant="body1" color="error">{checkinCheckout.error.message}</Typography>
+              ) : null}
+            </Stack>
+
+            <Divider />
+
+            <Stack spacing={2}>
+              <Typography variant="bodyStrong">Photos</Typography>
+              {toy.images.length > 0 ? (
+                <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                  {toy.images.map((img: ToyImage) => (
+                    <Box key={img.id}>
+                      <Box
+                        component="img"
+                        src={img.image_url}
+                        alt={toy.name}
+                        sx={{
+                          width: 120,
+                          aspectRatio: "4/3",
+                          objectFit: "cover",
+                          borderRadius: 1,
+                          border: img.is_featured ? 2 : 0,
+                          borderColor: "secondary.main",
+                          display: "block",
+                        }}
+                      />
+                      <Stack spacing={0.5} sx={{ mt: 0.5 }}>
+                        {img.is_featured ? (
+                          <Typography variant="label" color="secondary">Primary</Typography>
+                        ) : (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            disabled={setFeatured.isPending}
+                            onClick={() => handleSetFeatured(img.id)}
+                          >
+                            Set primary
+                          </Button>
+                        )}
+                        <Button
+                          size="small"
+                          color="error"
+                          variant="outlined"
+                          disabled={deleteImage.isPending}
+                          onClick={() => handleDeleteImage(img.id)}
+                        >
+                          Remove
+                        </Button>
+                      </Stack>
+                    </Box>
+                  ))}
+                </Stack>
+              ) : (
+                <Typography variant="body1" color="text.secondary">No photos yet.</Typography>
+              )}
+              <Box>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  multiple
+                  style={{ display: "none" }}
+                  onChange={handleFileChange}
+                />
+                <Button
+                  variant="outlined"
+                  disabled={uploadImage.isPending}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {uploadImage.isPending ? "Uploading…" : "Add photos"}
+                </Button>
+              </Box>
+              {uploadImage.isError ? (
+                <Typography variant="body1" color="error">{uploadImage.error.message}</Typography>
               ) : null}
             </Stack>
           </Stack>

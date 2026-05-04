@@ -40,7 +40,7 @@ export default function ToyPage({ params }: Props): JSX.Element {
   const { addToCart, removeFromCart, isInCart, cartIds } = useCart();
   const inCart = isInCart(params.id);
   const cartFull = cartIds.length >= 5;
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   return (
     <Box component="main" sx={{ p: 4, maxWidth: 800, mx: "auto" }}>
@@ -74,7 +74,7 @@ export default function ToyPage({ params }: Props): JSX.Element {
                     component="img"
                     src={getFeaturedImage(toy)!.image_url}
                     alt={toy.name}
-                    onClick={() => setLightboxUrl(getFeaturedImage(toy)!.image_url)}
+                    onClick={() => setLightboxIndex(toy.images.findIndex((img) => img.id === getFeaturedImage(toy)!.id))}
                     sx={{
                       width: "100%",
                       aspectRatio: "1/1",
@@ -91,7 +91,7 @@ export default function ToyPage({ params }: Props): JSX.Element {
                           component="img"
                           src={img.image_url}
                           alt={toy.name}
-                          onClick={() => setLightboxUrl(img.image_url)}
+                          onClick={() => setLightboxIndex(toy.images.findIndex((i) => i.id === img.id))}
                           sx={{
                             width: 72,
                             aspectRatio: "1/1",
@@ -129,7 +129,7 @@ export default function ToyPage({ params }: Props): JSX.Element {
                   {toy.piece_count !== null ? (
                     <Typography variant="body1">
                       <Typography variant="bodyStrong" component="span">Pieces: </Typography>
-                      {toy.piece_count}
+                      {toy.piece_count > 99 ? "100+" : toy.piece_count}
                     </Typography>
                   ) : null}
                   {toy.brand !== null ? (
@@ -163,9 +163,9 @@ export default function ToyPage({ params }: Props): JSX.Element {
 
                 <Divider />
 
-                <Typography variant="body1">{toy.description}</Typography>
+                <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>{toy.description}</Typography>
 
-                {toy.link !== null ? (
+                {toy.link !== null && isAdmin ? (
                   <Box>
                     <Button
                       component="a"
@@ -243,9 +243,8 @@ export default function ToyPage({ params }: Props): JSX.Element {
         )}
       </Stack>
 
-      <Modal open={lightboxUrl !== null} onClose={() => setLightboxUrl(null)}>
+      <Modal open={lightboxIndex !== null} onClose={() => setLightboxIndex(null)}>
         <Box
-          onClick={() => setLightboxUrl(null)}
           sx={{
             position: "fixed",
             inset: 0,
@@ -256,19 +255,57 @@ export default function ToyPage({ params }: Props): JSX.Element {
             p: 2,
             cursor: "zoom-out",
           }}
+          onClick={() => setLightboxIndex(null)}
         >
-          {lightboxUrl !== null ? (
+          {lightboxIndex !== null && toy !== undefined ? (
             <Box
-              component="img"
-              src={lightboxUrl}
-              alt=""
-              sx={{
-                maxWidth: "90vw",
-                maxHeight: "90vh",
-                objectFit: "contain",
-                borderRadius: 1,
-              }}
-            />
+              onClick={(e) => e.stopPropagation()}
+              sx={{ position: "relative", display: "inline-flex", alignItems: "center" }}
+            >
+              <Box
+                component="img"
+                src={toy.images[lightboxIndex].image_url}
+                alt=""
+                onClick={() => setLightboxIndex(null)}
+                sx={{
+                  maxWidth: "90vw",
+                  maxHeight: "90vh",
+                  objectFit: "contain",
+                  borderRadius: 1,
+                  cursor: "zoom-out",
+                }}
+              />
+              {toy.images.length > 1 ? (
+                <>
+                  <Button
+                    onClick={() => setLightboxIndex((lightboxIndex - 1 + toy.images.length) % toy.images.length)}
+                    sx={{
+                      position: "absolute",
+                      left: -48,
+                      color: "white",
+                      fontSize: "2rem",
+                      minWidth: "auto",
+                      p: 1,
+                    }}
+                  >
+                    ‹
+                  </Button>
+                  <Button
+                    onClick={() => setLightboxIndex((lightboxIndex + 1) % toy.images.length)}
+                    sx={{
+                      position: "absolute",
+                      right: -48,
+                      color: "white",
+                      fontSize: "2rem",
+                      minWidth: "auto",
+                      p: 1,
+                    }}
+                  >
+                    ›
+                  </Button>
+                </>
+              ) : null}
+            </Box>
           ) : null}
         </Box>
       </Modal>

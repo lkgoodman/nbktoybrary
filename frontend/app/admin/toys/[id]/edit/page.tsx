@@ -11,17 +11,19 @@ import Typography from "@mui/material/Typography";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "../../../../lib/AuthContext";
-import { useToy, useUpdateToy, useUploadToyImage, useSetFeaturedImage, useDeleteToyImage, queryKeys } from "../../../../lib/queries";
+import { useToy, useToys, useUpdateToy, useUploadToyImage, useSetFeaturedImage, useDeleteToyImage, queryKeys } from "../../../../lib/queries";
 import ToyForm from "../../../../components/ToyForm";
 import type { ToyCreate, ToyImage } from "../../../../lib/types";
 
 type Props = { params: { id: string } };
 
 export default function EditToyPage({ params }: Props): JSX.Element {
-  const { isAdmin, isAuthenticated, token } = useAuth();
+  const { isAdmin, isAuthenticated, token, authReady } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: toy, isPending } = useToy(params.id);
+  const { data: allToys } = useToys(token, { enabled: authReady });
+  const tagOptions = [...new Set((allToys ?? []).flatMap((t) => t.tags))].sort();
   const updateToy = useUpdateToy();
   const uploadImage = useUploadToyImage();
   const setFeatured = useSetFeaturedImage();
@@ -34,13 +36,22 @@ export default function EditToyPage({ params }: Props): JSX.Element {
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    const file = e.target.files?.[0];
-    if (file === undefined || token === null) return;
-    uploadImage.mutate(
-      { toyId: params.id, file, token },
-      { onSuccess: invalidateToy },
-    );
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0 || token === null) return;
     e.target.value = "";
+    files.reduce<Promise<void>>(
+      (chain, file) =>
+        chain.then(
+          () =>
+            new Promise<void>((resolve) => {
+              uploadImage.mutate(
+                { toyId: params.id, file, token },
+                { onSuccess: () => { invalidateToy(); resolve(); }, onError: () => resolve() },
+              );
+            }),
+        ),
+      Promise.resolve(),
+    );
   }
 
   useEffect(() => {
@@ -61,6 +72,8 @@ export default function EditToyPage({ params }: Props): JSX.Element {
         age_max: toy.age_max,
         piece_count: toy.piece_count,
         materials: toy.materials,
+        keywords: toy.keywords,
+        tags: toy.tags,
       });
     }
   }, [toy, values]);
@@ -102,91 +115,86 @@ export default function EditToyPage({ params }: Props): JSX.Element {
               isLoading={updateToy.isPending}
               error={updateToy.isError ? updateToy.error.message : null}
               submitLabel="Save changes"
-            />
+              tagOptions={tagOptions}
+            >
+              {toy !== undefined ? (
+                <Stack spacing={2}>
+                  <Typography variant="sectionTitle" component="h2">Photos</Typography>
+                  {toy.images.length > 0 ? (
+                    <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                      {toy.images.map((img: ToyImage) => (
+                        <Box key={img.id}>
+                          <Box
+                            component="img"
+                            src={img.image_url}
+                            alt={toy.name}
+                            sx={{
+                              width: 120,
+                              aspectRatio: "4/3",
+                              objectFit: "cover",
+                              borderRadius: 1,
+                              border: img.is_featured ? 2 : 0,
+                              borderColor: "secondary.main",
+                              display: "block",
+                            }}
+                          />
+                          <Stack spacing={0.5} sx={{ mt: 0.5 }}>
+                            {img.is_featured ? (
+                              <Typography variant="label" color="secondary">Primary</Typography>
+                            ) : (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                disabled={setFeatured.isPending}
+                                onClick={() =>
+                                  token !== null &&
+                                  setFeatured.mutate({ imageId: img.id, token }, { onSuccess: invalidateToy })
+                                }
+                              >
+                                Set primary
+                              </Button>
+                            )}
+                            <Button
+                              size="small"
+                              color="error"
+                              variant="outlined"
+                              disabled={deleteImage.isPending}
+                              onClick={() =>
+                                token !== null &&
+                                deleteImage.mutate({ imageId: img.id, token }, { onSuccess: invalidateToy })
+                              }
+                            >
+                              Remove
+                            </Button>
+                          </Stack>
+                        </Box>
+                      ))}
+                    </Stack>
+                  ) : (
+                    <Typography variant="body1" color="text.secondary">No photos yet.</Typography>
+                  )}
+                  <Box>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      multiple
+                      style={{ display: "none" }}
+                      onChange={handleFileChange}
+                    />
+                    <Button
+                      variant="outlined"
+                      disabled={uploadImage.isPending}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {uploadImage.isPending ? "Uploading…" : "Add photos"}
+                    </Button>
+                  </Box>
+                </Stack>
+              ) : null}
+            </ToyForm>
           )}
         </Paper>
-
-        {toy !== undefined ? (
-          <Paper elevation={0} sx={{ p: 4 }}>
-            <Stack spacing={2}>
-              <Typography variant="sectionTitle" component="h2">
-                Manage photos
-              </Typography>
-              <Stack direction="row" spacing={2} flexWrap="wrap">
-                {toy.images.map((img: ToyImage) => (
-                  <Box key={img.id}>
-                    <Box
-                      component="img"
-                      src={img.image_url}
-                      alt={toy.name}
-                      sx={{
-                        width: 120,
-                        aspectRatio: "4/3",
-                        objectFit: "cover",
-                        borderRadius: 1,
-                        border: img.is_featured ? 2 : 0,
-                        borderColor: "secondary.main",
-                      }}
-                    />
-                    <Stack spacing={0.5} sx={{ mt: 0.5 }}>
-                      {!img.is_featured ? (
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          disabled={setFeatured.isPending}
-                          onClick={() =>
-                            token !== null &&
-                            setFeatured.mutate(
-                              { imageId: img.id, token },
-                              { onSuccess: invalidateToy },
-                            )
-                          }
-                        >
-                          Set featured
-                        </Button>
-                      ) : (
-                        <Typography variant="label" color="secondary">
-                          Featured
-                        </Typography>
-                      )}
-                      <Button
-                        size="small"
-                        color="error"
-                        variant="outlined"
-                        disabled={deleteImage.isPending}
-                        onClick={() =>
-                          token !== null &&
-                          deleteImage.mutate(
-                            { imageId: img.id, token },
-                            { onSuccess: invalidateToy },
-                          )
-                        }
-                      >
-                        Delete
-                      </Button>
-                    </Stack>
-                  </Box>
-                ))}
-              </Stack>
-              <Box>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  style={{ display: "none" }}
-                  onChange={handleFileChange}
-                />
-                <Button
-                  variant="contained"
-                  disabled={uploadImage.isPending}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {uploadImage.isPending ? "Uploading…" : "Add photo"}
-                </Button>
-              </Box>
-            </Stack>
-          </Paper>
-        ) : null}
       </Stack>
     </Box>
   );

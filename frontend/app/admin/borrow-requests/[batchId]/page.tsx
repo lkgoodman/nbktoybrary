@@ -22,12 +22,12 @@ export default function BorrowRequestDetailPage({
 }: {
   params: { batchId: string };
 }): JSX.Element {
-  const { isAdmin, token, isAuthenticated } = useAuth();
+  const { isAdmin, token, isAuthenticated, authReady } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
 
   const { data: allRequests, isPending, isError } = useAdminBorrowRequests(token);
-  const { data: toys } = useToys();
+  const { data: toys } = useToys(token, { enabled: authReady });
   const updateBorrowRequest = useUpdateBorrowRequest();
   const { data: activeCheckouts } = useCheckouts(token, { returned: false });
   const createCheckout = useCreateCheckout();

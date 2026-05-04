@@ -22,6 +22,7 @@ interface StoredAuth {
 interface AuthContextValue {
   user: UserRead | null;
   token: string | null;
+  authReady: boolean;
   login: (email: string, password: string) => Promise<UserRead>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -35,18 +36,30 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
   const [user, setUser] = useState<UserRead | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw !== null) {
-      try {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw !== null) {
         const stored = JSON.parse(raw) as StoredAuth;
         setToken(stored.token);
         setUser(stored.user);
-      } catch {
-        localStorage.removeItem(STORAGE_KEY);
       }
+    } catch {
+      localStorage.removeItem(STORAGE_KEY);
     }
+    setAuthReady(true);
+  }, []);
+
+  useEffect(() => {
+    function handleUnauthorized(): void {
+      localStorage.removeItem(STORAGE_KEY);
+      setToken(null);
+      setUser(null);
+    }
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("auth:unauthorized", handleUnauthorized);
   }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<UserRead> => {
@@ -69,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   const value: AuthContextValue = {
     user,
     token,
+    authReady,
     login,
     logout,
     isAuthenticated: user !== null,

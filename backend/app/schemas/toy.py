@@ -10,7 +10,7 @@ from app.schemas.base import AuditRead, ORMModel
 
 class ToyBase(BaseModel):
     name: str = Field(min_length=1, max_length=255)
-    description: str = Field(min_length=1, max_length=2048)
+    description: str = Field(default="", max_length=2048)
     brand: str | None = Field(default=None, max_length=255)
     language: str | None = Field(default=None, max_length=64)
     link: str | None = Field(default=None, max_length=1024)
@@ -20,15 +20,16 @@ class ToyBase(BaseModel):
     age_max: int | None = Field(default=None, ge=0)
     piece_count: int | None = Field(default=None, ge=0)
     materials: list[str] = Field(default_factory=list)
+    keywords: list[str] = Field(default_factory=list)
 
 
 class ToyCreate(ToyBase):
-    pass
+    tags: list[str] = Field(default_factory=list)
 
 
 class ToyUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
-    description: str | None = Field(default=None, min_length=1, max_length=2048)
+    description: str | None = Field(default=None, max_length=2048)
     brand: str | None = Field(default=None, max_length=255)
     language: str | None = Field(default=None, max_length=64)
     link: str | None = Field(default=None, max_length=1024)
@@ -38,6 +39,8 @@ class ToyUpdate(BaseModel):
     age_max: int | None = Field(default=None, ge=0)
     piece_count: int | None = Field(default=None, ge=0)
     materials: list[str] | None = None
+    keywords: list[str] | None = None
+    tags: list[str] | None = None
 
 
 class ToyRead(ToyBase, AuditRead):

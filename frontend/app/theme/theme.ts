@@ -54,45 +54,42 @@ declare module "@mui/material/Typography" {
   }
 }
 
-const fontFamily: string = [
-  "system-ui",
-  "-apple-system",
-  "Segoe UI",
-  "Roboto",
-  "sans-serif",
-].join(", ");
+// Space Mono: display/heading font (matches nbktoybrary.org)
+// DM Sans: body/UI font (closest free substitute for Halyard Micro used on nbktoybrary.org)
+const displayFont: string = ["var(--font-space-mono)", "monospace"].join(", ");
+const bodyFont: string = ["var(--font-dm-sans)", "system-ui", "-apple-system", "sans-serif"].join(", ");
 
 const typography: TypographyVariantsOptions = {
-  fontFamily,
+  fontFamily: bodyFont,
   pageTitle: {
-    fontFamily,
+    fontFamily: displayFont,
     fontSize: "2.25rem",
     fontWeight: 700,
     lineHeight: 1.2,
-    letterSpacing: "-0.02em",
   },
   sectionTitle: {
-    fontFamily,
-    fontSize: "1.5rem",
-    fontWeight: 600,
+    fontFamily: displayFont,
+    fontSize: "1rem",
+    fontWeight: 700,
     lineHeight: 1.3,
+    letterSpacing: "0.02em",
   },
   bodyStrong: {
-    fontFamily,
+    fontFamily: bodyFont,
     fontSize: "1rem",
     fontWeight: 600,
     lineHeight: 1.5,
   },
   label: {
-    fontFamily,
+    fontFamily: bodyFont,
     fontSize: "0.75rem",
     fontWeight: 500,
     letterSpacing: "0.08em",
     textTransform: "uppercase",
   },
   navTitle: {
-    fontFamily,
-    fontSize: "1.5rem",
+    fontFamily: displayFont,
+    fontSize: "1.25rem",
     fontWeight: 700,
     lineHeight: 1.3,
   },

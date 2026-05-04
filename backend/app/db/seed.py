@@ -1,13 +1,63 @@
 from __future__ import annotations
 
+import csv
 from datetime import date, timedelta
+from pathlib import Path
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password
 from app.models.membership import AccountStanding, Membership, MembershipRequest, MembershipRequestStatus, MembershipUser
-from app.models.toy import Tag, Toy, ToyImage, ToyTag
+from app.models.toy import Tag, Toy, ToyTag
 from app.models.user import Role, User, UserRole
+
+CSV_PATH = Path(__file__).parent / "toys.csv"
+
+
+def _parse_age_months(value: str) -> int | None:
+    s = value.strip().replace(" ", "")
+    if not s:
+        return None
+    if s.lower().endswith("m+") or s.lower().endswith("m"):
+        try:
+            return int(s.lower().rstrip("m+"))
+        except ValueError:
+            return None
+    if s.endswith("+"):
+        try:
+            return int(s.rstrip("+")) * 12
+        except ValueError:
+            return None
+    try:
+        return int(s) * 12
+    except ValueError:
+        return None
+
+
+def _parse_piece_count(value: str) -> int | None:
+    s = value.strip().rstrip("+")
+    if not s:
+        return None
+    try:
+        return int(s)
+    except ValueError:
+        return None
+
+
+def _parse_materials(value: str) -> list[str]:
+    if not value.strip():
+        return []
+    return [m.strip().lower() for m in value.split(",") if m.strip()]
+
+
+def _parse_categories(value: str) -> list[str]:
+    if not value.strip():
+        return []
+    return [c.strip().lower() for c in value.split(",") if c.strip()]
+
+
+def _parse_battery(value: str) -> bool:
+    return value.strip().lower() in ("yes", "y", "true")
 
 
 async def seed(db: AsyncSession) -> None:
@@ -67,150 +117,50 @@ async def seed(db: AsyncSession) -> None:
     await db.flush()
 
     db.add(MembershipUser(membership_id=membership.id, user_id=member.id))
-
-    blocks = Toy(
-        name="Wooden Blocks",
-        description="Classic 50-piece wooden block set for open-ended building and creative play.",
-        brand="Melissa & Doug",
-        battery_operated=False,
-        shareable=True,
-        age_min=2,
-        age_max=8,
-        piece_count=50,
-        created_by=admin.id,
-    )
-    rc_car = Toy(
-        name="Remote Control Car",
-        description="Rechargeable RC car with working headlights and full directional control.",
-        brand="Hot Wheels",
-        battery_operated=True,
-        shareable=False,
-        age_min=6,
-        age_max=12,
-        created_by=admin.id,
-    )
-    easel = Toy(
-        name="Art Easel",
-        description="Double-sided easel with chalkboard and whiteboard surfaces, includes tray for supplies.",
-        battery_operated=False,
-        shareable=True,
-        age_min=3,
-        age_max=10,
-        created_by=admin.id,
-    )
-    kitchen = Toy(
-        name="Play Kitchen",
-        description="Wooden play kitchen with stovetop, oven, sink, and accessories for imaginative cooking play.",
-        brand="KidKraft",
-        battery_operated=False,
-        shareable=True,
-        age_min=2,
-        age_max=6,
-        created_by=admin.id,
-    )
-    duplo = Toy(
-        name="LEGO DUPLO Classic Brick Box",
-        description="Large Duplo bricks in assorted colors and shapes — perfect for toddler hands.",
-        brand="LEGO",
-        battery_operated=False,
-        shareable=True,
-        age_min=1,
-        age_max=5,
-        piece_count=85,
-        created_by=admin.id,
-    )
-    puzzle = Toy(
-        name="Floor Puzzle — World Map",
-        description="Giant 48-piece floor puzzle featuring a colorful illustrated world map with animals.",
-        brand="Melissa & Doug",
-        battery_operated=False,
-        shareable=True,
-        age_min=3,
-        age_max=8,
-        piece_count=48,
-        created_by=admin.id,
-    )
-    balance_bike = Toy(
-        name="Balance Bike",
-        description="Lightweight wooden balance bike to help young children develop coordination before pedaling.",
-        battery_operated=False,
-        shareable=True,
-        age_min=2,
-        age_max=5,
-        created_by=admin.id,
-    )
-    db.add_all([blocks, rc_car, easel, kitchen, duplo, puzzle, balance_bike])
     await db.flush()
 
-    db.add_all(
-        [
-            ToyImage(
-                toy_id=blocks.id,
-                image_url="https://picsum.photos/seed/woodenblocks/600/400",
-                is_featured=True,
-            ),
-            ToyImage(
-                toy_id=rc_car.id,
-                image_url="https://picsum.photos/seed/rccar/600/400",
-                is_featured=True,
-            ),
-            ToyImage(
-                toy_id=easel.id,
-                image_url="https://picsum.photos/seed/arteasel/600/400",
-                is_featured=True,
-            ),
-            ToyImage(
-                toy_id=kitchen.id,
-                image_url="https://picsum.photos/seed/playkitchen/600/400",
-                is_featured=True,
-            ),
-            ToyImage(
-                toy_id=duplo.id,
-                image_url="https://picsum.photos/seed/duplobricks/600/400",
-                is_featured=True,
-            ),
-            ToyImage(
-                toy_id=puzzle.id,
-                image_url="https://picsum.photos/seed/worldpuzzle/600/400",
-                is_featured=True,
-            ),
-            ToyImage(
-                toy_id=balance_bike.id,
-                image_url="https://picsum.photos/seed/balancebike/600/400",
-                is_featured=True,
-            ),
-        ]
-    )
+    # Read toys from CSV
+    tag_cache: dict[str, Tag] = {}
 
-    tag_building = Tag(name="building")
-    tag_creative = Tag(name="creative")
-    tag_vehicles = Tag(name="vehicles")
-    tag_outdoor = Tag(name="outdoor")
-    tag_electronic = Tag(name="electronic")
-    tag_art = Tag(name="art")
-    tag_pretend = Tag(name="pretend play")
-    tag_puzzles = Tag(name="puzzles")
-    tag_gross_motor = Tag(name="gross motor")
-    db.add_all([tag_building, tag_creative, tag_vehicles, tag_outdoor, tag_electronic, tag_art, tag_pretend, tag_puzzles, tag_gross_motor])
-    await db.flush()
+    with open(CSV_PATH, newline="", encoding="utf-8-sig") as f:
+        reader = csv.reader(f)
+        next(reader)  # skip header row
+        for row in reader:
+            if len(row) < 7:
+                continue
+            name = row[0].strip()
+            if not name:
+                continue
 
-    db.add_all(
-        [
-            ToyTag(toy_id=blocks.id, tag_id=tag_building.id),
-            ToyTag(toy_id=blocks.id, tag_id=tag_creative.id),
-            ToyTag(toy_id=rc_car.id, tag_id=tag_vehicles.id),
-            ToyTag(toy_id=rc_car.id, tag_id=tag_outdoor.id),
-            ToyTag(toy_id=rc_car.id, tag_id=tag_electronic.id),
-            ToyTag(toy_id=easel.id, tag_id=tag_art.id),
-            ToyTag(toy_id=easel.id, tag_id=tag_creative.id),
-            ToyTag(toy_id=kitchen.id, tag_id=tag_pretend.id),
-            ToyTag(toy_id=kitchen.id, tag_id=tag_creative.id),
-            ToyTag(toy_id=duplo.id, tag_id=tag_building.id),
-            ToyTag(toy_id=duplo.id, tag_id=tag_creative.id),
-            ToyTag(toy_id=puzzle.id, tag_id=tag_puzzles.id),
-            ToyTag(toy_id=balance_bike.id, tag_id=tag_outdoor.id),
-            ToyTag(toy_id=balance_bike.id, tag_id=tag_gross_motor.id),
-        ]
-    )
+            piece_count = _parse_piece_count(row[1])
+            age_min = _parse_age_months(row[2])
+            materials = _parse_materials(row[3])
+            battery_operated = _parse_battery(row[4])
+            categories = _parse_categories(row[5])
+            brand_raw = row[6].strip()
+            brand = brand_raw if brand_raw else None
+
+            toy = Toy(
+                name=name,
+                description=" ",
+                brand=brand,
+                battery_operated=battery_operated,
+                shareable=True,
+                age_min=age_min,
+                age_max=None,
+                piece_count=piece_count,
+                materials=materials,
+                created_by=admin.id,
+            )
+            db.add(toy)
+            await db.flush()
+
+            for cat in categories:
+                if cat not in tag_cache:
+                    tag = Tag(name=cat)
+                    db.add(tag)
+                    await db.flush()
+                    tag_cache[cat] = tag
+                db.add(ToyTag(toy_id=toy.id, tag_id=tag_cache[cat].id))
 
     await db.commit()

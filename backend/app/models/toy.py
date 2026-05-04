@@ -25,6 +25,7 @@ class Toy(AuditMixin, Base):
     battery_operated: Mapped[bool] = mapped_column(Boolean, nullable=False)
     shareable: Mapped[bool] = mapped_column(Boolean, nullable=False)
     materials: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    keywords: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     age_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
     age_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
     piece_count: Mapped[int | None] = mapped_column(Integer, nullable=True)

@@ -58,10 +58,11 @@ export function useUser(id: string, token: string | null): UseQueryResult<UserRe
   });
 }
 
-export function useToys(): UseQueryResult<Toy[], Error> {
+export function useToys(token?: string | null, options?: { enabled?: boolean }): UseQueryResult<Toy[], Error> {
   return useQuery<Toy[], Error>({
-    queryKey: queryKeys.toys.list(),
-    queryFn: listToys,
+    queryKey: [...queryKeys.toys.list(), token ?? null],
+    queryFn: () => listToys(token ?? undefined),
+    enabled: options?.enabled !== false,
   });
 }
 

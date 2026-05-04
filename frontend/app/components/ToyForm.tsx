@@ -3,6 +3,7 @@
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
+import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -26,6 +27,8 @@ interface ToyFormProps {
   isLoading: boolean;
   error: string | null;
   submitLabel: string;
+  tagOptions?: string[];
+  children?: React.ReactNode;
 }
 
 export default function ToyForm({
@@ -35,6 +38,8 @@ export default function ToyForm({
   isLoading,
   error,
   submitLabel,
+  tagOptions = [],
+  children,
 }: ToyFormProps): JSX.Element {
   function set<K extends keyof ToyCreate>(key: K, value: ToyCreate[K]): void {
     onChange({ ...values, [key]: value });
@@ -78,7 +83,6 @@ export default function ToyForm({
           label="Description"
           value={values.description}
           onChange={(e) => set("description", e.target.value)}
-          required
           fullWidth
           multiline
           rows={3}
@@ -109,6 +113,40 @@ export default function ToyForm({
           value={values.link ?? ""}
           onChange={(e) => set("link", e.target.value.trim() === "" ? null : e.target.value)}
           fullWidth
+        />
+        <FormControl fullWidth>
+          <InputLabel>Tags (optional)</InputLabel>
+          <Select
+            multiple
+            label="Tags (optional)"
+            value={values.tags}
+            onChange={(e: SelectChangeEvent<string[]>) => {
+              const val = e.target.value;
+              set("tags", typeof val === "string" ? val.split(",") : val);
+            }}
+            renderValue={(selected: string[]) => (
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                {selected.map((v) => <Chip key={v} label={v} size="small" />)}
+              </Box>
+            )}
+          >
+            {[...new Set([...tagOptions, ...values.tags])].sort().map((tag) => (
+              <MenuItem key={tag} value={tag}>
+                <Checkbox checked={values.tags.includes(tag)} size="small" />
+                <ListItemText primary={tag} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <TextField
+          label="Keywords (optional)"
+          value={values.keywords.join(", ")}
+          onChange={(e) => {
+            const raw = e.target.value;
+            set("keywords", raw === "" ? [] : raw.split(",").map((k) => k.trim().toLowerCase()).filter(Boolean));
+          }}
+          fullWidth
+          helperText="Comma-separated words used for search only, not shown as categories"
         />
         <FormControl fullWidth>
           <InputLabel>Materials (optional)</InputLabel>
@@ -184,6 +222,8 @@ export default function ToyForm({
           />
         </Box>
       </Stack>
+
+      {children}
 
       <Button type="submit" variant="contained" disabled={isLoading}>
         {isLoading ? "Saving…" : submitLabel}

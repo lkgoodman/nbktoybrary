@@ -23,6 +23,7 @@ export interface Toy {
   images: ToyImage[];
   tags: string[];
   materials: string[];
+  keywords: string[];
   is_available: boolean;
   is_checked_out: boolean;
   is_requested: boolean;
@@ -90,6 +91,8 @@ export interface ToyCreate {
   age_max: number | null;
   piece_count: number | null;
   materials: string[];
+  keywords: string[];
+  tags: string[];
 }
 
 export interface ToyUpdate {
@@ -103,6 +106,8 @@ export interface ToyUpdate {
   age_max?: number | null;
   piece_count?: number | null;
   materials?: string[];
+  keywords?: string[];
+  tags?: string[];
 }
 
 export interface BorrowRequestRead {

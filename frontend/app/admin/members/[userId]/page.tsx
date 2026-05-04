@@ -25,12 +25,12 @@ export default function AdminMemberPage({
 }: {
   params: { userId: string };
 }): JSX.Element {
-  const { isAdmin, isSuperadmin, isAuthenticated, token } = useAuth();
+  const { isAdmin, isSuperadmin, isAuthenticated, token, authReady } = useAuth();
   const queryClient = useQueryClient();
   const router = useRouter();
   const { data: member, isPending: memberPending, isError: memberError } = useUser(params.userId, token);
   const { data: allRequests, isPending: requestsPending } = useAdminBorrowRequests(token);
-  const { data: toys } = useToys();
+  const { data: toys } = useToys(token, { enabled: authReady });
   const { data: memberships } = useMembershipsByUser(params.userId, isSuperadmin ? token : null);
   const updateStanding = useUpdateMembershipStanding();
   const membership: MembershipRead | null = memberships?.[0] ?? null;

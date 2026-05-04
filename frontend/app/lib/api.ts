@@ -64,6 +64,9 @@ export const endpoints = {
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res: Response = await fetch(url, { cache: "no-store", ...init });
   if (!res.ok) {
+    if (res.status === 401) {
+      window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+    }
     let detail: string | null = null;
     try {
       const body = await res.json() as { detail?: string };
@@ -259,8 +262,10 @@ export async function checkinCheckout(id: string, token: string): Promise<Checko
   });
 }
 
-export async function listToys(): Promise<Toy[]> {
-  return request<Toy[]>(endpoints.toys.list());
+export async function listToys(token?: string): Promise<Toy[]> {
+  return request<Toy[]>(endpoints.toys.list(), {
+    headers: token !== undefined ? { Authorization: `Bearer ${token}` } : {},
+  });
 }
 
 export async function getToy(id: string): Promise<Toy> {

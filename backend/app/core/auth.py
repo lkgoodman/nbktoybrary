@@ -47,6 +47,27 @@ async def get_current_user(
     return user
 
 
+async def get_optional_user(
+    token: str | None = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> User | None:
+    if token is None:
+        return None
+    user_id = decode_access_token(token)
+    if user_id is None:
+        return None
+    result = await db.execute(
+        select(User).options(_load_roles).where(User.id == uuid.UUID(user_id))
+    )
+    return result.scalar_one_or_none()
+
+
+def _is_admin(user: User | None) -> bool:
+    if user is None:
+        return False
+    return bool({ur.role.name for ur in user.roles}.intersection({"admin", "superadmin"}))
+
+
 def require_roles(*role_names: str):
     async def dependency(current_user: User = Depends(get_current_user)) -> User:
         user_role_names = {ur.role.name for ur in current_user.roles}

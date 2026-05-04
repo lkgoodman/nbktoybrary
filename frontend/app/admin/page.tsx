@@ -27,7 +27,7 @@ import { useMembershipRequests, useUpdateMembershipRequest, useToys, useAdminBor
 import type { BorrowRequestReadWithDetails, MembershipRequestRead, TimeframeRead, Toy, ToyImage, UserRead } from "../lib/types";
 
 export default function AdminPage(): JSX.Element {
-  const { isAdmin, token, isAuthenticated } = useAuth();
+  const { isAdmin, token, isAuthenticated, authReady } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -94,7 +94,7 @@ export default function AdminPage(): JSX.Element {
 
   const { data: requests, isPending: requestsPending, isError: requestsError } = useMembershipRequests(token);
   const updateRequest = useUpdateMembershipRequest();
-  const { data: toys, isPending: toysPending, isError: toysError } = useToys();
+  const { data: toys, isPending: toysPending, isError: toysError } = useToys(token, { enabled: authReady });
   const { data: borrowRequests, isPending: borrowPending, isError: borrowError } = useAdminBorrowRequests(token);
   const { data: timeframes, isPending: timeframesPending, isError: timeframesError } = useTimeframes(token);
   const { data: users, isPending: usersPending, isError: usersError } = useUsers(token);
@@ -110,7 +110,8 @@ export default function AdminPage(): JSX.Element {
     const searchMatch =
       normalizedInventorySearch === "" ||
       toy.name.toLowerCase().includes(normalizedInventorySearch) ||
-      toy.description.toLowerCase().includes(normalizedInventorySearch);
+      toy.description.toLowerCase().includes(normalizedInventorySearch) ||
+      toy.keywords.some((k) => k.includes(normalizedInventorySearch));
     const tagMatch =
       inventoryTags.size === 0 || toy.tags.some((t: string) => inventoryTags.has(t));
     const ageMatch =
@@ -318,7 +319,7 @@ export default function AdminPage(): JSX.Element {
                   <MenuItem value="checked_out">Checked out</MenuItem>
                 </Select>
               </FormControl>
-              <Button component={NextLink} href="/admin/toys/new" variant="contained" sx={{ whiteSpace: "nowrap" }}>
+              <Button component={NextLink} href="/admin/toys/new" variant="contained" sx={{ whiteSpace: "nowrap", flexShrink: 0 }}>
                 Create toy
               </Button>
             </Stack>
