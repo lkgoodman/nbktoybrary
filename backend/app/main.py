@@ -7,10 +7,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from sqlalchemy import select
 from app.db.base import Base
 from app.db.seed import seed
 from app.db.session import DATABASE_PATH, SessionLocal, engine
 from app.models import *  # noqa: F401,F403  -- register mappers
+from app.models.user import User
 from app.routers import auth, borrow_requests, checkouts, favorites, membership_requests, memberships, timeframes, toy_images, toys, users
 
 IMAGES_DIR: str = os.getenv("IMAGES_DIR", "/data/images")
@@ -18,10 +20,12 @@ IMAGES_DIR: str = os.getenv("IMAGES_DIR", "/data/images")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    is_fresh_db = not os.path.exists(DATABASE_PATH)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    if is_fresh_db:
+    async with SessionLocal() as session:
+        result = await session.execute(select(User).limit(1))
+        needs_seed = result.scalar_one_or_none() is None
+    if needs_seed:
         async with SessionLocal() as session:
             await seed(session)
     yield
@@ -30,9 +34,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="nbktoybrary backend", lifespan=lifespan)
 
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
+_allow_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_allow_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
