@@ -6,11 +6,8 @@ services:
     volumes:
       - ./backend/app:/app/app
       - ./database:/data
-    environment:
-      - DATABASE_PATH=/data/app.db
-      - SECRET_KEY=dev-secret-key-change-in-production
-      - BASE_URL=http://localhost:8000
-      - IMAGES_DIR=/data/images
+    env_file:
+      - ./backend/.env
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:
@@ -20,8 +17,7 @@ services:
     volumes:
       - ./frontend/app:/app/app
       - ./frontend/public:/app/public
-    environment:
-      - BACKEND_URL=http://backend:8000
-      - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+    env_file:
+      - ./frontend/.env
     depends_on:
       - backend
