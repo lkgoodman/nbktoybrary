@@ -13,7 +13,7 @@ from app.models.toy import ToyImage
 from app.models.user import User
 from app.schemas.toy import ToyImageRead, ToyImageUpdate
 
-BASE_URL: str = os.getenv("BASE_URL", "http://localhost:8000")
+BASE_URL: str = ""
 IMAGES_DIR: str = os.getenv("IMAGES_DIR", "/data/images")
 
 router = APIRouter(tags=["toy-images"])

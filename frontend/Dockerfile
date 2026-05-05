@@ -7,8 +7,6 @@ RUN npm install
 
 COPY . .
 
-ENV NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
-
 EXPOSE 3000
 
 CMD ["npm", "run", "dev"]

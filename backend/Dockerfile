@@ -17,9 +17,8 @@ COPY app ./app
 
 ENV DATABASE_PATH=/data/app.db \
     SECRET_KEY=dev-secret-key-change-in-production \
-    BASE_URL=http://localhost:8000 \
     IMAGES_DIR=/data/images \
-    ALLOWED_ORIGINS=http://localhost:3000
+    ALLOWED_ORIGINS=*
 
 EXPOSE 8000
 
