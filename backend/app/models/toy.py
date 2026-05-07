@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, ForeignKey, Integer, JSON, String, UniqueConstraint, Uuid
+from sqlalchemy import Boolean, ForeignKey, Integer, JSON, LargeBinary, String, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import AuditMixin, Base, TimestampMixin, UuidPK
@@ -49,6 +49,8 @@ class ToyImage(AuditMixin, Base):
     )
     image_url: Mapped[str] = mapped_column(String(1024), nullable=False)
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    content_type: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
     toy: Mapped["Toy"] = relationship(back_populates="images")
 

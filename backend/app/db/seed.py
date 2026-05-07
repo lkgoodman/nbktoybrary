@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from datetime import date, timedelta
 from typing import Any
 
@@ -1590,11 +1591,24 @@ async def seed(db: AsyncSession) -> None:
             db.add(ToyTag(toy_id=toy.id, tag_id=tag_cache[tag_name].id))
 
         for img in toy_data["images"]:
-            db.add(ToyImage(
+            filename = img["url"].split("/")[-1]
+            filepath = os.path.join("/data/images", filename)
+            if not os.path.exists(filepath):
+                continue
+            with open(filepath, "rb") as f:
+                data = f.read()
+            ext = filename.rsplit(".", 1)[-1].lower()
+            content_type = "image/png" if ext == "png" else "image/jpeg"
+            toy_image = ToyImage(
                 toy_id=toy.id,
-                image_url=img["url"],
+                image_url="",
                 is_featured=img["is_featured"],
+                data=data,
+                content_type=content_type,
                 created_by=admin.id,
-            ))
+            )
+            db.add(toy_image)
+            await db.flush()
+            toy_image.image_url = f"/toy-images/{toy_image.id}/file"
 
     await db.commit()

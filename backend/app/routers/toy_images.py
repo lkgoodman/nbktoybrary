@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile, status
@@ -12,9 +11,6 @@ from app.db.session import get_db
 from app.models.toy import ToyImage
 from app.models.user import User
 from app.schemas.toy import ToyImageRead, ToyImageUpdate
-
-BASE_URL: str = ""
-IMAGES_DIR: str = os.getenv("IMAGES_DIR", "/data/images")
 
 router = APIRouter(tags=["toy-images"])
 
@@ -33,28 +29,36 @@ async def upload_toy_image(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail="Only JPEG, PNG, WebP, and GIF images are supported",
         )
-    os.makedirs(IMAGES_DIR, exist_ok=True)
-    ext = (file.filename or "image").rsplit(".", 1)[-1].lower()
-    filename = f"{uuid.uuid4()}.{ext}"
-    filepath = os.path.join(IMAGES_DIR, filename)
-    contents = await file.read()
-    with open(filepath, "wb") as f:
-        f.write(contents)
 
-    existing = await db.execute(
-        select(ToyImage).where(ToyImage.toy_id == toy_id)
-    )
+    existing = await db.execute(select(ToyImage).where(ToyImage.toy_id == toy_id))
     is_first = existing.scalar_one_or_none() is None
+
+    contents = await file.read()
 
     image = ToyImage(
         toy_id=toy_id,
-        image_url=f"{BASE_URL}/static/images/{filename}",
+        image_url="",
         is_featured=is_first,
+        data=contents,
+        content_type=file.content_type,
     )
     db.add(image)
+    await db.flush()
+    image.image_url = f"/toy-images/{image.id}/file"
     await db.commit()
     await db.refresh(image)
     return image
+
+
+@router.get("/toy-images/{image_id}/file")
+async def get_toy_image_file(
+    image_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    image = await db.get(ToyImage, image_id)
+    if image is None or image.data is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+    return Response(content=image.data, media_type=image.content_type or "application/octet-stream")
 
 
 @router.patch("/toy-images/{image_id}", response_model=ToyImageRead)
@@ -90,14 +94,6 @@ async def delete_toy_image(
     image = await db.get(ToyImage, image_id)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
-
-    url = image.image_url
-    prefix = f"{BASE_URL}/static/images/"
-    if url.startswith(prefix):
-        filepath = os.path.join(IMAGES_DIR, url[len(prefix):])
-        if os.path.exists(filepath):
-            os.remove(filepath)
-
     await db.delete(image)
     await db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
