@@ -1,6 +1,6 @@
 import { useMutation, useQuery, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 
-import { addFavorite, checkinCheckout, createBorrowRequests, createCheckout, createTimeframe, createToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listFavorites, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, removeFavorite, setFeaturedImage, updateMembershipRequest, updateMembershipStanding, updateToy, uploadToyImage } from "./api";
+import { addFavorite, checkinCheckout, createBorrowRequests, createCheckout, createMembership, createTimeframe, createToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listFavorites, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, removeFavorite, setFeaturedImage, updateMembershipRequest, updateMembershipStanding, updateToy, uploadToyImage } from "./api";
 import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
 
 
@@ -179,6 +179,12 @@ export function useMembershipsByUser(userId: string, token: string | null): UseQ
     queryKey: queryKeys.memberships.byUser(userId),
     queryFn: () => listMemberships(token!, userId),
     enabled: token !== null,
+  });
+}
+
+export function useCreateMembership(): UseMutationResult<MembershipRead, Error, { userId: string; token: string }> {
+  return useMutation<MembershipRead, Error, { userId: string; token: string }>({
+    mutationFn: ({ userId, token }) => createMembership(userId, token),
   });
 }
 

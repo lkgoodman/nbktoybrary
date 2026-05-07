@@ -210,6 +210,14 @@ export async function updateBorrowRequest(id: string, status: "pending" | "appro
   });
 }
 
+export async function createMembership(userId: string, token: string): Promise<MembershipRead> {
+  return request<MembershipRead>(endpoints.memberships.list(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ user_id: userId }),
+  });
+}
+
 export async function listMemberships(token: string, userId?: string): Promise<MembershipRead[]> {
   return request<MembershipRead[]>(endpoints.memberships.list(userId), {
     headers: { Authorization: `Bearer ${token}` },

@@ -23,7 +23,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import NextLink from "next/link";
 import { useAuth } from "../lib/AuthContext";
-import { useMembershipRequests, useUpdateMembershipRequest, useToys, useAdminBorrowRequests, useTimeframes, useCreateTimeframe, useDeleteTimeframe, useUsers, queryKeys } from "../lib/queries";
+import { useMembershipRequests, useUpdateMembershipRequest, useToys, useAdminBorrowRequests, useTimeframes, useCreateTimeframe, useDeleteTimeframe, useUsers, useCreateMembership, queryKeys } from "../lib/queries";
 import type { BorrowRequestReadWithDetails, MembershipRequestRead, TimeframeRead, Toy, ToyImage, UserRead } from "../lib/types";
 
 export default function AdminPage(): JSX.Element {
@@ -98,6 +98,7 @@ export default function AdminPage(): JSX.Element {
   const { data: borrowRequests, isPending: borrowPending, isError: borrowError } = useAdminBorrowRequests(token);
   const { data: timeframes, isPending: timeframesPending, isError: timeframesError } = useTimeframes(token);
   const { data: users, isPending: usersPending, isError: usersError } = useUsers(token);
+  const createMembership = useCreateMembership();
   const createTimeframe = useCreateTimeframe();
   const deleteTimeframe = useDeleteTimeframe();
 
@@ -487,28 +488,54 @@ export default function AdminPage(): JSX.Element {
             ) : (
               <Stack spacing={1}>
                 {(users ?? []).filter((u: UserRead) => {
-                  if (!u.roles.includes("member")) return false;
                   const q = memberSearch.trim().toLowerCase();
                   if (q === "") return true;
                   return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
-                }).map((u: UserRead) => (
-                  <Paper key={u.id} elevation={0} sx={{ p: 2 }}>
-                    <Stack direction="row" alignItems="center" justifyContent="space-between">
-                      <Stack spacing={0.25}>
-                        <Typography variant="bodyStrong">{u.name}</Typography>
-                        <Typography variant="body1" color="text.secondary">{u.email}</Typography>
+                }).map((u: UserRead) => {
+                  const isMember = u.roles.includes("member");
+                  return (
+                    <Paper key={u.id} elevation={0} sx={{ p: 2 }}>
+                      <Stack direction="row" alignItems="center" justifyContent="space-between">
+                        <Stack spacing={0.25}>
+                          <Typography variant="bodyStrong">{u.name}</Typography>
+                          <Typography variant="body1" color="text.secondary">{u.email}</Typography>
+                          {!isMember ? (
+                            <Typography variant="label" color="text.secondary">No membership</Typography>
+                          ) : null}
+                        </Stack>
+                        {isMember ? (
+                          <Button
+                            component={NextLink}
+                            href={`/admin/members/${u.id}`}
+                            variant="outlined"
+                            size="small"
+                          >
+                            View profile
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="contained"
+                            size="small"
+                            disabled={createMembership.isPending}
+                            onClick={() => {
+                              if (token === null) return;
+                              createMembership.mutate(
+                                { userId: u.id, token },
+                                {
+                                  onSuccess: () => {
+                                    void queryClient.invalidateQueries({ queryKey: queryKeys.users.list() });
+                                  },
+                                },
+                              );
+                            }}
+                          >
+                            Grant membership
+                          </Button>
+                        )}
                       </Stack>
-                      <Button
-                        component={NextLink}
-                        href={`/admin/members/${u.id}`}
-                        variant="outlined"
-                        size="small"
-                      >
-                        View profile
-                      </Button>
-                    </Stack>
-                  </Paper>
-                ))}
+                    </Paper>
+                  );
+                })}
               </Stack>
             )}
           </Stack>

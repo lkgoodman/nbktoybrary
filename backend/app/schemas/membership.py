@@ -34,10 +34,7 @@ class MembershipRequestReadWithUser(MembershipRequestRead):
 
 
 class MembershipCreate(BaseModel):
-    membership_request_id: uuid.UUID
-    start_date: date
-    end_date: date
-    account_standing: AccountStanding = AccountStanding.active
+    user_id: uuid.UUID
 
 
 class MembershipUpdate(BaseModel):

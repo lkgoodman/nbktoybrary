@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -9,15 +10,73 @@ from sqlalchemy.orm import selectinload
 
 from app.core.auth import require_roles
 from app.db.session import get_db
-from app.models.membership import AccountStanding, Membership, MembershipUser
-from app.models.user import User
-from app.schemas.membership import MembershipRead, MembershipUpdate
+from app.models.membership import AccountStanding, Membership, MembershipRequest, MembershipRequestStatus, MembershipUser
+from app.models.user import Role, User, UserRole
+from app.schemas.membership import MembershipCreate, MembershipRead, MembershipUpdate
 
 router = APIRouter(prefix="/memberships", tags=["memberships"])
 
 _load_options = [
     selectinload(Membership.users).selectinload(MembershipUser.user),
 ]
+
+
+@router.post("", response_model=MembershipRead, status_code=status.HTTP_201_CREATED)
+async def create_membership(
+    payload: MembershipCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles("admin", "superadmin")),
+) -> Membership:
+    user = await db.get(User, payload.user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    existing = await db.execute(
+        select(Membership)
+        .join(MembershipUser, Membership.id == MembershipUser.membership_id)
+        .where(MembershipUser.user_id == payload.user_id)
+    )
+    if existing.scalar_one_or_none() is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already has a membership")
+
+    now = datetime.now(timezone.utc)
+    today = date.today()
+    req = MembershipRequest(
+        user_id=payload.user_id,
+        status=MembershipRequestStatus.approved,
+        reviewed_by=current_user.id,
+        reviewed_at=now,
+        created_by=current_user.id,
+    )
+    db.add(req)
+    await db.flush()
+
+    membership = Membership(
+        membership_request_id=req.id,
+        start_date=today,
+        end_date=today + timedelta(days=365),
+        account_standing=AccountStanding.active,
+        created_by=current_user.id,
+    )
+    db.add(membership)
+    await db.flush()
+
+    db.add(MembershipUser(membership_id=membership.id, user_id=payload.user_id))
+
+    member_role = await db.execute(select(Role).where(Role.name == "member"))
+    role = member_role.scalar_one_or_none()
+    if role is not None:
+        existing_role = await db.execute(
+            select(UserRole).where(UserRole.user_id == payload.user_id, UserRole.role_id == role.id)
+        )
+        if existing_role.scalar_one_or_none() is None:
+            db.add(UserRole(user_id=payload.user_id, role_id=role.id))
+
+    await db.commit()
+    result = await db.execute(
+        select(Membership).options(*_load_options).where(Membership.id == membership.id)
+    )
+    return result.scalar_one()
 
 
 @router.get("", response_model=list[MembershipRead])
