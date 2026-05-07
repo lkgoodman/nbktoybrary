@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from app.db.base import Base
 from app.db.seed import seed
-from app.db.session import DATABASE_PATH, SessionLocal, engine
+from app.db.session import SessionLocal, engine
 from app.models import *  # noqa: F401,F403  -- register mappers
 from app.models.user import User
 from app.routers import auth, borrow_requests, checkouts, favorites, membership_requests, memberships, timeframes, toy_images, toys, users

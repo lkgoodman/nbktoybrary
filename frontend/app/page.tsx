@@ -76,19 +76,21 @@ export default function Page(): JSX.Element {
   const favoriteIds = useMemo(() => new Set((favorites ?? []).map((f) => f.toy_id)), [favorites]);
   const [favoritesOnly, setFavoritesOnly] = useState<boolean>(false);
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
-  const [welcomeName, setWelcomeName] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    const name = sessionStorage.getItem("welcomeName");
-    if (name !== null) sessionStorage.removeItem("welcomeName");
-    return name;
-  });
-  const [signedOut, setSignedOut] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    const flag = sessionStorage.getItem("signedOut");
-    if (flag !== null) sessionStorage.removeItem("signedOut");
-    return flag !== null;
-  });
+  const [welcomeName, setWelcomeName] = useState<string | null>(null);
+  const [signedOut, setSignedOut] = useState<boolean>(false);
   const prevAuthRef = useRef<boolean>(isAuthenticated);
+  useEffect(() => {
+    const name = sessionStorage.getItem("welcomeName");
+    if (name !== null) {
+      sessionStorage.removeItem("welcomeName");
+      setWelcomeName(name);
+    }
+    const flag = sessionStorage.getItem("signedOut");
+    if (flag !== null) {
+      sessionStorage.removeItem("signedOut");
+      setSignedOut(true);
+    }
+  }, []);
   useEffect(() => {
     if (prevAuthRef.current && !isAuthenticated) {
       setWelcomeName(null);

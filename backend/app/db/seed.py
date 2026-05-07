@@ -1,63 +1,1504 @@
 from __future__ import annotations
 
-import csv
 from datetime import date, timedelta
-from pathlib import Path
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password
 from app.models.membership import AccountStanding, Membership, MembershipRequest, MembershipRequestStatus, MembershipUser
-from app.models.toy import Tag, Toy, ToyTag
+from app.models.toy import Tag, Toy, ToyImage, ToyTag
 from app.models.user import Role, User, UserRole
 
-CSV_PATH = Path(__file__).parent / "toys.csv"
-
-
-def _parse_age_months(value: str) -> int | None:
-    s = value.strip().replace(" ", "")
-    if not s:
-        return None
-    if s.lower().endswith("m+") or s.lower().endswith("m"):
-        try:
-            return int(s.lower().rstrip("m+"))
-        except ValueError:
-            return None
-    if s.endswith("+"):
-        try:
-            return int(s.rstrip("+")) * 12
-        except ValueError:
-            return None
-    try:
-        return int(s) * 12
-    except ValueError:
-        return None
-
-
-def _parse_piece_count(value: str) -> int | None:
-    s = value.strip().rstrip("+")
-    if not s:
-        return None
-    try:
-        return int(s)
-    except ValueError:
-        return None
-
-
-def _parse_materials(value: str) -> list[str]:
-    if not value.strip():
-        return []
-    return [m.strip().lower() for m in value.split(",") if m.strip()]
-
-
-def _parse_categories(value: str) -> list[str]:
-    if not value.strip():
-        return []
-    return [c.strip().lower() for c in value.split(",") if c.strip()]
-
-
-def _parse_battery(value: str) -> bool:
-    return value.strip().lower() in ("yes", "y", "true")
+TOYS: list[dict[str, Any]] = [
+    {
+        "name": "Lincoln Logs",
+        "description": "Lincoln Logs are classic wooden building toys made of notched pieces that fit together to create structures like cabins, houses, and forts. They encourage creativity, problem-solving, and fine motor skill development through hands-on construction. Simple yet timeless, they let kids design and rebuild endlessly using their imagination.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic", "wood"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 100,
+        "keywords": [],
+        "tags": ["building"],
+        "images": [
+            {"url": "/static/images/de1c68ea-4ce3-4673-998f-6c98297a0b65.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Bristle Blocks",
+        "description": "Bristle Blocks are colorful, soft, interlocking building toys with flexible bristles that stick together at any angle. They are easy for toddlers and young children to connect for frustration-free, imaginative construction. They promote STEM skills, fine motor skills, hand-eye coordination, and creativity, with sets often including wheels, figurines, and storage jars for endless building possibilities like vehicles, animals, and castles.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 24,
+        "age_max": None,
+        "piece_count": 59,
+        "keywords": [],
+        "tags": ["building"],
+        "images": [
+            {"url": "/static/images/24b950b8-8c1d-4755-b0b3-40f27e56ee71.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Under the Sea Puzzle (48 pieces)",
+        "description": "Dive into an underwater adventure with this vibrant 48-piece sea creatures puzzle. Featuring colorful fish, playful dolphins, and other fascinating ocean life, it's designed to engage young minds while building problem-solving skills. Perfect for little hands, the sturdy pieces come together to create a lively ocean scene that kids will love exploring again and again.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["paper"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 48,
+        "keywords": [],
+        "tags": ["puzzle"],
+        "images": [
+            {"url": "/static/images/8e45c7bf-3333-4e95-8c80-eff18e1551f6.jpg", "is_featured": True},
+            {"url": "/static/images/b121c6a9-b60e-45cf-add1-0be2bfc2ab0c.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Lite Brite",
+        "description": "This retro-inspired creative light-up art set lets kids make glowing pictures by placing colorful pegs into the board's grid to form bright designs. Through freeform play, children can explore endless artistic possibilities while enjoying the satisfying illumination of their creations. It's a screen-free way to spark imagination and build fine motor skills through hands-on fun.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": True,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 48,
+        "age_max": None,
+        "piece_count": 100,
+        "keywords": [],
+        "tags": ["sensory"],
+        "images": [
+            {"url": "/static/images/d53a4fda-0326-491c-8ab8-d45321598b7e.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "MegaBloks",
+        "description": "Mega Bloks are large, easy-to-handle building blocks designed especially for little hands. They snap together securely to help toddlers build towers, shapes, and imaginative creations with confidence. Fun and durable, they support creativity, fine motor skills, and early problem-solving through hands-on play.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 84,
+        "keywords": [],
+        "tags": ["building"],
+        "images": [
+            {"url": "/static/images/b6574069-bf27-4877-9927-45c608e77518.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Bilibo",
+        "description": "Bilibo is a versatile, open-ended toy that sparks imagination through active, creative play. Its unique shell shape can be used for sitting, spinning, rocking, or inventing endless games indoors or outdoors. Durable and child-powered, Bilibo encourages balance, coordination, and free-form exploration without screens or batteries.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 24,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["active"],
+        "images": [
+            {"url": "/static/images/53154c83-5159-4526-82c3-0af60766a193.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Thomas and Friends Puzzle (48 pieces)",
+        "description": "This 24-piece Thomas the Tank Engine puzzle features bright, colorful artwork with Thomas and friends that kids will love. Designed for little hands, the sturdy pieces fit together easily while building confidence and problem-solving skills. Perfect for early puzzlers, it encourages focus, patience, and imaginative play.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["paper"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 24,
+        "keywords": [],
+        "tags": ["puzzle"],
+        "images": [
+            {"url": "/static/images/1182b666-32dc-476c-b618-922bbd34535e.jpg", "is_featured": True},
+            {"url": "/static/images/e68c1c12-7e94-4dd7-8942-c9816ba20c57.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Thomas the Tank Engine Puzzle (24 pieces)",
+        "description": "This 24-piece Thomas the Tank Engine puzzle features bright, colorful artwork with Thomas that kids will love. Designed for little hands, the sturdy pieces fit together easily while building confidence and problem-solving skills. Perfect for early puzzlers, it encourages focus, patience, and imaginative play.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["paper"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 24,
+        "keywords": [],
+        "tags": ["puzzle"],
+        "images": [
+            {"url": "/static/images/e7b05314-f1f1-48f1-8ffc-f553da362f9a.jpg", "is_featured": True},
+            {"url": "/static/images/8f6ac7f8-266f-4666-a022-7a68e416465f.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Abacus",
+        "description": "This classic wooden abacus features a sturdy hardwood frame with 100 brightly colored beads that slide smoothly along ten wires, making it perfect for early learning and play. Children can use it to explore counting, patterns, colors, and basic math concepts in a hands-on, screen-free way. Designed for little hands and built to last, it's an engaging educational tool that supports fine motor skills and early numeracy development.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["learning"],
+        "images": [
+            {"url": "/static/images/90cac2a8-ed04-439a-9104-d3174bcd13f6.png", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Bee Tummy Time",
+        "description": "This crawl toy is designed to grow with babies through three developmental stages starting at 5 months. It encourages discovery, exploration, and the development of motor and sensory skills. The cloud toy moves in patterns that motivate beginner and more advanced crawlers to engage and chase. The movement starts in a gentle circular motion and later becomes more random as skills improve. Throughout all stages, colorful lights, sounds, and music provide multi-sensory stimulation that keeps babies entertained and motivated to crawl.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": True,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 0,
+        "age_max": None,
+        "piece_count": 2,
+        "keywords": [],
+        "tags": ["baby", "active"],
+        "images": [
+            {"url": "/static/images/e21b6a4a-44e1-416d-827f-0864f264f6d5.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Barn Shape Sorter",
+        "description": "The Barn Shape Sorter is a portable wooden farm toy that lets toddlers fit 10 chunky, farm-themed pieces into matching shaped holes in the barn or stand them up for imaginative play. Its sturdy barn with a flip-up roof and built-in handle makes it easy to take playtime anywhere, while the extra-thick pieces are perfect for little hands to grasp and maneuver. Designed to promote fine motor skills, sorting, and matching through hands-on, screen-free fun.",
+        "brand": "Melissa & Doug",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 24,
+        "age_max": None,
+        "piece_count": 11,
+        "keywords": [],
+        "tags": ["baby", "learning"],
+        "images": [
+            {"url": "/static/images/c5bab3fc-eed5-4c52-86f0-c031d52f6c26.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Spinning Aquarium",
+        "description": "The Spinning Ocean Adventure Aquarium is an interactive toy that brings the underwater world to life for babies and toddlers. With a simple press of the water spout, the aquarium spins, lights up, and plays cheerful music while adorable sea creatures dance and swirl inside, capturing little ones' attention and encouraging cause-and-effect learning. Colorful buttons introduce animals, colors, and numbers, making play both fun and educational.",
+        "brand": "Vtech",
+        "language": None,
+        "link": None,
+        "battery_operated": True,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 0,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["baby"],
+        "images": [
+            {"url": "/static/images/0a9ee7ea-832f-4e1d-b7d9-78f0d3da756d.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Toppling Dominoes",
+        "description": "These colorful dominoes are designed for lining up and creating exciting chain-reaction topples. Simply arrange the tiles in patterns or paths, then tip the first one to watch them fall in a smooth, satisfying sequence. Perfect for hands-on play, they encourage creativity, focus, and an understanding of cause and effect.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 60,
+        "age_max": None,
+        "piece_count": 97,
+        "keywords": [],
+        "tags": ["building"],
+        "images": [
+            {"url": "/static/images/1b677881-1084-4142-a0c0-26c07074c973.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Pattern Blocks",
+        "description": "Pattern blocks are brightly colored geometric pieces designed for hands-on pattern building and design. Children can arrange the shapes to create repeating patterns, pictures, and mosaics. This classic learning tool supports early math concepts, spatial awareness, and creative exploration through structured play.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic", "paper", "wood"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 100,
+        "keywords": [],
+        "tags": ["learning"],
+        "images": [
+            {"url": "/static/images/1d129c5d-9f07-446a-88dc-ca09b435b4aa.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Flying Disc Launcher",
+        "description": "This fun outdoor toy lets kids step down on the launcher to send flying discs soaring into the air for exciting toss-and-catch play. Lightweight and easy to use without batteries, it encourages active play, coordination, and friendly competition in the backyard or park. Perfect for kids of all ages, it turns simple running and catching into high-energy outdoor fun.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 9,
+        "keywords": [],
+        "tags": ["active"],
+        "images": [
+            {"url": "/static/images/aba03c0a-3b69-4079-8923-cac1afeebaca.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Hape Sunny Valley Adventure Dome",
+        "description": "Sunny Valley Adventure Dome is an interactive 3D magnetic maze toy that invites little ones to drop magnetic beads through slides and engaging features using Lily the bird's magnetic beak. With fun elements like spiraling paths, a spinning windmill, and a ringing bell under the clear dome, it keeps kids entertained while they explore cause-and-effect play. Designed to support fine motor skills, imaginative storytelling, and cooperative play, it's a charming addition to any playroom.",
+        "brand": "Hape",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic", "wood", "magnets"],
+        "age_min": 24,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["sensory"],
+        "images": [
+            {"url": "/static/images/9abfa761-42b2-4505-aa19-e483fcfa6b10.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Story Shed Podcast Yoto Card",
+        "description": "Original and entertaining stories from an experienced teacher who understands what engages children. Yoto's own Jake Harris, primary school teacher and podcaster extraordinaire, creates this gem of a podcast, which updates regularly.",
+        "brand": "Yoto",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 60,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["yoto"],
+        "images": [
+            {"url": "/static/images/cc9b1df1-32c0-4632-9941-92ec64d90810.jpg", "is_featured": True},
+            {"url": "/static/images/38537486-1962-4fb9-b8af-6e85910fb881.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "My First Opposites Yoto Card",
+        "description": "Opposites are one of life's fundamental concepts and this interactive card helps preschoolers get to grips with them. Through a series of interactive questions, complemented by images, your little one will know their 'big' from their 'small', their 'wet' from their 'dry' and their 'happy' from their 'sad' in no time!",
+        "brand": "Yoto",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 0,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["yoto"],
+        "images": [
+            {"url": "/static/images/5d61db87-971d-435b-9f77-7cb7afe2d313.jpg", "is_featured": True},
+            {"url": "/static/images/a3978ddc-fd66-4e70-8f46-38cb79178167.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Aventuras en la Ciudad con Peppa Pig",
+        "description": "For Peppa and her friends, every day is an adventure! With original music.",
+        "brand": "Yoto",
+        "language": "Spanish",
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["yoto"],
+        "images": [
+            {"url": "/static/images/e66df8ac-e308-4c14-ac5f-93f3e70532d6.jpg", "is_featured": True},
+            {"url": "/static/images/42c7fc81-206d-42a2-a538-52c132799eba.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Cuentos para escuchar en familia",
+        "description": "For Peppa and her friends, every day is an adventure! With original music.",
+        "brand": "Yoto",
+        "language": "Spanish",
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["yoto"],
+        "images": [
+            {"url": "/static/images/d2df8a4d-015b-4489-b622-2f9e6362996c.jpg", "is_featured": True},
+            {"url": "/static/images/1be9d506-4b5e-4914-b227-5b3e5fdcc16a.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Cuentos de aventuras con Peppa Pig",
+        "description": "For Peppa and her friends, every day is an adventure! With original music.",
+        "brand": "Yoto",
+        "language": "Spanish",
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["yoto"],
+        "images": [
+            {"url": "/static/images/dc1b2f52-9132-4c72-90bb-bcf6f0ca7f6b.jpg", "is_featured": True},
+            {"url": "/static/images/713d5de1-0e3e-45c7-ad9c-7222469168b1.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Cuentos para cada dia con Peppa Pig",
+        "description": "For Peppa and her friends, every day is an adventure! With original music.",
+        "brand": "Yoto",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["yoto"],
+        "images": [
+            {"url": "/static/images/a3f2d413-b34e-40c3-b099-eaeff0b080d1.jpg", "is_featured": True},
+            {"url": "/static/images/ace42891-f725-4364-ad75-431d49264441.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Songs from the Playground",
+        "description": (
+            "Jazzy Ash is a celebrated vocalist, writer, arts educator, and founder of Leaping Lizards Music, "
+            "a music and theater education program for students, preschool through twelfth grade.\n\n"
+            "In this card, Jazzy Ash is reimagining African American folk songs written and sung by children "
+            "in playgrounds over the last 100-200 years. Joined by her pianist, she is creating a unique "
+            "jazz-inflected take on these tunes and creating something that is old, yet new, universal yet unique.\n\n"
+            "Track Listing:\n\n"
+            "1.   Yoto Intro\n"
+            "2.   Fly Through My Window\n"
+            "3.   Oats and Beans\n"
+            "4.   Pizza Pizza Daddy-O\n"
+            "5.   Head and Shoulders\n"
+            "6.   Green Grass Grows\n"
+            "7.   Mister Rabbit\n"
+            "8.   Bought Me a Cat\n"
+            "9.   Down, Down Baby\n"
+            "10. My Mama's Calling Me\n"
+            "11. Old Lady Sally\n"
+            "12. C-Line Woman\n"
+            "13. Little Johnny Brown\n"
+            "14. Love Somebody\n"
+            "15. Yoto Outro"
+        ),
+        "brand": "Yoto",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 0,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["yoto"],
+        "images": [
+            {"url": "/static/images/12282c51-9091-489a-8719-562ce71adc0e.jpg", "is_featured": True},
+            {"url": "/static/images/74a3bd31-36e4-4bf2-a0d4-95aea8873974.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "My first 100 words",
+        "description": " ",
+        "brand": "Yoto",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": False,
+        "materials": ["plastic"],
+        "age_min": 0,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["yoto"],
+        "images": [],
+    },
+    {
+        "name": "Forest Friends Block Puzzle (9 pieces)",
+        "description": "This 9 piece puzzle is actually 6 puzzles in 1, putting a new spin on the traditional puzzle. The scenes feature a variety of forest creatures.",
+        "brand": "Mudpuppy",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic", "paper"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 9,
+        "keywords": [],
+        "tags": ["puzzle"],
+        "images": [
+            {"url": "/static/images/8f286525-6787-43c4-9bc0-dc39784ac903.jpg", "is_featured": True},
+            {"url": "/static/images/c0f244fb-3a36-418b-a0e3-33b0ad7b26d5.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Wooden Lacing Beads",
+        "description": "These Blues Clues beads lace on colorful cords; match to patterns on double-sided activity cards or create unique patterns and designs. An engaging and creative way to learn shapes, colors, and counting; helps develop fine motor and problem-solving skills. Includes 25 1-inch wooden beads with shapes, numbers, colors, Blue's Clues & You! characters, and more, 4 lacing cords, 4 double-sided activity cards, wooden storage crate for easy cleanup.",
+        "brand": "Melissa & Doug",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood", "string"],
+        "age_min": 48,
+        "age_max": None,
+        "piece_count": 33,
+        "keywords": [],
+        "tags": ["sensory"],
+        "images": [
+            {"url": "/static/images/db5447c2-85be-41cf-8269-6e29843a3070.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Roly Poly Koala",
+        "description": (
+            "Koala's rounded, weighted bottom will always spin him back upright for more play. "
+            "And as he rolls around he makes a lovely tinkling bell sound, for additional sensory stimulation.\n\n"
+            "Ideal for babies learning to crawl, Koala's wobbling action entices little ones to reach out and push. "
+            "The repetitive action improves hand-eye coordination and fine motor skills, all the while helping to "
+            "develop an understanding of cause and effect Koala's ears offer a great grip point for small hands."
+        ),
+        "brand": "Tiger Tribe",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 0,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["baby"],
+        "images": [
+            {"url": "/static/images/44cdb55f-8cc4-4ca1-997b-377e599d5252.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "K'NEX",
+        "description": "K'NEX building sets feature colorful rods, connectors, and moving parts that snap together to create endless structures, vehicles, and machines. The pieces are durable, reusable, and designed for easy assembly, making them ideal for both guided builds and open-ended creativity. K'NEX promotes hands-on learning while delivering hours of engaging, imaginative play.",
+        "brand": "K'NEX",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 60,
+        "age_max": None,
+        "piece_count": 100,
+        "keywords": [],
+        "tags": ["building"],
+        "images": [
+            {"url": "/static/images/6fd771e1-facb-4b8e-933f-6ae5e6247e91.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Marble Run",
+        "description": "A marble run is a hands-on construction toy that lets kids design and build their own twisting tracks, ramps, and towers for marbles to race through. Bright, durable pieces connect easily, encouraging creativity, problem-solving, and an understanding of basic engineering concepts like gravity and momentum. Each build is unique, offering endless opportunities for experimentation, excitement, and active learning through play.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 100,
+        "keywords": [],
+        "tags": ["building"],
+        "images": [
+            {"url": "/static/images/a10afe42-9fe5-46b5-823a-f9099001dbae.jpg", "is_featured": True},
+            {"url": "/static/images/cebd1a8e-84b9-4beb-aa21-58f6bafab478.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Corn Popper",
+        "description": "The Fisher-Price Corn Popper is a classic push-along toy that delights toddlers with bright colors and lively popping sounds. As little ones walk and push, the colorful balls bounce inside the dome, rewarding movement and encouraging early motor development. Its simple cause-and-effect design keeps children engaged while supporting coordination and active play.",
+        "brand": "Fisher-Price",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["baby"],
+        "images": [
+            {"url": "/static/images/e4fc60bb-ed53-40db-b30e-35023e1ab3fc.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Poppitoppy",
+        "description": "Poppitoppy is an engaging cause-and-effect toy that comes to life with every press of its top. As children push down, colorful balls pop and bounce inside, creating a fun visual and auditory experience that keeps little ones entertained. Designed for small hands, it helps develop fine motor skills, coordination, and early curiosity through interactive play.",
+        "brand": "B. Toys",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["baby"],
+        "images": [
+            {"url": "/static/images/f97aa5f1-283c-4204-a760-6b48b82e0d97.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Magnetic Car Set",
+        "description": "Roll, spin, and play to engage your little one's senses! Practice motor skills with three colorful, linkable magnetic cars designed for little hands to push along. Discover the special features of each car with parts that spin, rattle, and fold open for bonus sensory play, and explore the weather with illustrated coins.",
+        "brand": "KiwiCo",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 5,
+        "keywords": [],
+        "tags": ["baby"],
+        "images": [
+            {"url": "/static/images/2a593c77-dfea-4e59-b0b5-f740139c13a1.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Tropical Pop-Up",
+        "description": "This engaging pop-up toy introduces babies to cause and effect through playful interactions with cheerful tropical fruit characters. Little ones can activate different features to reveal a strawberry, pear, pineapple, and orange, helping build fine motor and memory skills. Designed for ages 9 months and up, it's made of easy-to-clean plastic and perfectly sized for small hands.",
+        "brand": "Fisher-Price",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 9,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["baby"],
+        "images": [
+            {"url": "/static/images/786abbf5-c959-4add-b0d1-366004d840d0.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Cash Register",
+        "description": " ",
+        "brand": "Melissa & Doug",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood", "plastic"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": None,
+        "keywords": [],
+        "tags": ["learning"],
+        "images": [],
+    },
+    {
+        "name": "Ice Cream Truck & Tow Truck",
+        "description": " ",
+        "brand": "Fisher-Price",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 4,
+        "keywords": [],
+        "tags": ["vehicles"],
+        "images": [],
+    },
+    {
+        "name": "Kidscope",
+        "description": (
+            "Introduce children to a real scientific toy that sparks curiosity and encourages hands-on, "
+            "interactive learning from an early age with this microscope. With science toys like the Kidscope, "
+            "kids can start developing an interest in more than one field as young as 3 years old, from biology "
+            "to astronomy and beyond. Designed with kid-friendly features such as a comfy double eyepiece "
+            "(no need to close one eye!) low magnification to provide a wide field of view, easy-focus knob, "
+            "and illuminating LED light\n\n"
+            "The Kidscope includes 15 slides with 60 real images, storage drawer, build-in LED light, and guide "
+            "with over 200 facts to support scientific exploration."
+        ),
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": True,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 60,
+        "age_max": None,
+        "piece_count": 63,
+        "keywords": [],
+        "tags": ["learning"],
+        "images": [
+            {"url": "/static/images/256695e9-9824-4578-b934-cc8acc52c3e8.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Doll Stroller",
+        "description": "A doll stroller is a charming accessory that lets children take their favorite dolls or stuffed animals along for imaginative adventures or simply some extra balance for new walkers. Designed with lightweight frames, easy-grip handles, and smooth-rolling wheels, it's perfect for indoor or outdoor pretend play. It folds for easy storage and feature fun fabrics, making them both practical and delightful for little caregivers.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": [],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["baby", "active"],
+        "images": [
+            {"url": "/static/images/956a70f9-42db-4cbd-adab-c4ed3876e921.jpg", "is_featured": True},
+            {"url": "/static/images/7d3b4324-d4e3-43e1-9348-1a186d30619a.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Ford Mustang Model Car",
+        "description": "This detailed die-cast model of the 2012 Ford Mustang Boss 302 features a sleek black hardtop design with realistic styling and true-to-scale proportions. Built with a durable metal body and rubber tires, it includes interactive elements like opening doors and hood for added play and display appeal.",
+        "brand": "Showcasts",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["metal", "plastic"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["vehicles"],
+        "images": [
+            {"url": "/static/images/ba01214c-28c5-4699-91b6-2a7b2c5c5c4e.jpg", "is_featured": True},
+            {"url": "/static/images/3ac3363f-dc8d-4e4d-88d9-03b426543927.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Mack Dump Truck & Snowplow",
+        "description": (
+            "This highly detailed construction truck toy features the iconic Mack Granite design with a functional "
+            "snow plow blade for realistic winter play. Built from durable, high-quality plastic, it includes "
+            "interactive elements like opening doors, a tilting hood, and a working dump bed for loading and "
+            "unloading materials.\n\n"
+            "Note: This truck is rather large, measuring about 21 inches in length."
+        ),
+        "brand": "Bruder",
+        "language": None,
+        "link": None,
+        "battery_operated": True,
+        "shareable": True,
+        "materials": ["metal", "plastic"],
+        "age_min": 48,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["vehicles"],
+        "images": [
+            {"url": "/static/images/c4c64b70-8d21-4381-b7a2-f59afc5843ed.jpg", "is_featured": True},
+            {"url": "/static/images/ab72fb5a-a72c-4f06-bf6d-9656d059f30d.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Manhattan Toy Skwish",
+        "description": "The Manhattan Toy Skwish is a timeless wooden baby toy featuring a unique web of rods and sliding beads that captivate little hands and eyes. Its flexible design allows it to squish flat and spring back to shape, encouraging grasping, shaking, and sensory exploration. Lightweight and easy to hold, it supports early motor skill development while providing gentle rattling sounds for added engagement.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood", "string"],
+        "age_min": 0,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["baby"],
+        "images": [
+            {"url": "/static/images/dcb7e450-0624-4183-a93d-c756f59cd300.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Cubebot",
+        "description": "Cubebot is a wooden toy robot inspired by Japanese Shinto Kumi-ki puzzles. Made from wood and elastic, Cubebot can be positioned to hold dozens of poses. When it's time to rest, Cubebot folds back into a perfect cube. A classic toy for all ages that will endure generations of play.",
+        "brand": "Areaware",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood", "string"],
+        "age_min": 48,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["pretend play", "learning"],
+        "images": [
+            {"url": "/static/images/c2900e67-6cfa-409f-a05c-62357bcc06b4.png", "is_featured": True},
+            {"url": "/static/images/64e05b95-9530-4fa9-94c8-4cae62890a65.png", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Astronaut Costume",
+        "description": "Blast off into imagination with this astronaut costume, designed to inspire space-bound adventures and curious minds. Featuring a sleek suit with realistic mission patches and a comfortable fit, it's perfect for exploring galaxies both real and pretend. Whether for playtime or special events, this outfit turns every child into a fearless space explorer. Fits approximately ages 4-6.",
+        "brand": "H&M",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["fabric"],
+        "age_min": None,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["pretend play"],
+        "images": [
+            {"url": "/static/images/e3a259d4-66b9-486b-b4b6-7502cd464da0.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Pirate Costume",
+        "description": "Set sail for adventure with this classic pirate costume, perfect for treasure hunts and high-seas storytelling. Featuring bold details like a striped shirt, rugged vest, and swashbuckling accessories, it brings the spirit of the open ocean to life. Whether for playtime or dress-up occasions, it transforms any child into a daring captain of their own ship. Fits approximately ages 4-6 years.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["fabric"],
+        "age_min": None,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["pretend play"],
+        "images": [
+            {"url": "/static/images/a24ecce0-fabd-4dc0-9700-dfea749e1f06.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Knight tunic",
+        "description": (
+            "A knight tunic child costume is a simple, medieval-style garment worn over clothing. "
+            "Made from soft, comfortable materials, it's designed for easy movement and imaginative play. "
+            "Perfect for dress-up, it encourages storytelling and role-playing as children become heroic knights "
+            "on their own adventures.\n\n"
+            "Fits approximately ages 4-6 years."
+        ),
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["fabric"],
+        "age_min": None,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["pretend play"],
+        "images": [
+            {"url": "/static/images/87ef29c6-4b6c-4c11-a047-9e2ed587ddbe.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Quick Cube",
+        "description": "The Quick Cube is a compact and beginner-friendly puzzle designed for fast, smooth solving. Its easy-turning mechanism and corner-cutting design allow for quick movements, making it ideal for learning and improving speed. Durable and low-maintenance, it offers a satisfying hands-on challenge for both kids and adults.",
+        "brand": "Duncan",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 72,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["puzzles"],
+        "images": [
+            {"url": "/static/images/a8825fb7-b011-405b-bd0b-706f53bd9792.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Moose Match Mayhem",
+        "description": "The Moose Match Mayhem game is a lively speed-matching game where players race to collect sets of animals before their opponents. Quick rounds and simple rules make it easy to learn, while action cards add unexpected twists that keep everyone on their toes. Perfect for family game night, it combines fast reflexes, friendly competition, and lots of laughs.",
+        "brand": "DolphinHat",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["paper"],
+        "age_min": 84,
+        "age_max": None,
+        "piece_count": 93,
+        "keywords": [],
+        "tags": ["games"],
+        "images": [
+            {"url": "/static/images/7162d22e-8ebf-4980-bee0-81e35e4de0c1.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Clown puzzle",
+        "description": "8 piece wooden clown puzzle with pegs for easy handling.",
+        "brand": "Simplex",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 9,
+        "keywords": [],
+        "tags": ["puzzles"],
+        "images": [
+            {"url": "/static/images/5fc57e0d-c404-4ad8-8d9b-653e7a576bad.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Pickup Sticks",
+        "description": "Pickup Sticks is a classic game of patience and steady hands where players carefully remove sticks from a pile without disturbing the others. Each successful pick earns points based on the stick's color, adding a simple layer of strategy. Easy to learn and engaging for a wide range of ages, it's a great activity for building focus and fine motor skills.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 60,
+        "age_max": None,
+        "piece_count": 31,
+        "keywords": [],
+        "tags": ["games"],
+        "images": [
+            {"url": "/static/images/2c7498f7-bffc-47d8-8533-af7850c1bae3.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Triangle",
+        "description": "The triangle is a simple percussion instrument made from a metal rod bent into a three-sided shape, played by striking it with a small metal beater. It produces a bright, clear ringing sound that helps children explore rhythm, timing, and cause-and-effect through play. Durable and easy to use, it's a great introduction to music for young children.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["metal"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 2,
+        "keywords": [],
+        "tags": ["sensory"],
+        "images": [
+            {"url": "/static/images/455578f5-2a0b-4ac1-872b-de902787195b.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Uno",
+        "description": "Uno is a fast-paced card game where players race to be the first to get rid of all their cards by matching colors or numbers. Special action cards add excitement by reversing play, skipping turns, or making others draw extra cards. Easy to learn, UNO is perfect for group play and building turn-taking and strategy skills.",
+        "brand": "Mattel",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["paper"],
+        "age_min": 84,
+        "age_max": None,
+        "piece_count": 100,
+        "keywords": [],
+        "tags": ["games"],
+        "images": [
+            {"url": "/static/images/e7208204-97ca-4095-9eea-113b47b004f3.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Xylophone",
+        "description": (
+            "A glockenspiel (slightly different from a xylophone!) is a percussion instrument made of metal bars "
+            "arranged like a small keyboard and played with mallets. It produces bright, bell-like tones and is "
+            "great for helping children explore melody, pitch, and early music skills.\n\n"
+            "Note: This high quality glockenspiel is designed for older kids wanting to learn about music, "
+            "not a toddler toy."
+        ),
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["metal", "wood"],
+        "age_min": 72,
+        "age_max": None,
+        "piece_count": 3,
+        "keywords": [],
+        "tags": ["sensory"],
+        "images": [
+            {"url": "/static/images/63e718ce-40e1-4eec-bca7-af6e59cba17f.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Owl Puzzle",
+        "description": "This artistic owl puzzle consists of 300 pieces. The final size of the puzzle is approximately 15 inches x 10 inches.",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["paper"],
+        "age_min": 72,
+        "age_max": None,
+        "piece_count": 100,
+        "keywords": [],
+        "tags": ["puzzles"],
+        "images": [
+            {"url": "/static/images/ca848457-076f-49d0-b6b9-2c22fd46f8b6.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Butterfly Matching Game",
+        "description": "A colorful butterfly matching game that helps children build memory and concentration skills. Players flip over cards to find pairs of beautifully illustrated butterflies. It's a simple, engaging activity that encourages focus, visual recognition, and turn-taking.",
+        "brand": "Eeboo",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["paper"],
+        "age_min": 60,
+        "age_max": None,
+        "piece_count": 44,
+        "keywords": [],
+        "tags": ["puzzles"],
+        "images": [
+            {"url": "/static/images/43e12fe7-7b22-4575-967c-c16a5bf49641.jpg", "is_featured": True},
+            {"url": "/static/images/ad39e73a-dec2-4f5b-bbca-21fe42ec5a43.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Deep Ocean Puzzle",
+        "description": " ",
+        "brand": "Quokka",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["paper"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 30,
+        "keywords": [],
+        "tags": ["puzzles"],
+        "images": [
+            {"url": "/static/images/615cc910-86ec-4522-a039-5e3e7b30fc1d.jpg", "is_featured": True},
+            {"url": "/static/images/ad89cc22-afbc-4575-8005-d21994aeb99a.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Rainbow Nesting Bowls",
+        "description": (
+            "This set of five brightly colored wooden Rainbow Nesting Bowls by Grimm's can be nested or stacked, "
+            "providing hours of creative play for babies and toddlers.\n\n"
+            "As children get older, they will have fun filling one with small items, such as beans or gemstones, "
+            "and emptying them into another bowl. The bowls can also be used for kitchen play."
+        ),
+        "brand": "Grimm's",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 5,
+        "keywords": [],
+        "tags": ["baby"],
+        "images": [
+            {"url": "/static/images/d71dfce6-4796-4e8c-a96d-7bcfa2809ea1.jpg", "is_featured": True},
+            {"url": "/static/images/d25ab5b4-30b5-4175-91f4-7126ce064ca1.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Chunky Wooden Jigsaw Puzzle",
+        "description": "A puzzle that's easy to hold—and a challenge to solve. Part of the Companion Lovevery Playkit for ages 22-24 months.",
+        "brand": "Lovevery",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 4,
+        "keywords": ["lovevery"],
+        "tags": ["baby"],
+        "images": [
+            {"url": "/static/images/478c7bcd-9494-4ce3-9c69-cb3d625e1a04.jpg", "is_featured": True},
+            {"url": "/static/images/48e123a2-776f-4119-a430-3c4206614531.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Water Waves Nesting Blocks",
+        "description": (
+            "Carved out of a single block of hardwood, these six Water Waves Nesting Blocks nestle together to "
+            "create a stacking toy as well as a simple nesting puzzle.\n\n"
+            "This is an inspired, open-ended Waldorf toy designed to stimulate a child's creativity. Pieces can be "
+            "used as a bridge, hill, fence, see-saw, doll cradle, tunnel, or cozy cave for imaginary playmates."
+        ),
+        "brand": "Grimm's",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 6,
+        "keywords": [],
+        "tags": ["baby"],
+        "images": [],
+    },
+    {
+        "name": "Stacking Rainbow",
+        "description": "This rainbow is very versatile - children like to stack and sort, use it as a cradle for dolls, as a tunnel or bridge for their vehicle, or as a fence for their animals. This rainbow is great for small world play.",
+        "brand": "Grimm's",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 6,
+        "keywords": [],
+        "tags": ["baby"],
+        "images": [
+            {"url": "/static/images/a04db749-3a09-43c8-aa11-21132c2b76e5.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Wooden Stacking Pegboard",
+        "description": "Fit small objects into small spaces while building colorful towers. Part of the Adventurer play kit for ages 16 - 18 months.",
+        "brand": "Lovevery",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 13,
+        "keywords": ["lovevery"],
+        "tags": ["baby"],
+        "images": [
+            {"url": "/static/images/fd54a212-e537-43ec-87bf-c315849539f3.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Alphabet Blocks",
+        "description": (
+            "Expand your knowledge of France with French language blocks. Enjoy the embossed fleur-de-lis filigree. "
+            "This stylized detail surrounds two capital letters on opposing sides of each block. Two other sides show "
+            "one number and one animal paired with their French translations. Two more hand crafted letters make four "
+            "complete alphabets.\n\n"
+            "Cherchez the color palette inspired by the softer tones of the Delacroix \"Liberty Leading the People\" "
+            "painting. The fleur-de-lis filigree you see is unique to the Uncle Goose French block set.\n"
+            "Made using sustainable Midwestern basswood\n"
+            "Printed with safe-to-touch inks\n"
+            "100% made in the USA"
+        ),
+        "brand": "Uncle Goose",
+        "language": "French",
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 24,
+        "age_max": None,
+        "piece_count": None,
+        "keywords": [],
+        "tags": ["learning", "building"],
+        "images": [
+            {"url": "/static/images/e7f36cad-9153-4e98-9355-08d27e31d12b.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Race and Chase Ramp",
+        "description": "Explore motion and direction with our unique side-by-side racing ramp. Part of the Adventurer Play kit for ages 16-18 months.",
+        "brand": "Lovevery",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 3,
+        "keywords": ["lovevery"],
+        "tags": ["baby", "vehicles"],
+        "images": [
+            {"url": "/static/images/720aacc3-2d95-48ec-8d8e-8777cac34b19.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Triange, Circle, Square Building Set",
+        "description": "These colorful blocks are for both building and puzzle. Open a whole new world with these geometrical shapes.",
+        "brand": "Grimm's",
+        "language": None,
+        "link": "https://www.grimms.eu/en/products/building-set-triangle-square-circle?srsltid=AfmBOopVwbl5fxw1jxQy63DSmgHpIy_BSTt6SveSOvHMRw6ydPTLgY76",
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 30,
+        "keywords": [],
+        "tags": ["building"],
+        "images": [
+            {"url": "/static/images/4c5c2d22-f0d0-453e-bc82-33dfb79c2778.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Community Garden Puzzle",
+        "description": " ",
+        "brand": "Lovevery",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 6,
+        "keywords": [],
+        "tags": ["puzzle"],
+        "images": [],
+    },
+    {
+        "name": "Cranium Junior",
+        "description": (
+            "Cranium Junior, often called Cranium Cadoo is the outrageously fun game designed especially for kids. "
+            "With a variety of hilarious activities, the game gets kids thinking, creating, giggling, and grinning "
+            "as they try to get four tokens in a row to win. Can you sculpt a taco? Act out a hula dancer? Think of "
+            "a word that means to bounce a basketball and to drip milk from your chin? Which is strongest for its "
+            "size: an ant, a human, or a chimp? Whether kids love to act, puzzle, sketch, sculpt, or even crack "
+            "secret codes, Cadoo has something for them. Two or more kids will have a blast playing Cadoo -- even "
+            "grown-ups will love to play and show what they can do! 2+ players"
+        ),
+        "brand": "Hasbro",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["paper", "plastic"],
+        "age_min": 84,
+        "age_max": None,
+        "piece_count": 100,
+        "keywords": [],
+        "tags": ["games"],
+        "images": [
+            {"url": "/static/images/b2da5f34-77e8-4dc5-b003-048b089a8a37.jpg", "is_featured": True},
+            {"url": "/static/images/ecc08a15-c839-4985-a591-64251ee89919.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "On a Scale of 1 to T-Rex",
+        "description": (
+            "A card game for people who are bad at charades.\n\n"
+            "PLAYERS MUST PERFORM RIDICULOUS ACTIONS, BUT THE TWIST IS THAT THEY DON'T NECESSARILY HAVE TO DO IT WELL.\n\n"
+            "Each player is given an action. Everyone performs their actions at the same time. Your action isn't a "
+            "secret. Everybody knows what everybody else is doing. The secret is how intensely you perform it on a "
+            "scale of 1 to 10. You win by guessing the intensity of each others' performances. In the midst of all "
+            "that roaring, dancing, meowing and yodeling, you must find someone on the same level as you."
+        ),
+        "brand": "Exploding Kittens",
+        "language": None,
+        "link": "https://www.explodingkittens.com/products/on-a-scale-of-one-to-t-rex-original-edition?srsltid=AfmBOorUmHFxguLZKn11cfEATt6Y-WzHjomHPHr-HM3cQStqyZ5OAY3D",
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["paper", "plastic"],
+        "age_min": 84,
+        "age_max": None,
+        "piece_count": 100,
+        "keywords": [],
+        "tags": ["games"],
+        "images": [
+            {"url": "/static/images/b134ddea-30f1-405e-bd8d-6b1fdd863f98.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Firefighter Costume",
+        "description": "Sound the sirens and make way for the rescue! This role play outfit is a bright red jacket trimmed with reflective material. The Fire Chief Role Play Set is sized to fit boys and girls ages three to six. The high-quality fabrics and solid construction ensure durability so your kids can wear it over and over again.",
+        "brand": "Melissa & Doug",
+        "language": None,
+        "link": "https://www.melissaanddoug.com/products/fire-chief-role-play-costume-set?variant=40109117472822&gclsrc=aw.ds&gad_source=1&gad_campaignid=21802289665&gbraid=0AAAAA949c4wsxlDPrgX0OAdKU0OYRh2tJ&gclid=CjwKCAjwhqfPBhBWEiwAZo196kypK19laiXm6rw_mq7Jp3dWMZon4VJKlzlq0ubrw2BTqKLHdtIHWRoCQ5AQAvD_BwE",
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["fabric"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["pretend play"],
+        "images": [
+            {"url": "/static/images/8ab6bd79-e22b-4677-8e9c-eaeff974dc65.jpg", "is_featured": True},
+            {"url": "/static/images/7ab7ae94-806e-4e2c-a8c1-a962a3ffec75.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Wooden Train",
+        "description": " ",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 10,
+        "keywords": [],
+        "tags": ["baby"],
+        "images": [],
+    },
+    {
+        "name": "Felt Flowers",
+        "description": "Plant them, pick them, and make a bouquet. Part of the Lovevery Helper Play Kit for ages 25-27 months.",
+        "brand": "Lovevery",
+        "language": None,
+        "link": "https://lovevery.com/products/the-play-kits-the-helper?srsltid=AfmBOorkXkJczZecYnLmb-PDLfsEbkY_N8vk0SbZeNT23XoWGVzNVYUt",
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood", "fabric"],
+        "age_min": 24,
+        "age_max": None,
+        "piece_count": 6,
+        "keywords": [],
+        "tags": ["pretend play"],
+        "images": [
+            {"url": "/static/images/c8b023e9-4111-4445-9f88-884a25b50e9f.jpg", "is_featured": True},
+            {"url": "/static/images/55b2bc22-7907-4140-84e3-03b31d09f859.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Drop & Match Dot Catcher",
+        "description": "From the Lovevery Helper Play Kit for ages 25-27 months.",
+        "brand": "Lovevery",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood", "plastic"],
+        "age_min": 24,
+        "age_max": None,
+        "piece_count": 26,
+        "keywords": [],
+        "tags": ["learning"],
+        "images": [
+            {"url": "/static/images/ed86d6a7-9b07-4f00-a250-8b9adfc295cf.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Stacking Trio",
+        "description": "A stacking toy, composed of three sets of geometric pieces of varying sizes and colors, to be assembled on three flexible rods. Children will learn to differentiate sizes, forms and colors, while creating amusing characters according to their imagination.",
+        "brand": "Voila",
+        "language": None,
+        "link": "https://www.wisekidstoys.com/products/voila-207-geo-trio?srsltid=AfmBOooUfjmebBs3jyFSf0C3SJeopvlEabpi86_kwQrEeAFVd_o7mo9R",
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 13,
+        "keywords": [],
+        "tags": ["baby"],
+        "images": [
+            {"url": "/static/images/02473ad5-13b5-4c71-8c6d-5ae046aec733.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Double Sided Puzzle",
+        "description": "1 set of pieces, two puzzles. Part of the Lovevery Helper Kit for ages 25-27 months.",
+        "brand": "Lovevery",
+        "language": None,
+        "link": "https://lovevery.com/?utm_source=google&utm_medium=cpc&utm_campaign=shopping_us-pmax_core_angler-ai&utm_marketing_tactic=shopping&gclid=CjwKCAjwtcHPBhADEiwAWo3sJgcOYWauRn-ovuArwfqVkN4z3wRxtcz4sUM8met8BK3iV6XMSXURwBoCZfMQAvD_BwE&gad_source=1&gad_campaignid=23032072259&gbraid=0AAAAACnVutsnrCGjc3VsHRauXBs07RC05&gclid=CjwKCAjwtcHPBhADEiwAWo3sJgcOYWauRn-ovuArwfqVkN4z3wRxtcz4sUM8met8BK3iV6XMSXURwBoCZfMQAvD_BwE",
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 24,
+        "age_max": None,
+        "piece_count": 8,
+        "keywords": [],
+        "tags": ["puzzle"],
+        "images": [
+            {"url": "/static/images/64685b0f-8f98-477c-8f1d-1fb844fe8a6a.jpg", "is_featured": True},
+            {"url": "/static/images/1bc22b01-178c-4dd9-b01d-5125b9369d31.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "First Words Flashcards",
+        "description": " ",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["paper"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 22,
+        "keywords": [],
+        "tags": ["learning"],
+        "images": [],
+    },
+    {
+        "name": "Fruit Fidget Poppers",
+        "description": "Pop, pop, pop your way through a whole fruit bowl with this super fun 3-piece fidget toy set, featuring a cool avocado, a colorful watermelon, and a silly bunch of bananas! Press the bubbly bumps in and out as many times as you want — they always bounce back for more popping fun! Grab all three fruity friends and see how fast your fingers can go!",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["plastic"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 3,
+        "keywords": [],
+        "tags": ["sensory"],
+        "images": [
+            {"url": "/static/images/009f62b4-bc9e-4351-a8f8-7ee7a772d2cc.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Routine Cards",
+        "description": "Help visualize your child's routine with the Lovevery routine cards. From the Helper Play Kit for ages 25-27 months.",
+        "brand": "Lovevery",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["paper"],
+        "age_min": 12,
+        "age_max": None,
+        "piece_count": 20,
+        "keywords": ["lovevery"],
+        "tags": ["learning"],
+        "images": [
+            {"url": "/static/images/e908a333-0140-479c-8f24-84f8632080fa.jpg", "is_featured": True},
+            {"url": "/static/images/547e08f3-bfc7-4e1f-9d12-acd742629839.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Chunky ABC Puzzle",
+        "description": "Help little ones learn their letters the hands-on way with this colorful chunky wooden alphabet puzzle, perfect for small fingers to grab, lift, and place! Each thick, oversized piece fits snugly into its matching slot, making it a fun and satisfying challenge for toddlers and early learners. It's a classic toy that makes learning the ABCs feel like playtime!",
+        "brand": "Little Tikes",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 36,
+        "age_max": None,
+        "piece_count": 27,
+        "keywords": [],
+        "tags": ["learning", "puzzles"],
+        "images": [
+            {"url": "/static/images/4aed4fcd-a450-4fb5-a8b3-2ee159a9f440.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Clock",
+        "description": " ",
+        "brand": "Lakeshore",
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood", "plastic"],
+        "age_min": 60,
+        "age_max": None,
+        "piece_count": 1,
+        "keywords": [],
+        "tags": ["learning"],
+        "images": [
+            {"url": "/static/images/8194c617-0862-443f-bd4a-305aeca9a264.jpg", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Dinosaur Stacking Blocks",
+        "description": " ",
+        "brand": None,
+        "language": None,
+        "link": None,
+        "battery_operated": False,
+        "shareable": True,
+        "materials": ["wood"],
+        "age_min": 48,
+        "age_max": None,
+        "piece_count": 20,
+        "keywords": [],
+        "tags": ["games"],
+        "images": [
+            {"url": "/static/images/ff66622a-daa8-4de1-9003-ba367381daff.jpg", "is_featured": True},
+        ],
+    },
+]
 
 
 async def seed(db: AsyncSession) -> None:
@@ -119,48 +1560,41 @@ async def seed(db: AsyncSession) -> None:
     db.add(MembershipUser(membership_id=membership.id, user_id=member.id))
     await db.flush()
 
-    # Read toys from CSV
     tag_cache: dict[str, Tag] = {}
 
-    with open(CSV_PATH, newline="", encoding="utf-8-sig") as f:
-        reader = csv.reader(f)
-        next(reader)  # skip header row
-        for row in reader:
-            if len(row) < 7:
-                continue
-            name = row[0].strip()
-            if not name:
-                continue
+    for toy_data in TOYS:
+        toy = Toy(
+            name=toy_data["name"],
+            description=toy_data["description"],
+            brand=toy_data["brand"],
+            language=toy_data["language"],
+            link=toy_data["link"],
+            battery_operated=toy_data["battery_operated"],
+            shareable=toy_data["shareable"],
+            materials=toy_data["materials"],
+            keywords=toy_data["keywords"],
+            age_min=toy_data["age_min"],
+            age_max=toy_data["age_max"],
+            piece_count=toy_data["piece_count"],
+            created_by=admin.id,
+        )
+        db.add(toy)
+        await db.flush()
 
-            piece_count = _parse_piece_count(row[1])
-            age_min = _parse_age_months(row[2])
-            materials = _parse_materials(row[3])
-            battery_operated = _parse_battery(row[4])
-            categories = _parse_categories(row[5])
-            brand_raw = row[6].strip()
-            brand = brand_raw if brand_raw else None
+        for tag_name in toy_data["tags"]:
+            if tag_name not in tag_cache:
+                tag = Tag(name=tag_name)
+                db.add(tag)
+                await db.flush()
+                tag_cache[tag_name] = tag
+            db.add(ToyTag(toy_id=toy.id, tag_id=tag_cache[tag_name].id))
 
-            toy = Toy(
-                name=name,
-                description=" ",
-                brand=brand,
-                battery_operated=battery_operated,
-                shareable=True,
-                age_min=age_min,
-                age_max=None,
-                piece_count=piece_count,
-                materials=materials,
+        for img in toy_data["images"]:
+            db.add(ToyImage(
+                toy_id=toy.id,
+                image_url=img["url"],
+                is_featured=img["is_featured"],
                 created_by=admin.id,
-            )
-            db.add(toy)
-            await db.flush()
-
-            for cat in categories:
-                if cat not in tag_cache:
-                    tag = Tag(name=cat)
-                    db.add(tag)
-                    await db.flush()
-                    tag_cache[cat] = tag
-                db.add(ToyTag(toy_id=toy.id, tag_id=tag_cache[cat].id))
+            ))
 
     await db.commit()

@@ -9,10 +9,17 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-DATABASE_PATH = os.environ.get("DATABASE_PATH", "/data/app.db")
-DATABASE_URL = f"sqlite+aiosqlite:///{DATABASE_PATH}"
+_raw_url = os.environ.get("DATABASE_URL")
 
-engine = create_async_engine(DATABASE_URL, future=True)
+if _raw_url:
+    # Railway (and most PaaS) provide postgresql:// but asyncpg requires postgresql+asyncpg://
+    DATABASE_URL = _raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    engine = create_async_engine(DATABASE_URL, future=True)
+else:
+    DATABASE_PATH = os.environ.get("DATABASE_PATH", "/data/app.db")
+    DATABASE_URL = f"sqlite+aiosqlite:///{DATABASE_PATH}"
+    engine = create_async_engine(DATABASE_URL, future=True)
+
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
 
