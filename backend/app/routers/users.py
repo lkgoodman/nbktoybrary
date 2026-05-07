@@ -12,7 +12,7 @@ from app.core.security import hash_password
 from app.db.session import get_db
 from app.models.membership import MembershipRequest
 from app.models.user import User, UserRole
-from app.schemas.user import UserCreate, UserRead, UserReadWithRoles
+from app.schemas.user import UserCreate, UserPasswordUpdate, UserRead, UserReadWithRoles
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -58,6 +58,24 @@ async def register_user(
     result = await db.execute(select(User).options(_load_roles).where(User.id == user.id))
     user = result.scalar_one()
     return _build_user_with_roles(user)
+
+
+@router.patch("/{user_id}", response_model=UserReadWithRoles)
+async def update_user_password(
+    user_id: uuid.UUID,
+    payload: UserPasswordUpdate,
+    db: AsyncSession = Depends(get_db),
+    _current_user: User = Depends(require_roles("admin", "superadmin")),
+) -> UserReadWithRoles:
+    result = await db.execute(select(User).options(_load_roles).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    user.password_hash = hash_password(payload.password)
+    await db.commit()
+    await db.refresh(user)
+    result = await db.execute(select(User).options(_load_roles).where(User.id == user_id))
+    return _build_user_with_roles(result.scalar_one())
 
 
 @router.get("/{user_id}", response_model=UserReadWithRoles)

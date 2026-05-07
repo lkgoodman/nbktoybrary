@@ -242,6 +242,14 @@ export async function listUsers(token: string): Promise<UserRead[]> {
   });
 }
 
+export async function resetUserPassword(id: string, password: string, token: string): Promise<UserRead> {
+  return request<UserRead>(endpoints.users.detail(id), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ password }),
+  });
+}
+
 export async function getUser(id: string, token: string): Promise<UserRead> {
   return request<UserRead>(endpoints.users.detail(id), {
     headers: { Authorization: `Bearer ${token}` },

@@ -30,6 +30,10 @@ class UserReadWithRoles(UserRead):
     roles: list[str] = []
 
 
+class UserPasswordUpdate(BaseModel):
+    password: str = Field(min_length=8, max_length=255)
+
+
 class RoleBase(BaseModel):
     name: str = Field(min_length=1, max_length=64)
 

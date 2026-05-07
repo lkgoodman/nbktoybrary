@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import NextLink from "next/link";
 import Box from "@mui/material/Box";
@@ -9,11 +9,12 @@ import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../lib/AuthContext";
-import { useUser, useAdminBorrowRequests, useToys, useMembershipsByUser, useUpdateMembershipStanding, queryKeys } from "../../../lib/queries";
+import { useUser, useAdminBorrowRequests, useToys, useMembershipsByUser, useUpdateMembershipStanding, useResetUserPassword, queryKeys } from "../../../lib/queries";
 import type { BorrowRequestReadWithDetails, MembershipRead, Toy, ToyImage } from "../../../lib/types";
 
 function getFeaturedImage(toy: Toy): ToyImage | null {
@@ -33,7 +34,11 @@ export default function AdminMemberPage({
   const { data: toys } = useToys(token, { enabled: authReady });
   const { data: memberships } = useMembershipsByUser(params.userId, isSuperadmin ? token : null);
   const updateStanding = useUpdateMembershipStanding();
+  const resetPassword = useResetUserPassword();
   const membership: MembershipRead | null = memberships?.[0] ?? null;
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<boolean>(false);
 
   useEffect(() => {
     if (!isAuthenticated || !isAdmin) router.replace("/");
@@ -136,6 +141,47 @@ export default function AdminMemberPage({
                       </Button>
                     )}
                   </Stack>
+                ) : null}
+              </Stack>
+            </Paper>
+
+            <Paper elevation={0} sx={{ p: 3 }}>
+              <Stack spacing={2}>
+                <Typography variant="sectionTitle" component="h2">Reset password</Typography>
+                <Stack direction="row" spacing={2} alignItems="flex-start">
+                  <TextField
+                    label="New password"
+                    type="password"
+                    size="small"
+                    value={newPassword}
+                    onChange={(e) => { setNewPassword(e.target.value); setPasswordError(null); setPasswordSuccess(false); }}
+                    sx={{ flex: 1 }}
+                  />
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    disabled={resetPassword.isPending || newPassword.length < 8}
+                    onClick={() => {
+                      if (token === null) return;
+                      setPasswordError(null);
+                      setPasswordSuccess(false);
+                      resetPassword.mutate(
+                        { id: params.userId, password: newPassword, token },
+                        {
+                          onSuccess: () => { setNewPassword(""); setPasswordSuccess(true); },
+                          onError: (err) => setPasswordError(err.message),
+                        },
+                      );
+                    }}
+                  >
+                    {resetPassword.isPending ? "Saving…" : "Save"}
+                  </Button>
+                </Stack>
+                {passwordError !== null ? (
+                  <Typography variant="body1" color="error">{passwordError}</Typography>
+                ) : null}
+                {passwordSuccess ? (
+                  <Typography variant="body1" color="success.main">Password updated.</Typography>
                 ) : null}
               </Stack>
             </Paper>
