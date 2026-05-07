@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from app.db.base import Base
 from app.db.seed import seed
 from app.db.session import SessionLocal, engine
@@ -22,6 +22,15 @@ IMAGES_DIR: str = os.getenv("IMAGES_DIR", "/data/images")
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Add columns introduced after initial deploy (no-op if they already exist)
+        for stmt in [
+            "ALTER TABLE toy_images ADD COLUMN IF NOT EXISTS data BYTEA",
+            "ALTER TABLE toy_images ADD COLUMN IF NOT EXISTS content_type VARCHAR(128)",
+        ]:
+            try:
+                await conn.execute(text(stmt))
+            except Exception:
+                pass
     async with SessionLocal() as session:
         result = await session.execute(select(User).limit(1))
         needs_seed = result.scalar_one_or_none() is None
