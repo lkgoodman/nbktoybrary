@@ -112,7 +112,7 @@ export default function NewMemberPage(): JSX.Element {
               onChange={(e) => setPhone(e.target.value)}
             />
             <TextField
-              label="Temporary password"
+              label="Password"
               type="password"
               size="small"
               required
