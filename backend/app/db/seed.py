@@ -1609,6 +1609,6 @@ async def seed(db: AsyncSession) -> None:
             )
             db.add(toy_image)
             await db.flush()
-            toy_image.image_url = f"/toy-images/{toy_image.id}/file"
+            toy_image.image_url = f"/api/toy-images/{toy_image.id}/file"
 
     await db.commit()

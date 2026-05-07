@@ -44,7 +44,7 @@ async def upload_toy_image(
     )
     db.add(image)
     await db.flush()
-    image.image_url = f"/toy-images/{image.id}/file"
+    image.image_url = f"/api/toy-images/{image.id}/file"
     await db.commit()
     await db.refresh(image)
     return image
