@@ -41,15 +41,28 @@ async def create_membership(
 
     now = datetime.now(timezone.utc)
     today = date.today()
-    req = MembershipRequest(
-        user_id=payload.user_id,
-        status=MembershipRequestStatus.approved,
-        reviewed_by=current_user.id,
-        reviewed_at=now,
-        created_by=current_user.id,
+
+    existing_req = await db.execute(
+        select(MembershipRequest)
+        .where(MembershipRequest.user_id == payload.user_id)
+        .where(MembershipRequest.status == MembershipRequestStatus.pending)
     )
-    db.add(req)
-    await db.flush()
+    req = existing_req.scalar_one_or_none()
+    if req is not None:
+        req.status = MembershipRequestStatus.approved
+        req.reviewed_by = current_user.id
+        req.reviewed_at = now
+        await db.flush()
+    else:
+        req = MembershipRequest(
+            user_id=payload.user_id,
+            status=MembershipRequestStatus.approved,
+            reviewed_by=current_user.id,
+            reviewed_at=now,
+            created_by=current_user.id,
+        )
+        db.add(req)
+        await db.flush()
 
     membership = Membership(
         membership_request_id=req.id,

@@ -474,13 +474,24 @@ export default function AdminPage(): JSX.Element {
           </Stack>
         ) : tab === 4 ? (
           <Stack spacing={2}>
-            <TextField
-              label="Search members"
-              size="small"
-              value={memberSearch}
-              onChange={(e) => setMemberSearch(e.target.value)}
-              fullWidth
-            />
+            <Stack direction="row" spacing={2} alignItems="center">
+              <TextField
+                label="Search members"
+                size="small"
+                value={memberSearch}
+                onChange={(e) => setMemberSearch(e.target.value)}
+                sx={{ flex: 1 }}
+              />
+              <Button
+                component={NextLink}
+                href="/admin/members/new"
+                variant="contained"
+                size="small"
+                sx={{ whiteSpace: "nowrap", flexShrink: 0 }}
+              >
+                Add member
+              </Button>
+            </Stack>
             {usersPending ? (
               <Typography variant="body1" color="text.secondary">Loading…</Typography>
             ) : usersError ? (
