@@ -29,6 +29,7 @@ function formatTimeframeDate(isoString: string): string {
 
 function formatTimeframeTime(isoString: string): string {
   return new Date(isoString).toLocaleTimeString(undefined, {
+    timeZone: "UTC",
     hour: "numeric",
     minute: "2-digit",
   });

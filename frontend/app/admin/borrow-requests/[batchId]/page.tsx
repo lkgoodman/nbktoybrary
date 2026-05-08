@@ -129,9 +129,9 @@ export default function BorrowRequestDetailPage({
   function formatPickup(start: string, end: string): string {
     const s = new Date(start);
     const e = new Date(end);
-    const date = s.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
-    const startTime = s.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-    const endTime = e.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    const date = s.toLocaleDateString(undefined, { timeZone: "UTC", weekday: "long", month: "long", day: "numeric" });
+    const startTime = s.toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" });
+    const endTime = e.toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" });
     return `${date}, ${startTime} – ${endTime}`;
   }
 
@@ -174,9 +174,9 @@ export default function BorrowRequestDetailPage({
               {batch[0].return_start !== null && batch[0].return_end !== null ? (
                 <Typography variant="label" color="text.secondary">
                   Return: {new Date(batch[0].return_start).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{" "}
-                  {new Date(batch[0].return_start).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                  {new Date(batch[0].return_start).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
                   {" – "}
-                  {new Date(batch[0].return_end).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                  {new Date(batch[0].return_end).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
                 </Typography>
               ) : batch[0].return_date !== null ? (
                 <Typography variant="label" color="text.secondary">

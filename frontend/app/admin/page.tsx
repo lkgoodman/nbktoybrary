@@ -153,12 +153,7 @@ export default function AdminPage(): JSX.Element {
   }
 
   function localDateTimeString(date: string, hour: string): string {
-    const d = new Date(`${date}T${hour.padStart(2, "0")}:00:00`);
-    const off = -d.getTimezoneOffset();
-    const sign = off >= 0 ? "+" : "-";
-    const hh = String(Math.floor(Math.abs(off) / 60)).padStart(2, "0");
-    const mm = String(Math.abs(off) % 60).padStart(2, "0");
-    return `${date}T${hour.padStart(2, "0")}:00:00${sign}${hh}:${mm}`;
+    return `${date}T${hour.padStart(2, "0")}:00:00`;
   }
 
   function handleGenerateRecurring(): void {
@@ -635,7 +630,7 @@ export default function AdminPage(): JSX.Element {
                   >
                     {Array.from({ length: 15 }, (_, i) => i + 7).map((h) => (
                       <MenuItem key={h} value={String(h)}>
-                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
                       </MenuItem>
                     ))}
                   </Select>
@@ -649,7 +644,7 @@ export default function AdminPage(): JSX.Element {
                   >
                     {Array.from({ length: 15 }, (_, i) => i + 7).map((h) => (
                       <MenuItem key={h} value={String(h)}>
-                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
                       </MenuItem>
                     ))}
                   </Select>
@@ -719,7 +714,7 @@ export default function AdminPage(): JSX.Element {
                   >
                     {Array.from({ length: 15 }, (_, i) => i + 7).map((h) => (
                       <MenuItem key={h} value={String(h)}>
-                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
                       </MenuItem>
                     ))}
                   </Select>
@@ -733,7 +728,7 @@ export default function AdminPage(): JSX.Element {
                   >
                     {Array.from({ length: 15 }, (_, i) => i + 7).map((h) => (
                       <MenuItem key={h} value={String(h)}>
-                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
                       </MenuItem>
                     ))}
                   </Select>
@@ -867,9 +862,9 @@ export default function AdminPage(): JSX.Element {
                             {dayTfs.map((tf) => (
                               <Stack key={tf.id} direction="row" alignItems="center" justifyContent="space-between" spacing={0.5}>
                                 <Typography variant="label" color="primary.main" sx={{ fontSize: "0.65rem", lineHeight: 1.2 }}>
-                                  {new Date(tf.start_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                                  {new Date(tf.start_time).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
                                   {" – "}
-                                  {new Date(tf.end_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                                  {new Date(tf.end_time).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
                                 </Typography>
                                 <Box
                                   component="button"
@@ -947,9 +942,9 @@ export default function AdminPage(): JSX.Element {
                             {dayTimeframes.map((tf) => (
                               <Stack key={tf.id} direction="row" alignItems="center" justifyContent="space-between">
                                 <Typography variant="label">
-                                  {new Date(tf.start_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                                  {new Date(tf.start_time).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
                                   {" – "}
-                                  {new Date(tf.end_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                                  {new Date(tf.end_time).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
                                   {tf.notes !== null ? ` · ${tf.notes}` : ""}
                                 </Typography>
                                 <Box
