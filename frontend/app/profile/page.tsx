@@ -17,7 +17,7 @@ import { useMembershipsByUser, useUpdateUser, queryKeys } from "../lib/queries";
 import type { MembershipRead } from "../lib/types";
 
 export default function ProfilePage(): JSX.Element {
-  const { user, token, isAuthenticated, authReady } = useAuth();
+  const { user, token, isAuthenticated, authReady, updateStoredUser } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -82,20 +82,8 @@ export default function ProfilePage(): JSX.Element {
       {
         onSuccess: (updated) => {
           setInfoSaved(true);
+          updateStoredUser(updated);
           void queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(user.id) });
-          // Update stored auth so name reflects immediately in nav
-          try {
-            const raw = localStorage.getItem("nbktoybrary_auth");
-            if (raw !== null) {
-              const stored = JSON.parse(raw) as { token: string; user: unknown };
-              localStorage.setItem(
-                "nbktoybrary_auth",
-                JSON.stringify({ token: stored.token, user: updated }),
-              );
-            }
-          } catch {
-            // ignore
-          }
         },
         onError: (err) => setInfoError(err.message),
       },

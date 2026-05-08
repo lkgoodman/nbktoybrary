@@ -25,6 +25,7 @@ interface AuthContextValue {
   authReady: boolean;
   login: (email: string, password: string) => Promise<UserRead>;
   logout: () => void;
+  updateStoredUser: (updated: UserRead) => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
   isSuperadmin: boolean;
@@ -77,6 +78,19 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     setUser(null);
   }, []);
 
+  const updateStoredUser = useCallback((updated: UserRead): void => {
+    setUser(updated);
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw !== null) {
+        const stored = JSON.parse(raw) as StoredAuth;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: stored.token, user: updated }));
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const roles = user?.roles ?? [];
 
   const value: AuthContextValue = {
@@ -85,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     authReady,
     login,
     logout,
+    updateStoredUser,
     isAuthenticated: user !== null,
     isAdmin: roles.includes("admin") || roles.includes("superadmin"),
     isSuperadmin: roles.includes("superadmin"),
