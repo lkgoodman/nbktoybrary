@@ -3,16 +3,24 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
 from app.models.scheduling import TimeframeStatus
 from app.schemas.base import AuditRead
+
+
+def _strip_tz(v: datetime) -> str:
+    return v.strftime("%Y-%m-%dT%H:%M:%S")
 
 
 class TimeframeBase(BaseModel):
     start_time: datetime
     end_time: datetime
     notes: str | None = Field(default=None, max_length=1024)
+
+    @field_serializer("start_time", "end_time")
+    def serialize_time(self, v: datetime) -> str:
+        return _strip_tz(v)
 
 
 class TimeframeCreate(TimeframeBase):

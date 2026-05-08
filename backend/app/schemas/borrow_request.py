@@ -3,10 +3,16 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
 from app.models.scheduling import RequestStatus
 from app.schemas.base import AuditRead
+
+
+def _strip_tz(v: datetime | None) -> str | None:
+    if v is None:
+        return None
+    return v.strftime("%Y-%m-%dT%H:%M:%S")
 
 
 class BorrowRequestCreate(BaseModel):
@@ -32,6 +38,10 @@ class BorrowRequestRead(AuditRead):
     return_start: datetime | None
     return_end: datetime | None
 
+    @field_serializer("return_start", "return_end")
+    def serialize_time(self, v: datetime | None) -> str | None:
+        return _strip_tz(v)
+
 
 class BorrowRequestReadWithDetails(AuditRead):
     id: uuid.UUID
@@ -48,3 +58,7 @@ class BorrowRequestReadWithDetails(AuditRead):
     pickup_end: datetime | None
     return_start: datetime | None
     return_end: datetime | None
+
+    @field_serializer("pickup_start", "pickup_end", "return_start", "return_end")
+    def serialize_time(self, v: datetime | None) -> str | None:
+        return _strip_tz(v)

@@ -843,9 +843,9 @@ export default function AdminPage(): JSX.Element {
                             {dayTfs.map((tf) => (
                               <Stack key={tf.id} direction="row" alignItems="center" justifyContent="space-between" spacing={0.5}>
                                 <Typography variant="label" color="primary.main" sx={{ fontSize: "0.65rem", lineHeight: 1.2 }}>
-                                  {new Date(tf.start_time).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
+                                  {new Date(tf.start_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                                   {" – "}
-                                  {new Date(tf.end_time).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
+                                  {new Date(tf.end_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                                 </Typography>
                                 <Box
                                   component="button"
@@ -923,9 +923,9 @@ export default function AdminPage(): JSX.Element {
                             {dayTimeframes.map((tf) => (
                               <Stack key={tf.id} direction="row" alignItems="center" justifyContent="space-between">
                                 <Typography variant="label">
-                                  {new Date(tf.start_time).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
+                                  {new Date(tf.start_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                                   {" – "}
-                                  {new Date(tf.end_time).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
+                                  {new Date(tf.end_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                                   {tf.notes !== null ? ` · ${tf.notes}` : ""}
                                 </Typography>
                                 <Box

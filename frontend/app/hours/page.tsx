@@ -115,9 +115,9 @@ export default function HoursPage(): JSX.Element {
                     {slots.map((tf) => (
                       <Stack key={tf.id} spacing={0.25}>
                         <Typography variant="body1">
-                          {new Date(tf.start_time).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
+                          {new Date(tf.start_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                           {" – "}
-                          {new Date(tf.end_time).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
+                          {new Date(tf.end_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                         </Typography>
                         {tf.notes !== null ? (
                           <Typography variant="label" color="text.secondary">{tf.notes}</Typography>
