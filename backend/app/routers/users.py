@@ -71,7 +71,7 @@ async def update_user(
     is_self = current_user.id == user_id
     if not is_self and not is_admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
-    if "password" in payload.model_fields_set and not is_admin:
+    if "password" in payload.model_fields_set and not is_admin and not is_self:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can reset passwords")
     result = await db.execute(select(User).options(_load_roles).where(User.id == user_id))
     user = result.scalar_one_or_none()
