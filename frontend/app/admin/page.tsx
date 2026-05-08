@@ -152,6 +152,15 @@ export default function AdminPage(): JSX.Element {
     );
   }
 
+  function localDateTimeString(date: string, hour: string): string {
+    const d = new Date(`${date}T${hour.padStart(2, "0")}:00:00`);
+    const off = -d.getTimezoneOffset();
+    const sign = off >= 0 ? "+" : "-";
+    const hh = String(Math.floor(Math.abs(off) / 60)).padStart(2, "0");
+    const mm = String(Math.abs(off) % 60).padStart(2, "0");
+    return `${date}T${hour.padStart(2, "0")}:00:00${sign}${hh}:${mm}`;
+  }
+
   function handleGenerateRecurring(): void {
     if (token === null || recurringDay === "" || recurringStartHour === "" || recurringEndHour === "") return;
     if (!recurringIndefinite && recurringEndDate === "") return;
@@ -176,8 +185,8 @@ export default function AdminPage(): JSX.Element {
         for (const date of dates) {
           await createTimeframe.mutateAsync({
             payload: {
-              start_time: `${date}T${recurringStartHour.padStart(2, "0")}:00`,
-              end_time: `${date}T${recurringEndHour.padStart(2, "0")}:00`,
+              start_time: localDateTimeString(date, recurringStartHour),
+              end_time: localDateTimeString(date, recurringEndHour),
               notes: null,
             },
             token,
@@ -657,13 +666,11 @@ export default function AdminPage(): JSX.Element {
                   disabled={newTfDate === "" || newTfStartHour === "" || newTfEndHour === "" || createTimeframe.isPending}
                   onClick={() => {
                     if (token === null || newTfDate === "" || newTfStartHour === "" || newTfEndHour === "") return;
-                    const startHour = newTfStartHour.padStart(2, "0");
-                    const endHour = newTfEndHour.padStart(2, "0");
                     createTimeframe.mutate(
                       {
                         payload: {
-                          start_time: `${newTfDate}T${startHour}:00`,
-                          end_time: `${newTfDate}T${endHour}:00`,
+                          start_time: localDateTimeString(newTfDate, newTfStartHour),
+                          end_time: localDateTimeString(newTfDate, newTfEndHour),
                           notes: newTfNotes.trim() === "" ? null : newTfNotes.trim(),
                         },
                         token,
