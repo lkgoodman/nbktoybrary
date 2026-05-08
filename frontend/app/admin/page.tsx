@@ -10,6 +10,7 @@ import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import ListItemText from "@mui/material/ListItemText";
@@ -43,6 +44,12 @@ export default function AdminPage(): JSX.Element {
   const [newTfStartHour, setNewTfStartHour] = useState<string>("");
   const [newTfEndHour, setNewTfEndHour] = useState<string>("");
   const [newTfNotes, setNewTfNotes] = useState<string>("");
+  const [recurringDay, setRecurringDay] = useState<string>("");
+  const [recurringStartHour, setRecurringStartHour] = useState<string>("");
+  const [recurringEndHour, setRecurringEndHour] = useState<string>("");
+  const [recurringEndDate, setRecurringEndDate] = useState<string>("");
+  const [recurringIndefinite, setRecurringIndefinite] = useState<boolean>(false);
+  const [recurringGenerating, setRecurringGenerating] = useState<boolean>(false);
   const [calendarMonth, setCalendarMonth] = useState<Date>(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -143,6 +150,49 @@ export default function AdminPage(): JSX.Element {
         },
       },
     );
+  }
+
+  function handleGenerateRecurring(): void {
+    if (token === null || recurringDay === "" || recurringStartHour === "" || recurringEndHour === "") return;
+    if (!recurringIndefinite && recurringEndDate === "") return;
+    const dow = parseInt(recurringDay, 10);
+    const endLimit = recurringIndefinite
+      ? new Date(new Date().getFullYear() + 2, new Date().getMonth(), new Date().getDate())
+      : new Date(recurringEndDate);
+    const cur = new Date();
+    cur.setHours(0, 0, 0, 0);
+    while (cur.getDay() !== dow) cur.setDate(cur.getDate() + 1);
+    const dates: string[] = [];
+    while (cur <= endLimit) {
+      const yyyy = cur.getFullYear();
+      const mm = String(cur.getMonth() + 1).padStart(2, "0");
+      const dd = String(cur.getDate()).padStart(2, "0");
+      dates.push(`${yyyy}-${mm}-${dd}`);
+      cur.setDate(cur.getDate() + 7);
+    }
+    setRecurringGenerating(true);
+    void (async () => {
+      try {
+        for (const date of dates) {
+          await createTimeframe.mutateAsync({
+            payload: {
+              start_time: `${date}T${recurringStartHour.padStart(2, "0")}:00`,
+              end_time: `${date}T${recurringEndHour.padStart(2, "0")}:00`,
+              notes: null,
+            },
+            token,
+          });
+        }
+        await queryClient.invalidateQueries({ queryKey: queryKeys.timeframes.list() });
+        setRecurringDay("");
+        setRecurringStartHour("");
+        setRecurringEndHour("");
+        setRecurringEndDate("");
+        setRecurringIndefinite(false);
+      } finally {
+        setRecurringGenerating(false);
+      }
+    })();
   }
 
   if (!isAuthenticated || !isAdmin) return <Box />;
@@ -636,6 +686,85 @@ export default function AdminPage(): JSX.Element {
               {createTimeframe.isError ? (
                 <Typography variant="body1" color="error">{createTimeframe.error.message}</Typography>
               ) : null}
+            </Stack>
+
+            <Stack spacing={2}>
+              <Typography variant="bodyStrong">Generate recurring open hours</Typography>
+              <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="flex-end">
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                  <InputLabel>Day of week</InputLabel>
+                  <Select
+                    label="Day of week"
+                    value={recurringDay}
+                    onChange={(e) => setRecurringDay(e.target.value)}
+                  >
+                    {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((d, i) => (
+                      <MenuItem key={d} value={String(i)}>{d}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel>Start time</InputLabel>
+                  <Select
+                    label="Start time"
+                    value={recurringStartHour}
+                    onChange={(e) => setRecurringStartHour(e.target.value)}
+                  >
+                    {Array.from({ length: 15 }, (_, i) => i + 7).map((h) => (
+                      <MenuItem key={h} value={String(h)}>
+                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel>End time</InputLabel>
+                  <Select
+                    label="End time"
+                    value={recurringEndHour}
+                    onChange={(e) => setRecurringEndHour(e.target.value)}
+                  >
+                    {Array.from({ length: 15 }, (_, i) => i + 7).map((h) => (
+                      <MenuItem key={h} value={String(h)}>
+                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <TextField
+                  label="End date"
+                  type="date"
+                  size="small"
+                  slotProps={{
+                    inputLabel: { shrink: true },
+                    htmlInput: { min: new Date().toISOString().slice(0, 10) },
+                  }}
+                  value={recurringEndDate}
+                  onChange={(e) => setRecurringEndDate(e.target.value)}
+                  disabled={recurringIndefinite}
+                  sx={{ minWidth: 160 }}
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={recurringIndefinite}
+                      onChange={(e) => {
+                        setRecurringIndefinite(e.target.checked);
+                        if (e.target.checked) setRecurringEndDate("");
+                      }}
+                      size="small"
+                    />
+                  }
+                  label="No end date"
+                />
+                <Button
+                  variant="contained"
+                  disabled={recurringDay === "" || recurringStartHour === "" || recurringEndHour === "" || (!recurringIndefinite && recurringEndDate === "") || recurringGenerating}
+                  onClick={handleGenerateRecurring}
+                >
+                  {recurringGenerating ? "Generating…" : "Generate"}
+                </Button>
+              </Stack>
             </Stack>
 
             <Divider />
