@@ -752,6 +752,27 @@ export default function AdminPage(): JSX.Element {
 
             <Divider />
 
+            {(timeframes ?? []).length > 0 ? (
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                sx={{ alignSelf: "flex-start" }}
+                disabled={deleteTimeframe.isPending}
+                onClick={() => {
+                  if (token === null) return;
+                  void (async () => {
+                    for (const tf of timeframes ?? []) {
+                      await deleteTimeframe.mutateAsync({ id: tf.id, token });
+                    }
+                    await queryClient.invalidateQueries({ queryKey: queryKeys.timeframes.list() });
+                  })();
+                }}
+              >
+                Delete all open hours
+              </Button>
+            ) : null}
+
             {timeframesPending ? (
               <Typography variant="body1" color="text.secondary">Loading…</Typography>
             ) : timeframesError ? (
