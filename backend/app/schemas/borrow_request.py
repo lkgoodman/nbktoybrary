@@ -38,7 +38,7 @@ class BorrowRequestRead(AuditRead):
     return_start: datetime | None
     return_end: datetime | None
 
-    @field_serializer("return_start", "return_end")
+    @field_serializer("return_start", "return_end", when_used="json")
     def serialize_time(self, v: datetime | None) -> str | None:
         return _strip_tz(v)
 
@@ -59,6 +59,6 @@ class BorrowRequestReadWithDetails(AuditRead):
     return_start: datetime | None
     return_end: datetime | None
 
-    @field_serializer("pickup_start", "pickup_end", "return_start", "return_end")
+    @field_serializer("pickup_start", "pickup_end", "return_start", "return_end", when_used="json")
     def serialize_time(self, v: datetime | None) -> str | None:
         return _strip_tz(v)

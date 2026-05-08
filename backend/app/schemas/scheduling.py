@@ -18,10 +18,6 @@ class TimeframeBase(BaseModel):
     end_time: datetime
     notes: str | None = Field(default=None, max_length=1024)
 
-    @field_serializer("start_time", "end_time")
-    def serialize_time(self, v: datetime) -> str:
-        return _strip_tz(v)
-
 
 class TimeframeCreate(TimeframeBase):
     pass
@@ -29,6 +25,10 @@ class TimeframeCreate(TimeframeBase):
 
 class TimeframeRead(TimeframeBase, AuditRead):
     id: uuid.UUID
+
+    @field_serializer("start_time", "end_time", when_used="json")
+    def serialize_time(self, v: datetime) -> str:
+        return _strip_tz(v)
 
 
 class RequestCreate(BaseModel):
