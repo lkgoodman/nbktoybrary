@@ -14,7 +14,7 @@ import Typography from "@mui/material/Typography";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../lib/AuthContext";
-import { useUser, useAdminBorrowRequests, useToys, useMembershipsByUser, useUpdateMembershipStanding, useResetUserPassword, queryKeys } from "../../../lib/queries";
+import { useUser, useAdminBorrowRequests, useToys, useMembershipsByUser, useUpdateMembershipStanding, useCreateMembership, useResetUserPassword, queryKeys } from "../../../lib/queries";
 import type { BorrowRequestReadWithDetails, MembershipRead, Toy, ToyImage } from "../../../lib/types";
 
 function getFeaturedImage(toy: Toy): ToyImage | null {
@@ -34,6 +34,7 @@ export default function AdminMemberPage({
   const { data: toys } = useToys(token, { enabled: authReady });
   const { data: memberships } = useMembershipsByUser(params.userId, isSuperadmin ? token : null);
   const updateStanding = useUpdateMembershipStanding();
+  const createMembership = useCreateMembership();
   const resetPassword = useResetUserPassword();
   const membership: MembershipRead | null = memberships?.[0] ?? null;
   const [newPassword, setNewPassword] = useState<string>("");
@@ -105,40 +106,92 @@ export default function AdminMemberPage({
                 <Typography variant="label" color="text.secondary">
                   {member.address_line1}{member.address_line2 !== null ? `, ${member.address_line2}` : ""}, {member.city}, {member.state} {member.zip}
                 </Typography>
-                {isSuperadmin && membership !== null ? (
+                {isSuperadmin ? (
                   <Stack direction="row" spacing={1} sx={{ pt: 1 }}>
-                    {membership.account_standing !== "temporary_hold" ? (
+                    {membership === null ? (
                       <Button
                         variant="outlined"
                         size="small"
-                        color="warning"
-                        disabled={updateStanding.isPending}
+                        disabled={createMembership.isPending}
                         onClick={() => {
                           if (token === null) return;
-                          updateStanding.mutate(
-                            { id: membership.id, accountStanding: "temporary_hold", token },
-                            { onSuccess: () => { void queryClient.invalidateQueries({ queryKey: queryKeys.memberships.byUser(params.userId) }); } },
+                          createMembership.mutate(
+                            { userId: params.userId, token },
+                            { onSuccess: () => { void queryClient.invalidateQueries({ queryKey: queryKeys.memberships.byUser(params.userId) }); void queryClient.invalidateQueries({ queryKey: queryKeys.users.list() }); } },
                           );
                         }}
                       >
-                        Pause membership
+                        Grant membership
                       </Button>
                     ) : (
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        color="success"
-                        disabled={updateStanding.isPending}
-                        onClick={() => {
-                          if (token === null) return;
-                          updateStanding.mutate(
-                            { id: membership.id, accountStanding: "active", token },
-                            { onSuccess: () => { void queryClient.invalidateQueries({ queryKey: queryKeys.memberships.byUser(params.userId) }); } },
-                          );
-                        }}
-                      >
-                        Resume membership
-                      </Button>
+                      <>
+                        {membership.account_standing !== "temporary_hold" ? (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="warning"
+                            disabled={updateStanding.isPending}
+                            onClick={() => {
+                              if (token === null) return;
+                              updateStanding.mutate(
+                                { id: membership.id, accountStanding: "temporary_hold", token },
+                                { onSuccess: () => { void queryClient.invalidateQueries({ queryKey: queryKeys.memberships.byUser(params.userId) }); } },
+                              );
+                            }}
+                          >
+                            Pause membership
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="success"
+                            disabled={updateStanding.isPending}
+                            onClick={() => {
+                              if (token === null) return;
+                              updateStanding.mutate(
+                                { id: membership.id, accountStanding: "active", token },
+                                { onSuccess: () => { void queryClient.invalidateQueries({ queryKey: queryKeys.memberships.byUser(params.userId) }); } },
+                              );
+                            }}
+                          >
+                            Resume membership
+                          </Button>
+                        )}
+                        {membership.account_standing !== "banned" ? (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="error"
+                            disabled={updateStanding.isPending}
+                            onClick={() => {
+                              if (token === null) return;
+                              updateStanding.mutate(
+                                { id: membership.id, accountStanding: "banned", token },
+                                { onSuccess: () => { void queryClient.invalidateQueries({ queryKey: queryKeys.memberships.byUser(params.userId) }); } },
+                              );
+                            }}
+                          >
+                            Ban
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="success"
+                            disabled={updateStanding.isPending}
+                            onClick={() => {
+                              if (token === null) return;
+                              updateStanding.mutate(
+                                { id: membership.id, accountStanding: "active", token },
+                                { onSuccess: () => { void queryClient.invalidateQueries({ queryKey: queryKeys.memberships.byUser(params.userId) }); } },
+                              );
+                            }}
+                          >
+                            Unban
+                          </Button>
+                        )}
+                      </>
                     )}
                   </Stack>
                 ) : null}
