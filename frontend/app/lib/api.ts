@@ -1,4 +1,4 @@
-import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, HelloResponse, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead, UserUpdate } from "./types";
+import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, HelloResponse, MembershipRead, MembershipRequestRead, RegisterRequest, SiteSettingsRead, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead, UserUpdate } from "./types";
 
 const BACKEND_URL = "/api";
 
@@ -52,6 +52,10 @@ export const endpoints = {
     upload: (toyId: string): string => `${BACKEND_URL}/toys/${toyId}/images`,
     update: (imageId: string): string => `${BACKEND_URL}/toy-images/${imageId}`,
     delete: (imageId: string): string => `${BACKEND_URL}/toy-images/${imageId}`,
+  },
+  settings: {
+    get: (): string => `${BACKEND_URL}/settings`,
+    update: (): string => `${BACKEND_URL}/settings`,
   },
   favorites: {
     list: (): string => `${BACKEND_URL}/favorites`,
@@ -305,6 +309,18 @@ export async function addFavorite(toyId: string, token: string): Promise<Favorit
   return request<FavoriteRead>(`${endpoints.favorites.add()}?toy_id=${toyId}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function fetchSettings(): Promise<SiteSettingsRead> {
+  return request<SiteSettingsRead>(endpoints.settings.get());
+}
+
+export async function updateSettings(address: string, token: string): Promise<SiteSettingsRead> {
+  return request<SiteSettingsRead>(endpoints.settings.update(), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ address }),
   });
 }
 

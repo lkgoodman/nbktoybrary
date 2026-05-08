@@ -23,7 +23,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import NextLink from "next/link";
 import { useAuth } from "../lib/AuthContext";
-import { useMembershipRequests, useUpdateMembershipRequest, useToys, useAdminBorrowRequests, useTimeframes, useCreateTimeframe, useDeleteTimeframe, useUsers, useCreateMembership, queryKeys } from "../lib/queries";
+import { useMembershipRequests, useUpdateMembershipRequest, useToys, useAdminBorrowRequests, useTimeframes, useCreateTimeframe, useDeleteTimeframe, useUsers, useCreateMembership, useSettings, useUpdateSettings, queryKeys } from "../lib/queries";
 import type { BorrowRequestReadWithDetails, MembershipRequestRead, TimeframeRead, Toy, ToyImage, UserRead } from "../lib/types";
 
 export default function AdminPage(): JSX.Element {
@@ -32,7 +32,7 @@ export default function AdminPage(): JSX.Element {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<number>(
-    searchParams.get("tab") === "schedule" ? 1 : searchParams.get("tab") === "borrow" ? 2 : searchParams.get("tab") === "members" || searchParams.get("tab") === "membership" ? 3 : searchParams.get("tab") === "pickup" ? 4 : 0
+    searchParams.get("tab") === "schedule" ? 1 : searchParams.get("tab") === "borrow" ? 2 : searchParams.get("tab") === "members" || searchParams.get("tab") === "membership" ? 3 : searchParams.get("tab") === "pickup" ? 4 : searchParams.get("tab") === "settings" ? 5 : 0
   );
   const [inventorySearch, setInventorySearch] = useState<string>("");
   const [inventoryTags, setInventoryTags] = useState<Set<string>>(new Set());
@@ -59,6 +59,8 @@ export default function AdminPage(): JSX.Element {
   });
   const [selectedScheduleDay, setSelectedScheduleDay] = useState<{ year: number; month: number; day: number } | null>(null);
   const [memberSearch, setMemberSearch] = useState<string>("");
+  const [settingsAddress, setSettingsAddress] = useState<string>("");
+  const [settingsSaved, setSettingsSaved] = useState<boolean>(false);
   const [welcomeName, setWelcomeName] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     const name = sessionStorage.getItem("welcomeName");
@@ -91,12 +93,6 @@ export default function AdminPage(): JSX.Element {
     setInventoryAge(val === "" ? null : AGE_BUCKETS.find((b) => b.label === val)?.age ?? null);
   }
 
-  useEffect(() => {
-    if (!isAuthenticated || !isAdmin) {
-      router.replace("/");
-    }
-  }, [isAuthenticated, isAdmin, router]);
-
   const { data: requests, isPending: requestsPending, isError: requestsError } = useMembershipRequests(token);
   const updateRequest = useUpdateMembershipRequest();
   const { data: toys, isPending: toysPending, isError: toysError } = useToys(token, { enabled: authReady });
@@ -106,6 +102,20 @@ export default function AdminPage(): JSX.Element {
   const createMembership = useCreateMembership();
   const createTimeframe = useCreateTimeframe();
   const deleteTimeframe = useDeleteTimeframe();
+  const { data: siteSettings } = useSettings();
+  const updateSettingsMutation = useUpdateSettings();
+
+  useEffect(() => {
+    if (!isAuthenticated || !isAdmin) {
+      router.replace("/");
+    }
+  }, [isAuthenticated, isAdmin, router]);
+
+  useEffect(() => {
+    if (siteSettings !== undefined) {
+      setSettingsAddress(siteSettings.address);
+    }
+  }, [siteSettings]);
 
   const allTags: string[] = toys
     ? [...new Set(toys.flatMap((toy: Toy) => toy.tags))].sort()
@@ -228,6 +238,7 @@ export default function AdminPage(): JSX.Element {
               </Badge>
             } />
             <Tab label="Open hours" sx={{ alignItems: "flex-start" }} />
+            <Tab label="Settings" sx={{ alignItems: "flex-start" }} />
           </Tabs>
           <Box sx={{ flex: 1, minWidth: 0 }}>
 
@@ -937,6 +948,44 @@ export default function AdminPage(): JSX.Element {
                 </Stack>
               );
             })()}
+          </Stack>
+        ) : tab === 5 ? (
+          <Stack spacing={3}>
+            <Typography variant="sectionTitle" component="h2">Location</Typography>
+            <Stack direction="row" spacing={2} alignItems="flex-start">
+              <TextField
+                label="Pickup / return address"
+                size="small"
+                value={settingsAddress}
+                onChange={(e) => { setSettingsAddress(e.target.value); setSettingsSaved(false); }}
+                sx={{ flex: 1 }}
+              />
+              <Button
+                variant="contained"
+                size="small"
+                disabled={updateSettingsMutation.isPending || settingsAddress.trim() === ""}
+                onClick={() => {
+                  if (token === null) return;
+                  updateSettingsMutation.mutate(
+                    { address: settingsAddress.trim(), token },
+                    {
+                      onSuccess: () => {
+                        setSettingsSaved(true);
+                        void queryClient.invalidateQueries({ queryKey: queryKeys.settings.get() });
+                      },
+                    },
+                  );
+                }}
+              >
+                {updateSettingsMutation.isPending ? "Saving…" : "Save"}
+              </Button>
+            </Stack>
+            {settingsSaved ? (
+              <Typography variant="body1" color="success.main">Saved.</Typography>
+            ) : null}
+            {updateSettingsMutation.isError ? (
+              <Typography variant="body1" color="error">{updateSettingsMutation.error.message}</Typography>
+            ) : null}
           </Stack>
         ) : tab === 1 ? (() => {
           const schedYear = scheduleCalendarMonth.getFullYear();

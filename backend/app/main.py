@@ -14,7 +14,8 @@ from app.db.session import SessionLocal, engine
 from app.models import *  # noqa: F401,F403  -- register mappers
 from app.models.user import User, Role, UserRole
 from app.core.security import hash_password
-from app.routers import auth, borrow_requests, checkouts, favorites, membership_requests, memberships, timeframes, toy_images, toys, users
+from app.models.settings import SiteSettings  # noqa: F401 -- register mapper
+from app.routers import auth, borrow_requests, checkouts, favorites, membership_requests, memberships, settings, timeframes, toy_images, toys, users
 
 IMAGES_DIR: str = os.getenv("IMAGES_DIR", "/data/images")
 
@@ -68,6 +69,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         if result.scalar_one_or_none() is None:
             session.add(UserRole(user_id=user.id, role_id=role.id))
         await session.commit()
+    # Seed default site settings
+    async with SessionLocal() as session:
+        result = await session.execute(select(SiteSettings).where(SiteSettings.id == 1))
+        if result.scalar_one_or_none() is None:
+            session.add(SiteSettings(id=1, address="171 Calyer"))
+            await session.commit()
     yield
     await engine.dispose()
 
@@ -85,6 +92,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(settings.router)
 app.include_router(users.router)
 app.include_router(membership_requests.router)
 app.include_router(memberships.router)

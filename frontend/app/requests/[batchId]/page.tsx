@@ -9,7 +9,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { useAuth } from "../../lib/AuthContext";
-import { useBorrowRequests, useToys } from "../../lib/queries";
+import { useBorrowRequests, useSettings, useToys } from "../../lib/queries";
 import type { BorrowRequestRead, Toy, ToyImage } from "../../lib/types";
 
 function getFeaturedImage(toy: Toy): ToyImage | null {
@@ -24,6 +24,7 @@ export default function RequestBatchPage({
   const { token, isMember } = useAuth();
   const { data: requests, isPending, isError } = useBorrowRequests(token);
   const { data: toys } = useToys();
+  const { data: siteSettings } = useSettings();
 
   if (!isMember) {
     return (
@@ -65,6 +66,12 @@ export default function RequestBatchPage({
             {(batch[0].pickup_start !== null || batch[0].return_start !== null || batch[0].return_date !== null) ? (
               <Paper elevation={0} sx={{ p: 3 }}>
                 <Stack spacing={1}>
+                  {siteSettings !== undefined && siteSettings.address !== "" ? (
+                    <Stack spacing={0.25}>
+                      <Typography variant="label" color="text.secondary">Location</Typography>
+                      <Typography variant="body1">{siteSettings.address}</Typography>
+                    </Stack>
+                  ) : null}
                   {batch[0].pickup_start !== null && batch[0].pickup_end !== null ? (
                     <Stack spacing={0.25}>
                       <Typography variant="label" color="text.secondary">Pickup</Typography>

@@ -1,10 +1,14 @@
 import { useMutation, useQuery, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 
-import { addFavorite, checkinCheckout, createBorrowRequests, createCheckout, createMembership, createTimeframe, createToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listFavorites, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, removeFavorite, resetUserPassword, setFeaturedImage, updateMembershipRequest, updateMembershipStanding, updateToy, updateUser, uploadToyImage } from "./api";
-import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead, UserUpdate } from "./types";
+import { addFavorite, checkinCheckout, createBorrowRequests, createCheckout, createMembership, createTimeframe, createToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, fetchSettings, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listFavorites, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, removeFavorite, resetUserPassword, setFeaturedImage, updateMembershipRequest, updateMembershipStanding, updateSettings, updateToy, updateUser, uploadToyImage } from "./api";
+import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, MembershipRead, MembershipRequestRead, RegisterRequest, SiteSettingsRead, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead, UserUpdate } from "./types";
 
 
 export const queryKeys = {
+  settings: {
+    all: ["settings"] as const,
+    get: () => [...queryKeys.settings.all] as const,
+  },
   checkouts: {
     all: ["checkouts"] as const,
     list: (params?: { toyId?: string; returned?: boolean }) => ["checkouts", "list", params] as const,
@@ -251,6 +255,19 @@ export function useRemoveFavorite(): UseMutationResult<void, Error, { toyId: str
 export function useResetUserPassword(): UseMutationResult<UserRead, Error, { id: string; password: string; token: string }> {
   return useMutation<UserRead, Error, { id: string; password: string; token: string }>({
     mutationFn: ({ id, password, token }) => resetUserPassword(id, password, token),
+  });
+}
+
+export function useSettings(): UseQueryResult<SiteSettingsRead, Error> {
+  return useQuery<SiteSettingsRead, Error>({
+    queryKey: queryKeys.settings.get(),
+    queryFn: () => fetchSettings(),
+  });
+}
+
+export function useUpdateSettings(): UseMutationResult<SiteSettingsRead, Error, { address: string; token: string }> {
+  return useMutation<SiteSettingsRead, Error, { address: string; token: string }>({
+    mutationFn: ({ address, token }) => updateSettings(address, token),
   });
 }
 

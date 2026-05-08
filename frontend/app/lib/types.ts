@@ -198,6 +198,10 @@ export interface FavoriteRead {
   updated_at: string;
 }
 
+export interface SiteSettingsRead {
+  address: string;
+}
+
 export interface HelloResponse {
   message: string;
 }
