@@ -61,6 +61,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             )
             session.add(user)
             await session.flush()
+        else:
+            if user.phone == "":
+                user.phone = "000-000-0000"
         result = await session.execute(select(UserRole).where(UserRole.user_id == user.id, UserRole.role_id == role.id))
         if result.scalar_one_or_none() is None:
             session.add(UserRole(user_id=user.id, role_id=role.id))
