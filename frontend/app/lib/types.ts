@@ -95,6 +95,17 @@ export interface ToyCreate {
   tags: string[];
 }
 
+export interface UserUpdate {
+  name?: string;
+  phone?: string;
+  address_line1?: string;
+  address_line2?: string | null;
+  city?: string;
+  state?: string;
+  zip?: string;
+  password?: string;
+}
+
 export interface ToyUpdate {
   name?: string;
   description?: string;

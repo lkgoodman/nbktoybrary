@@ -1,4 +1,4 @@
-import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, HelloResponse, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
+import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, HelloResponse, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead, UserUpdate } from "./types";
 
 const BACKEND_URL = "/api";
 
@@ -247,6 +247,14 @@ export async function resetUserPassword(id: string, password: string, token: str
     method: "PATCH",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify({ password }),
+  });
+}
+
+export async function updateUser(id: string, payload: UserUpdate, token: string): Promise<UserRead> {
+  return request<UserRead>(endpoints.users.detail(id), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
   });
 }
 

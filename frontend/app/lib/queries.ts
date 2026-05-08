@@ -1,7 +1,7 @@
 import { useMutation, useQuery, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 
-import { addFavorite, checkinCheckout, createBorrowRequests, createCheckout, createMembership, createTimeframe, createToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listFavorites, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, removeFavorite, resetUserPassword, setFeaturedImage, updateMembershipRequest, updateMembershipStanding, updateToy, uploadToyImage } from "./api";
-import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead } from "./types";
+import { addFavorite, checkinCheckout, createBorrowRequests, createCheckout, createMembership, createTimeframe, createToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listFavorites, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, removeFavorite, resetUserPassword, setFeaturedImage, updateMembershipRequest, updateMembershipStanding, updateToy, updateUser, uploadToyImage } from "./api";
+import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, MembershipRead, MembershipRequestRead, RegisterRequest, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead, UserUpdate } from "./types";
 
 
 export const queryKeys = {
@@ -251,5 +251,11 @@ export function useRemoveFavorite(): UseMutationResult<void, Error, { toyId: str
 export function useResetUserPassword(): UseMutationResult<UserRead, Error, { id: string; password: string; token: string }> {
   return useMutation<UserRead, Error, { id: string; password: string; token: string }>({
     mutationFn: ({ id, password, token }) => resetUserPassword(id, password, token),
+  });
+}
+
+export function useUpdateUser(): UseMutationResult<UserRead, Error, { id: string; payload: UserUpdate; token: string }> {
+  return useMutation<UserRead, Error, { id: string; payload: UserUpdate; token: string }>({
+    mutationFn: ({ id, payload, token }) => updateUser(id, payload, token),
   });
 }

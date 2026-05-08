@@ -34,6 +34,17 @@ class UserPasswordUpdate(BaseModel):
     password: str = Field(min_length=8, max_length=255)
 
 
+class UserUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    phone: str | None = Field(default=None, min_length=1, max_length=32)
+    address_line1: str | None = Field(default=None, min_length=1, max_length=255)
+    address_line2: str | None = Field(default=None, max_length=255)
+    city: str | None = Field(default=None, min_length=1, max_length=128)
+    state: str | None = Field(default=None, min_length=1, max_length=64)
+    zip: str | None = Field(default=None, min_length=1, max_length=16)
+    password: str | None = Field(default=None, min_length=8, max_length=255)
+
+
 class RoleBase(BaseModel):
     name: str = Field(min_length=1, max_length=64)
 

@@ -89,6 +89,9 @@ export default function NavBar(): JSX.Element {
               <MenuItem component={NextLink} href="/hours" onClick={handleCloseMenu}>
                 Hours
               </MenuItem>
+              <MenuItem component={NextLink} href="/profile" onClick={handleCloseMenu}>
+                My profile
+              </MenuItem>
               {isMember ? (
                 <MenuItem component={NextLink} href="/requests" onClick={handleCloseMenu}>
                   Checkout history
