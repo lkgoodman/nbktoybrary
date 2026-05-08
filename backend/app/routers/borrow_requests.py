@@ -161,6 +161,8 @@ async def create_borrow_requests(
             status=r.status,
             denial_note=r.denial_note,
             return_date=r.return_date,
+            pickup_start=timeframe.start_time,
+            pickup_end=timeframe.end_time,
             return_start=return_timeframe.start_time,
             return_end=return_timeframe.end_time,
             created_at=r.created_at,
@@ -234,8 +236,16 @@ async def update_borrow_request(
     req.status = payload.status
     req.denial_note = payload.denial_note if payload.status == RequestStatus.denied else None
     await db.commit()
-    await db.refresh(req)
-    await db.refresh(req, attribute_names=["return_timeframe"])
+    result = await db.execute(
+        select(Request)
+        .options(
+            selectinload(Request.return_timeframe),
+            selectinload(Request.checkout_timeframes).selectinload(CheckoutTimeframe.timeframe),
+        )
+        .where(Request.id == request_id)
+    )
+    req = result.scalar_one()
+    ct = req.checkout_timeframes[0] if req.checkout_timeframes else None
     return BorrowRequestRead(
         id=req.id,
         batch_id=req.batch_id,
@@ -244,6 +254,8 @@ async def update_borrow_request(
         status=req.status,
         denial_note=req.denial_note,
         return_date=req.return_date,
+        pickup_start=ct.timeframe.start_time if ct is not None else None,
+        pickup_end=ct.timeframe.end_time if ct is not None else None,
         return_start=req.return_timeframe.start_time if req.return_timeframe is not None else None,
         return_end=req.return_timeframe.end_time if req.return_timeframe is not None else None,
         created_at=req.created_at,
