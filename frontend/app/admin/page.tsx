@@ -10,7 +10,6 @@ import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Checkbox from "@mui/material/Checkbox";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import ListItemText from "@mui/material/ListItemText";
@@ -48,7 +47,6 @@ export default function AdminPage(): JSX.Element {
   const [recurringStartHour, setRecurringStartHour] = useState<string>("");
   const [recurringEndHour, setRecurringEndHour] = useState<string>("");
   const [recurringEndDate, setRecurringEndDate] = useState<string>("");
-  const [recurringIndefinite, setRecurringIndefinite] = useState<boolean>(false);
   const [recurringGenerating, setRecurringGenerating] = useState<boolean>(false);
   const [calendarMonth, setCalendarMonth] = useState<Date>(() => {
     const d = new Date();
@@ -158,11 +156,9 @@ export default function AdminPage(): JSX.Element {
 
   function handleGenerateRecurring(): void {
     if (token === null || recurringDay === "" || recurringStartHour === "" || recurringEndHour === "") return;
-    if (!recurringIndefinite && recurringEndDate === "") return;
+    if (recurringEndDate === "") return;
     const dow = parseInt(recurringDay, 10);
-    const endLimit = recurringIndefinite
-      ? new Date(new Date().getFullYear() + 2, new Date().getMonth(), new Date().getDate())
-      : new Date(recurringEndDate);
+    const endLimit = new Date(recurringEndDate);
     const cur = new Date();
     cur.setHours(0, 0, 0, 0);
     while (cur.getDay() !== dow) cur.setDate(cur.getDate() + 1);
@@ -192,7 +188,6 @@ export default function AdminPage(): JSX.Element {
         setRecurringStartHour("");
         setRecurringEndHour("");
         setRecurringEndDate("");
-        setRecurringIndefinite(false);
       } finally {
         setRecurringGenerating(false);
       }
@@ -743,25 +738,11 @@ export default function AdminPage(): JSX.Element {
                   }}
                   value={recurringEndDate}
                   onChange={(e) => setRecurringEndDate(e.target.value)}
-                  disabled={recurringIndefinite}
                   sx={{ minWidth: 160 }}
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={recurringIndefinite}
-                      onChange={(e) => {
-                        setRecurringIndefinite(e.target.checked);
-                        if (e.target.checked) setRecurringEndDate("");
-                      }}
-                      size="small"
-                    />
-                  }
-                  label="No end date"
                 />
                 <Button
                   variant="contained"
-                  disabled={recurringDay === "" || recurringStartHour === "" || recurringEndHour === "" || (!recurringIndefinite && recurringEndDate === "") || recurringGenerating}
+                  disabled={recurringDay === "" || recurringStartHour === "" || recurringEndHour === "" || recurringEndDate === "" || recurringGenerating}
                   onClick={handleGenerateRecurring}
                 >
                   {recurringGenerating ? "Generating…" : "Generate"}
