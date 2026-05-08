@@ -265,7 +265,16 @@ export default function BorrowRequestDetailPage({
                   );
                 })}
                 {pending.length > 1 ? (
-                  <Box>
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      variant="outlined"
+                      color="success"
+                      size="small"
+                      disabled={updateBorrowRequest.isPending}
+                      onClick={handleApproveAll}
+                    >
+                      Approve all
+                    </Button>
                     <Button
                       variant="outlined"
                       color="error"
@@ -275,7 +284,7 @@ export default function BorrowRequestDetailPage({
                     >
                       Deny all
                     </Button>
-                  </Box>
+                  </Stack>
                 ) : null}
               </Stack>
             ) : null}
