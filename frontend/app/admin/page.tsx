@@ -625,7 +625,7 @@ export default function AdminPage(): JSX.Element {
                   >
                     {Array.from({ length: 15 }, (_, i) => i + 7).map((h) => (
                       <MenuItem key={h} value={String(h)}>
-                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
+                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                       </MenuItem>
                     ))}
                   </Select>
@@ -639,7 +639,7 @@ export default function AdminPage(): JSX.Element {
                   >
                     {Array.from({ length: 15 }, (_, i) => i + 7).map((h) => (
                       <MenuItem key={h} value={String(h)}>
-                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
+                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                       </MenuItem>
                     ))}
                   </Select>
@@ -709,7 +709,7 @@ export default function AdminPage(): JSX.Element {
                   >
                     {Array.from({ length: 15 }, (_, i) => i + 7).map((h) => (
                       <MenuItem key={h} value={String(h)}>
-                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
+                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                       </MenuItem>
                     ))}
                   </Select>
@@ -723,7 +723,7 @@ export default function AdminPage(): JSX.Element {
                   >
                     {Array.from({ length: 15 }, (_, i) => i + 7).map((h) => (
                       <MenuItem key={h} value={String(h)}>
-                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { timeZone: "UTC", hour: "numeric", minute: "2-digit" })}
+                        {new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                       </MenuItem>
                     ))}
                   </Select>
