@@ -187,7 +187,10 @@ async def list_borrow_requests(
         return []
     result = await db.execute(
         select(Request)
-        .options(selectinload(Request.return_timeframe))
+        .options(
+            selectinload(Request.return_timeframe),
+            selectinload(Request.checkout_timeframes).selectinload(CheckoutTimeframe.timeframe),
+        )
         .where(Request.membership_id == membership.id)
         .order_by(Request.created_at.desc())
     )
@@ -201,6 +204,8 @@ async def list_borrow_requests(
             status=r.status,
             denial_note=r.denial_note,
             return_date=r.return_date,
+            pickup_start=r.checkout_timeframes[0].timeframe.start_time if r.checkout_timeframes else None,
+            pickup_end=r.checkout_timeframes[0].timeframe.end_time if r.checkout_timeframes else None,
             return_start=r.return_timeframe.start_time if r.return_timeframe is not None else None,
             return_end=r.return_timeframe.end_time if r.return_timeframe is not None else None,
             created_at=r.created_at,

@@ -129,6 +129,8 @@ export interface BorrowRequestRead {
   status: "pending" | "approved" | "denied";
   denial_note: string | null;
   return_date: string | null;
+  pickup_start: string | null;
+  pickup_end: string | null;
   return_start: string | null;
   return_end: string | null;
   created_at: string;

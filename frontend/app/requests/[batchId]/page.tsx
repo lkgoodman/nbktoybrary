@@ -62,11 +62,47 @@ export default function RequestBatchPage({
           <Typography variant="body1" color="text.secondary">Request not found.</Typography>
         ) : (
           <Stack spacing={2}>
+            {(batch[0].pickup_start !== null || batch[0].return_start !== null || batch[0].return_date !== null) ? (
+              <Paper elevation={0} sx={{ p: 3 }}>
+                <Stack spacing={1}>
+                  {batch[0].pickup_start !== null && batch[0].pickup_end !== null ? (
+                    <Stack spacing={0.25}>
+                      <Typography variant="label" color="text.secondary">Pickup</Typography>
+                      <Typography variant="bodyStrong">
+                        {new Date(batch[0].pickup_start).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+                      </Typography>
+                      <Typography variant="body1">
+                        {new Date(batch[0].pickup_start).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                        {" – "}
+                        {new Date(batch[0].pickup_end).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                      </Typography>
+                    </Stack>
+                  ) : null}
+                  {batch[0].return_start !== null && batch[0].return_end !== null ? (
+                    <Stack spacing={0.25}>
+                      <Typography variant="label" color="text.secondary">Return</Typography>
+                      <Typography variant="bodyStrong">
+                        {new Date(batch[0].return_start).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+                      </Typography>
+                      <Typography variant="body1">
+                        {new Date(batch[0].return_start).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                        {" – "}
+                        {new Date(batch[0].return_end).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                      </Typography>
+                    </Stack>
+                  ) : batch[0].return_date !== null ? (
+                    <Stack spacing={0.25}>
+                      <Typography variant="label" color="text.secondary">Return by</Typography>
+                      <Typography variant="bodyStrong">
+                        {new Date(batch[0].return_date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+                      </Typography>
+                    </Stack>
+                  ) : null}
+                </Stack>
+              </Paper>
+            ) : null}
             <Typography variant="label" color="text.secondary">
               Submitted {new Date(batch[0].created_at).toLocaleDateString()}
-              {batch[0].return_start !== null && batch[0].return_end !== null
-                ? ` · Return ${new Date(batch[0].return_start).toLocaleDateString(undefined, { month: "long", day: "numeric" })} ${new Date(batch[0].return_start).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })} – ${new Date(batch[0].return_end).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`
-                : batch[0].return_date !== null ? ` · Return by ${new Date(batch[0].return_date).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}` : ""}
             </Typography>
 
             {batch.map((req: BorrowRequestRead) => {
