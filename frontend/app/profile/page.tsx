@@ -17,14 +17,11 @@ import { useMembershipsByUser, useUpdateUser, queryKeys } from "../lib/queries";
 import type { MembershipRead } from "../lib/types";
 
 export default function ProfilePage(): JSX.Element {
-  const { user, token, isAuthenticated, isMember, authReady } = useAuth();
+  const { user, token, isAuthenticated, authReady } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { data: memberships } = useMembershipsByUser(
-    user?.id ?? "",
-    isAuthenticated && user !== null ? token : null,
-  );
+  const { data: memberships } = useMembershipsByUser(user?.id ?? "", token);
   const membership: MembershipRead | null = memberships?.[0] ?? null;
 
   const updateUser = useUpdateUser();
@@ -123,7 +120,7 @@ export default function ProfilePage(): JSX.Element {
       <Stack spacing={4}>
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Typography variant="pageTitle" component="h1">My profile</Typography>
-          {isMember && membership !== null ? (
+          {membership !== null ? (
             membership.account_standing === "temporary_hold" ? (
               <Chip label="Membership paused" size="small" color="warning" variant="outlined" />
             ) : membership.account_standing === "banned" ? (

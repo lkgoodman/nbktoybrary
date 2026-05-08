@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.auth import require_roles
+from app.core.auth import get_current_user, require_roles
 from app.db.session import get_db
 from app.models.membership import AccountStanding, Membership, MembershipRequest, MembershipRequestStatus, MembershipUser
 from app.models.user import Role, User, UserRole
@@ -96,8 +96,13 @@ async def create_membership(
 async def list_memberships(
     user_id: uuid.UUID | None = None,
     db: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(require_roles("superadmin")),
+    current_user: User = Depends(get_current_user),
 ) -> list[Membership]:
+    is_superadmin = any(ur.role.name == "superadmin" for ur in current_user.roles)
+    # Non-superadmins may only query their own membership
+    if not is_superadmin:
+        if user_id is None or user_id != current_user.id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
     stmt = select(Membership).options(*_load_options)
     if user_id is not None:
         stmt = stmt.join(MembershipUser).where(MembershipUser.user_id == user_id)
