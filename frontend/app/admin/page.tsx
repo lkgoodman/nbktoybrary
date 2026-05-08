@@ -32,7 +32,7 @@ export default function AdminPage(): JSX.Element {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<number>(
-    searchParams.get("tab") === "schedule" ? 1 : searchParams.get("tab") === "borrow" ? 2 : searchParams.get("tab") === "membership" ? 3 : searchParams.get("tab") === "members" ? 4 : searchParams.get("tab") === "pickup" ? 5 : 0
+    searchParams.get("tab") === "schedule" ? 1 : searchParams.get("tab") === "borrow" ? 2 : searchParams.get("tab") === "members" || searchParams.get("tab") === "membership" ? 3 : searchParams.get("tab") === "pickup" ? 4 : 0
   );
   const [inventorySearch, setInventorySearch] = useState<string>("");
   const [inventoryTags, setInventoryTags] = useState<Set<string>>(new Set());
@@ -224,83 +224,14 @@ export default function AdminPage(): JSX.Element {
             } />
             <Tab sx={{ alignItems: "flex-start" }} label={
               <Badge badgeContent={pendingMembershipCount} color="error" sx={{ pr: pendingMembershipCount > 0 ? 2 : 0 }}>
-                Membership requests
+                Members
               </Badge>
             } />
-            <Tab label="Members" sx={{ alignItems: "flex-start" }} />
             <Tab label="Open hours" sx={{ alignItems: "flex-start" }} />
           </Tabs>
           <Box sx={{ flex: 1, minWidth: 0 }}>
 
-        {tab === 3 ? (
-          <Stack spacing={2}>
-            {requestsPending ? (
-              <Typography variant="body1" color="text.secondary">Loading…</Typography>
-            ) : requestsError ? (
-              <Typography variant="body1" color="error">Failed to load requests.</Typography>
-            ) : pending.length === 0 ? (
-              <Typography variant="body1" color="text.secondary">No pending requests.</Typography>
-            ) : (
-              <Stack spacing={2}>
-                {pending.map((req: MembershipRequestRead) => (
-                  <Paper key={req.id} elevation={0} sx={{ p: 3 }}>
-                    <Stack spacing={1}>
-                      <Typography variant="bodyStrong">{req.user.name}</Typography>
-                      <Typography variant="body1" color="text.secondary">{req.user.email}</Typography>
-                      <Typography variant="label" color="text.secondary">
-                        {req.user.address_line1}, {req.user.city}, {req.user.state} {req.user.zip}
-                      </Typography>
-                      <Stack direction="row" spacing={1} sx={{ pt: 1 }}>
-                        <Button
-                          variant="contained"
-                          size="small"
-                          disabled={updateRequest.isPending}
-                          onClick={() => handleReview(req.id, "approved")}
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          color="error"
-                          disabled={updateRequest.isPending}
-                          onClick={() => handleReview(req.id, "denied")}
-                        >
-                          Deny
-                        </Button>
-                      </Stack>
-                    </Stack>
-                  </Paper>
-                ))}
-              </Stack>
-            )}
-
-            {reviewed.length > 0 ? (
-              <>
-                <Divider />
-                <Typography variant="label" color="text.secondary">Previously reviewed</Typography>
-                <Stack spacing={2}>
-                  {reviewed.map((req: MembershipRequestRead) => (
-                    <Paper key={req.id} elevation={0} sx={{ p: 3 }}>
-                      <Stack spacing={0.5}>
-                        <Stack direction="row" spacing={2} alignItems="center">
-                          <Typography variant="bodyStrong">{req.user.name}</Typography>
-                          <Typography
-                            variant="label"
-                            color={req.status === "approved" ? "success.main" : "error.main"}
-                          >
-                            {req.status}
-                          </Typography>
-                        </Stack>
-                        <Typography variant="body1" color="text.secondary">{req.user.email}</Typography>
-                      </Stack>
-                    </Paper>
-                  ))}
-                </Stack>
-              </>
-            ) : null}
-          </Stack>
-        ) : tab === 0 ? (
+        {tab === 0 ? (
           <Stack spacing={2}>
             <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
               <TextField
@@ -521,89 +452,135 @@ export default function AdminPage(): JSX.Element {
               );
             })()}
           </Stack>
-        ) : tab === 4 ? (
-          <Stack spacing={2}>
-            <Stack direction="row" spacing={2} alignItems="center">
-              <TextField
-                label="Search members"
-                size="small"
-                value={memberSearch}
-                onChange={(e) => setMemberSearch(e.target.value)}
-                sx={{ flex: 1 }}
-              />
-              <Button
-                component={NextLink}
-                href="/admin/members/new"
-                variant="contained"
-                size="small"
-                sx={{ whiteSpace: "nowrap", flexShrink: 0 }}
-              >
-                Add member
-              </Button>
-            </Stack>
-            {usersPending ? (
-              <Typography variant="body1" color="text.secondary">Loading…</Typography>
-            ) : usersError ? (
-              <Typography variant="body1" color="error">Failed to load members.</Typography>
-            ) : (
-              <Stack spacing={1}>
-                {(users ?? []).filter((u: UserRead) => {
-                  const q = memberSearch.trim().toLowerCase();
-                  if (q === "") return true;
-                  return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
-                }).map((u: UserRead) => {
-                  const isMember = u.roles.includes("member");
-                  const canViewProfile = isMember || isSuperadmin;
-                  return (
-                    <Paper key={u.id} elevation={0} sx={{ p: 2 }}>
-                      <Stack direction="row" alignItems="center" justifyContent="space-between">
-                        <Stack spacing={0.25}>
-                          <Typography variant="bodyStrong">{u.name}</Typography>
-                          <Typography variant="body1" color="text.secondary">{u.email}</Typography>
-                          {!isMember ? (
-                            <Typography variant="label" color="text.secondary">No membership</Typography>
-                          ) : null}
-                        </Stack>
-                        <Stack direction="row" spacing={1}>
-                          {canViewProfile ? (
-                            <Button
-                              component={NextLink}
-                              href={`/admin/members/${u.id}`}
-                              variant="outlined"
-                              size="small"
-                            >
-                              View profile
-                            </Button>
-                          ) : null}
-                          {!isMember ? (
+        ) : tab === 3 ? (
+          <Stack spacing={3}>
+            {pending.length > 0 ? (
+              <Stack spacing={2}>
+                <Typography variant="sectionTitle" component="h2">Membership requests</Typography>
+                {requestsPending ? (
+                  <Typography variant="body1" color="text.secondary">Loading…</Typography>
+                ) : requestsError ? (
+                  <Typography variant="body1" color="error">Failed to load requests.</Typography>
+                ) : (
+                  <Stack spacing={2}>
+                    {pending.map((req: MembershipRequestRead) => (
+                      <Paper key={req.id} elevation={0} sx={{ p: 3 }}>
+                        <Stack spacing={1}>
+                          <Typography variant="bodyStrong">{req.user.name}</Typography>
+                          <Typography variant="body1" color="text.secondary">{req.user.email}</Typography>
+                          <Typography variant="label" color="text.secondary">
+                            {req.user.address_line1}, {req.user.city}, {req.user.state} {req.user.zip}
+                          </Typography>
+                          <Stack direction="row" spacing={1} sx={{ pt: 1 }}>
                             <Button
                               variant="contained"
                               size="small"
-                              disabled={createMembership.isPending}
-                              onClick={() => {
-                                if (token === null) return;
-                                createMembership.mutate(
-                                  { userId: u.id, token },
-                                  {
-                                    onSuccess: () => {
-                                      void queryClient.invalidateQueries({ queryKey: queryKeys.users.list() });
-                                    },
-                                  },
-                                );
-                              }}
+                              disabled={updateRequest.isPending}
+                              onClick={() => handleReview(req.id, "approved")}
                             >
-                              Grant membership
+                              Approve
                             </Button>
-                          ) : null}
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              color="error"
+                              disabled={updateRequest.isPending}
+                              onClick={() => handleReview(req.id, "denied")}
+                            >
+                              Deny
+                            </Button>
+                          </Stack>
                         </Stack>
-                      </Stack>
-                    </Paper>
-                  );
-                })}
+                      </Paper>
+                    ))}
+                  </Stack>
+                )}
+                <Divider />
               </Stack>
-            )}
+            ) : null}
+            <Stack spacing={2}>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <TextField
+                  label="Search members"
+                  size="small"
+                  value={memberSearch}
+                  onChange={(e) => setMemberSearch(e.target.value)}
+                  sx={{ flex: 1 }}
+                />
+                <Button
+                  component={NextLink}
+                  href="/admin/members/new"
+                  variant="contained"
+                  size="small"
+                  sx={{ whiteSpace: "nowrap", flexShrink: 0 }}
+                >
+                  Add member
+                </Button>
+              </Stack>
+              {usersPending ? (
+                <Typography variant="body1" color="text.secondary">Loading…</Typography>
+              ) : usersError ? (
+                <Typography variant="body1" color="error">Failed to load members.</Typography>
+              ) : (
+                <Stack spacing={1}>
+                  {(users ?? []).filter((u: UserRead) => {
+                    const q = memberSearch.trim().toLowerCase();
+                    if (q === "") return true;
+                    return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+                  }).map((u: UserRead) => {
+                    const isMember = u.roles.includes("member");
+                    const canViewProfile = isMember || isSuperadmin;
+                    return (
+                      <Paper key={u.id} elevation={0} sx={{ p: 2 }}>
+                        <Stack direction="row" alignItems="center" justifyContent="space-between">
+                          <Stack spacing={0.25}>
+                            <Typography variant="bodyStrong">{u.name}</Typography>
+                            <Typography variant="body1" color="text.secondary">{u.email}</Typography>
+                            {!isMember ? (
+                              <Typography variant="label" color="text.secondary">No membership</Typography>
+                            ) : null}
+                          </Stack>
+                          <Stack direction="row" spacing={1}>
+                            {canViewProfile ? (
+                              <Button
+                                component={NextLink}
+                                href={`/admin/members/${u.id}`}
+                                variant="outlined"
+                                size="small"
+                              >
+                                View profile
+                              </Button>
+                            ) : null}
+                            {!isMember ? (
+                              <Button
+                                variant="contained"
+                                size="small"
+                                disabled={createMembership.isPending}
+                                onClick={() => {
+                                  if (token === null) return;
+                                  createMembership.mutate(
+                                    { userId: u.id, token },
+                                    {
+                                      onSuccess: () => {
+                                        void queryClient.invalidateQueries({ queryKey: queryKeys.users.list() });
+                                      },
+                                    },
+                                  );
+                                }}
+                              >
+                                Grant membership
+                              </Button>
+                            ) : null}
+                          </Stack>
+                        </Stack>
+                      </Paper>
+                    );
+                  })}
+                </Stack>
+              )}
+            </Stack>
           </Stack>
-        ) : tab === 5 ? (
+        ) : tab === 4 ? (
           <Stack spacing={3}>
             <Stack spacing={2}>
               <Typography variant="bodyStrong">Add open hours</Typography>
