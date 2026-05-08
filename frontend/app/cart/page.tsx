@@ -291,7 +291,7 @@ export default function CartPage(): JSX.Element {
                   {selectedPickupDay !== null && selectedDayPickupTimeframes.length > 0 ? (
                     <Stack spacing={1} sx={{ pt: 1 }}>
                       <Typography variant="label" color="text.secondary">
-                        Available times on {new Date(selectedPickupDay.year, selectedPickupDay.month, selectedPickupDay.day).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}:
+                        Choose pickup window on {new Date(selectedPickupDay.year, selectedPickupDay.month, selectedPickupDay.day).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}:
                       </Typography>
                       {selectedDayPickupTimeframes.map((tf) => (
                         <Paper
@@ -401,7 +401,7 @@ export default function CartPage(): JSX.Element {
                   {selectedReturnDay !== null && selectedDayReturnTimeframes.length > 0 ? (
                     <Stack spacing={1} sx={{ pt: 1 }}>
                       <Typography variant="label" color="text.secondary">
-                        Available times on {new Date(selectedReturnDay.year, selectedReturnDay.month, selectedReturnDay.day).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}:
+                        Choose return window on {new Date(selectedReturnDay.year, selectedReturnDay.month, selectedReturnDay.day).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}:
                       </Typography>
                       {selectedDayReturnTimeframes.map((tf) => (
                         <Paper
