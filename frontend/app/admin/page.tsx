@@ -27,7 +27,7 @@ import { useMembershipRequests, useUpdateMembershipRequest, useToys, useAdminBor
 import type { BorrowRequestReadWithDetails, MembershipRequestRead, TimeframeRead, Toy, ToyImage, UserRead } from "../lib/types";
 
 export default function AdminPage(): JSX.Element {
-  const { isAdmin, token, isAuthenticated, authReady } = useAuth();
+  const { isAdmin, isSuperadmin, token, isAuthenticated, authReady } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -553,6 +553,7 @@ export default function AdminPage(): JSX.Element {
                   return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
                 }).map((u: UserRead) => {
                   const isMember = u.roles.includes("member");
+                  const canViewProfile = isMember || isSuperadmin;
                   return (
                     <Paper key={u.id} elevation={0} sx={{ p: 2 }}>
                       <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -563,35 +564,38 @@ export default function AdminPage(): JSX.Element {
                             <Typography variant="label" color="text.secondary">No membership</Typography>
                           ) : null}
                         </Stack>
-                        {isMember ? (
-                          <Button
-                            component={NextLink}
-                            href={`/admin/members/${u.id}`}
-                            variant="outlined"
-                            size="small"
-                          >
-                            View profile
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="contained"
-                            size="small"
-                            disabled={createMembership.isPending}
-                            onClick={() => {
-                              if (token === null) return;
-                              createMembership.mutate(
-                                { userId: u.id, token },
-                                {
-                                  onSuccess: () => {
-                                    void queryClient.invalidateQueries({ queryKey: queryKeys.users.list() });
+                        <Stack direction="row" spacing={1}>
+                          {canViewProfile ? (
+                            <Button
+                              component={NextLink}
+                              href={`/admin/members/${u.id}`}
+                              variant="outlined"
+                              size="small"
+                            >
+                              View profile
+                            </Button>
+                          ) : null}
+                          {!isMember ? (
+                            <Button
+                              variant="contained"
+                              size="small"
+                              disabled={createMembership.isPending}
+                              onClick={() => {
+                                if (token === null) return;
+                                createMembership.mutate(
+                                  { userId: u.id, token },
+                                  {
+                                    onSuccess: () => {
+                                      void queryClient.invalidateQueries({ queryKey: queryKeys.users.list() });
+                                    },
                                   },
-                                },
-                              );
-                            }}
-                          >
-                            Grant membership
-                          </Button>
-                        )}
+                                );
+                              }}
+                            >
+                              Grant membership
+                            </Button>
+                          ) : null}
+                        </Stack>
                       </Stack>
                     </Paper>
                   );
