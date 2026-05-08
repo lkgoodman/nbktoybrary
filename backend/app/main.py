@@ -52,7 +52,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             user = User(
                 name="Library Admin",
                 email="lkg@nbktoybrary.org",
-                phone="",
+                phone="000-000-0000",
                 address_line1="123 Main St",
                 city="Brooklyn",
                 state="NY",
