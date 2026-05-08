@@ -12,7 +12,8 @@ from app.db.base import Base
 from app.db.seed import seed
 from app.db.session import SessionLocal, engine
 from app.models import *  # noqa: F401,F403  -- register mappers
-from app.models.user import User
+from app.models.user import User, Role, UserRole
+from app.core.security import hash_password
 from app.routers import auth, borrow_requests, checkouts, favorites, membership_requests, memberships, timeframes, toy_images, toys, users
 
 IMAGES_DIR: str = os.getenv("IMAGES_DIR", "/data/images")
@@ -37,6 +38,33 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if needs_seed:
         async with SessionLocal() as session:
             await seed(session)
+    # Ensure superadmin role and account exist
+    async with SessionLocal() as session:
+        result = await session.execute(select(Role).where(Role.name == "superadmin"))
+        role = result.scalar_one_or_none()
+        if role is None:
+            role = Role(name="superadmin")
+            session.add(role)
+            await session.flush()
+        result = await session.execute(select(User).where(User.email == "lkg@nbktoybrary.org"))
+        user = result.scalar_one_or_none()
+        if user is None:
+            user = User(
+                name="Library Admin",
+                email="lkg@nbktoybrary.org",
+                phone="",
+                address_line1="123 Main St",
+                city="Brooklyn",
+                state="NY",
+                zip="11201",
+                password_hash=hash_password("Toybrary2026!"),
+            )
+            session.add(user)
+            await session.flush()
+        result = await session.execute(select(UserRole).where(UserRole.user_id == user.id, UserRole.role_id == role.id))
+        if result.scalar_one_or_none() is None:
+            session.add(UserRole(user_id=user.id, role_id=role.id))
+        await session.commit()
     yield
     await engine.dispose()
 
