@@ -416,7 +416,7 @@ export default function AdminPage(): JSX.Element {
                       <Stack spacing={0.5}>
                         <Typography variant="bodyStrong">{batch[0].member_name}</Typography>
                         <Typography variant="label" color="text.secondary">
-                          {new Date(batch[0].created_at).toLocaleDateString()} · {statusLabel}
+                          {statusLabel}
                         </Typography>
                         {pickup !== null ? (
                           <Typography variant="label" color="text.secondary">
@@ -441,11 +441,34 @@ export default function AdminPage(): JSX.Element {
                 return <Typography variant="body1" color="text.secondary">No borrow requests.</Typography>;
               }
 
+              function groupByDate(batchList: BorrowRequestReadWithDetails[][]): { dateLabel: string; batches: BorrowRequestReadWithDetails[][] }[] {
+                const map = new Map<string, BorrowRequestReadWithDetails[][]>();
+                for (const batch of batchList) {
+                  const d = new Date(batch[0].created_at);
+                  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                  const existing = map.get(key) ?? [];
+                  existing.push(batch);
+                  map.set(key, existing);
+                }
+                return [...map.entries()].map(([key, bs]) => ({
+                  dateLabel: new Date(key + "T12:00:00").toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" }),
+                  batches: bs,
+                }));
+              }
+
+              const pendingByDate = groupByDate(pendingBatches);
+              const resolvedByDate = groupByDate(resolvedBatches);
+
               return (
                 <Stack spacing={2}>
                   {pendingBatches.length > 0 ? (
-                    <Stack spacing={1}>
-                      {pendingBatches.map((batch) => <BatchCard key={batch[0].batch_id} batch={batch} />)}
+                    <Stack spacing={2}>
+                      {pendingByDate.map(({ dateLabel, batches: dateBatches }) => (
+                        <Stack key={dateLabel} spacing={1}>
+                          <Typography variant="sectionTitle">{dateLabel}</Typography>
+                          {dateBatches.map((batch) => <BatchCard key={batch[0].batch_id} batch={batch} />)}
+                        </Stack>
+                      ))}
                     </Stack>
                   ) : (
                     <Typography variant="body1" color="text.secondary">No pending borrow requests.</Typography>
@@ -454,8 +477,13 @@ export default function AdminPage(): JSX.Element {
                     <>
                       <Divider />
                       <Typography variant="label" color="text.secondary">Resolved</Typography>
-                      <Stack spacing={1}>
-                        {resolvedBatches.map((batch) => <BatchCard key={batch[0].batch_id} batch={batch} />)}
+                      <Stack spacing={2}>
+                        {resolvedByDate.map(({ dateLabel, batches: dateBatches }) => (
+                          <Stack key={dateLabel} spacing={1}>
+                            <Typography variant="sectionTitle">{dateLabel}</Typography>
+                            {dateBatches.map((batch) => <BatchCard key={batch[0].batch_id} batch={batch} />)}
+                          </Stack>
+                        ))}
                       </Stack>
                     </>
                   ) : null}
