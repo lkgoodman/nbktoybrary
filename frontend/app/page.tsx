@@ -140,6 +140,7 @@ export default function Page(): JSX.Element {
         const favoriteMatch = !favoritesOnly || favoriteIds.has(toy.id);
         return searchMatch && tagMatch && ageMatch && languageMatch && availabilityMatch && favoriteMatch;
       })
+      .sort((a, b) => Number(a.is_available ? 0 : 1) - Number(b.is_available ? 0 : 1))
     : [];
 
   function handleTagsChange(e: SelectChangeEvent<string[]>): void {
