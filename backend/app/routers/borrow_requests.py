@@ -111,7 +111,7 @@ async def create_borrow_requests(
     if return_timeframe is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Return timeframe not found")
 
-    MAX_TOYS = 5
+    MAX_TOYS = 3
     count_result = await db.execute(
         select(func.count()).where(
             Request.membership_id == membership.id,
