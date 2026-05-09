@@ -7,6 +7,7 @@ import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Toolbar from "@mui/material/Toolbar";
@@ -20,6 +21,7 @@ export default function NavBar(): JSX.Element {
   const { cartIds } = useCart();
   const router = useRouter();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [browseAnchorEl, setBrowseAnchorEl] = useState<null | HTMLElement>(null);
 
   function handleOpenMenu(e: React.MouseEvent<HTMLElement>): void {
     setAnchorEl(e.currentTarget);
@@ -27,6 +29,14 @@ export default function NavBar(): JSX.Element {
 
   function handleCloseMenu(): void {
     setAnchorEl(null);
+  }
+
+  function handleOpenBrowse(e: React.MouseEvent<HTMLElement>): void {
+    setBrowseAnchorEl(e.currentTarget);
+  }
+
+  function handleCloseBrowse(): void {
+    setBrowseAnchorEl(null);
   }
 
   function handleSignOut(): void {
@@ -63,13 +73,33 @@ export default function NavBar(): JSX.Element {
             <Typography variant="label" sx={{ color: "text.secondary" }}>
               {user?.name}
             </Typography>
+            <IconButton
+              onClick={handleOpenBrowse}
+              sx={{ width: 40, height: 40, bgcolor: "brand.name", "&:hover": { bgcolor: "brand.name" } }}
+            >
+              <Box sx={{ width: 16, height: 16, borderRadius: "50%", bgcolor: "background.default" }} />
+            </IconButton>
+            <Menu
+              anchorEl={browseAnchorEl}
+              open={browseAnchorEl !== null}
+              onClose={handleCloseBrowse}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+              <MenuItem component={NextLink} href="/" onClick={handleCloseBrowse}>
+                Inventory
+              </MenuItem>
+              <MenuItem component={NextLink} href="/hours" onClick={handleCloseBrowse}>
+                Hours
+              </MenuItem>
+            </Menu>
             <Button
               variant="contained"
               size="large"
               onClick={handleOpenMenu}
               sx={{ px: 4, py: 1.5, fontSize: "1.1rem", bgcolor: "brand.name", "&:hover": { bgcolor: "brand.name" } }}
             >
-              Menu
+              My account
             </Button>
             <Menu
               anchorEl={anchorEl}
@@ -83,12 +113,11 @@ export default function NavBar(): JSX.Element {
                   Admin
                 </MenuItem>
               ) : null}
-              <MenuItem component={NextLink} href="/" onClick={handleCloseMenu}>
-                Inventory
-              </MenuItem>
-              <MenuItem component={NextLink} href="/hours" onClick={handleCloseMenu}>
-                Hours
-              </MenuItem>
+              {isMember ? (
+                <MenuItem component={NextLink} href="/loans" onClick={handleCloseMenu}>
+                  Loans
+                </MenuItem>
+              ) : null}
               {isMember ? (
                 <MenuItem component={NextLink} href="/requests" onClick={handleCloseMenu}>
                   Checkout history

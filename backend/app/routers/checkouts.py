@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import require_roles
+from app.core.auth import get_current_user, require_roles
 from app.db.session import get_db
 from app.models.membership import Membership, MembershipUser
 from app.models.scheduling import Checkout, Request, RequestStatus
@@ -49,9 +49,21 @@ async def list_checkouts(
     toy_id: uuid_lib.UUID | None = None,
     returned: bool | None = None,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_roles("admin", "superadmin")),
+    current_user: User = Depends(get_current_user),
 ) -> list[CheckoutRead]:
+    is_admin = any(ur.role.name in ("admin", "superadmin") for ur in current_user.roles)
     stmt = select(Checkout).options(*_load_options).order_by(Checkout.checked_out_at.desc())
+    if not is_admin:
+        mem_result = await db.execute(
+            select(Membership)
+            .join(MembershipUser, MembershipUser.membership_id == Membership.id)
+            .where(MembershipUser.user_id == current_user.id)
+            .order_by(Membership.end_date.desc())
+        )
+        membership = mem_result.scalars().first()
+        if membership is None:
+            return []
+        stmt = stmt.where(Checkout.membership_id == membership.id)
     if toy_id is not None:
         stmt = stmt.where(Checkout.toy_id == toy_id)
     if returned is False:
