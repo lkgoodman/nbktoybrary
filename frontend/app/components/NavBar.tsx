@@ -70,9 +70,6 @@ export default function NavBar(): JSX.Element {
 
         {isAuthenticated ? (
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Typography variant="label" sx={{ color: "text.secondary" }}>
-              {user?.name}
-            </Typography>
             <IconButton
               onClick={handleOpenBrowse}
               sx={{ width: 40, height: 40, bgcolor: "brand.name", "&:hover": { bgcolor: "brand.name" } }}
@@ -99,7 +96,7 @@ export default function NavBar(): JSX.Element {
               onClick={handleOpenMenu}
               sx={{ px: 4, py: 1.5, fontSize: "1.1rem", bgcolor: "brand.name", "&:hover": { bgcolor: "brand.name" } }}
             >
-              My account
+              {user?.name ?? "My account"}
             </Button>
             <Menu
               anchorEl={anchorEl}
