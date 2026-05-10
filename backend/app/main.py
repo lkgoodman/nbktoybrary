@@ -69,6 +69,28 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         if result.scalar_one_or_none() is None:
             session.add(UserRole(user_id=user.id, role_id=role.id))
         await session.commit()
+    # Merge "puzzle" tag into "puzzles"
+    async with SessionLocal() as session:
+        from app.models.toy import Tag, ToyTag
+        puzzle_result = await session.execute(select(Tag).where(Tag.name == "puzzle"))
+        puzzle_tag = puzzle_result.scalar_one_or_none()
+        if puzzle_tag is not None:
+            puzzles_result = await session.execute(select(Tag).where(Tag.name == "puzzles"))
+            puzzles_tag = puzzles_result.scalar_one_or_none()
+            if puzzles_tag is None:
+                puzzle_tag.name = "puzzles"
+            else:
+                await session.execute(
+                    text("UPDATE toy_tags SET tag_id = :new WHERE tag_id = :old AND toy_id NOT IN (SELECT toy_id FROM toy_tags WHERE tag_id = :new)")
+                    .bindparams(new=puzzles_tag.id, old=puzzle_tag.id)
+                )
+                await session.execute(
+                    text("DELETE FROM toy_tags WHERE tag_id = :old").bindparams(old=puzzle_tag.id)
+                )
+                await session.execute(
+                    text("DELETE FROM tags WHERE id = :old").bindparams(old=puzzle_tag.id)
+                )
+            await session.commit()
     # Seed default site settings
     async with SessionLocal() as session:
         result = await session.execute(select(SiteSettings).where(SiteSettings.id == 1))

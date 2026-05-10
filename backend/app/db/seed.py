@@ -61,7 +61,7 @@ TOYS: list[dict[str, Any]] = [
         "age_max": None,
         "piece_count": 48,
         "keywords": [],
-        "tags": ["puzzle"],
+        "tags": ["puzzles"],
         "images": [
             {"url": "/static/images/8e45c7bf-3333-4e95-8c80-eff18e1551f6.jpg", "is_featured": True},
             {"url": "/static/images/b121c6a9-b60e-45cf-add1-0be2bfc2ab0c.jpg", "is_featured": False},
@@ -134,7 +134,7 @@ TOYS: list[dict[str, Any]] = [
         "age_max": None,
         "piece_count": 24,
         "keywords": [],
-        "tags": ["puzzle"],
+        "tags": ["puzzles"],
         "images": [
             {"url": "/static/images/1182b666-32dc-476c-b618-922bbd34535e.jpg", "is_featured": True},
             {"url": "/static/images/e68c1c12-7e94-4dd7-8942-c9816ba20c57.jpg", "is_featured": False},
@@ -153,7 +153,7 @@ TOYS: list[dict[str, Any]] = [
         "age_max": None,
         "piece_count": 24,
         "keywords": [],
-        "tags": ["puzzle"],
+        "tags": ["puzzles"],
         "images": [
             {"url": "/static/images/e7b05314-f1f1-48f1-8ffc-f553da362f9a.jpg", "is_featured": True},
             {"url": "/static/images/8f6ac7f8-266f-4666-a022-7a68e416465f.jpg", "is_featured": False},
@@ -487,7 +487,7 @@ TOYS: list[dict[str, Any]] = [
         "age_max": None,
         "piece_count": 9,
         "keywords": [],
-        "tags": ["puzzle"],
+        "tags": ["puzzles"],
         "images": [
             {"url": "/static/images/8f286525-6787-43c4-9bc0-dc39784ac903.jpg", "is_featured": True},
             {"url": "/static/images/c0f244fb-3a36-418b-a0e3-33b0ad7b26d5.jpg", "is_featured": False},
@@ -1228,7 +1228,7 @@ TOYS: list[dict[str, Any]] = [
         "age_max": None,
         "piece_count": 6,
         "keywords": [],
-        "tags": ["puzzle"],
+        "tags": ["puzzles"],
         "images": [],
     },
     {
@@ -1386,7 +1386,7 @@ TOYS: list[dict[str, Any]] = [
         "age_max": None,
         "piece_count": 8,
         "keywords": [],
-        "tags": ["puzzle"],
+        "tags": ["puzzles"],
         "images": [
             {"url": "/static/images/64685b0f-8f98-477c-8f1d-1fb844fe8a6a.jpg", "is_featured": True},
             {"url": "/static/images/1bc22b01-178c-4dd9-b01d-5125b9369d31.jpg", "is_featured": False},
