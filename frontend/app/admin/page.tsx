@@ -221,7 +221,12 @@ export default function AdminPage(): JSX.Element {
         <Stack direction="row" spacing={4} alignItems="flex-start">
           <Tabs
             value={tab}
-            onChange={(_e, v: number) => setTab(v)}
+            onChange={(_e, v: number) => {
+              setTab(v);
+              const tabNames = ["", "schedule", "borrow", "members", "pickup", "settings"] as const;
+              const name = tabNames[v];
+              router.replace(name === "" ? "/admin" : `/admin?tab=${name}`);
+            }}
             orientation="vertical"
             sx={{ borderRight: 1, borderColor: "divider", minWidth: 180, flexShrink: 0 }}
           >
