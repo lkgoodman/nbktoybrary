@@ -1029,7 +1029,7 @@ export default function AdminPage(): JSX.Element {
           // Build sets of days that have pickups or returns
           const pickupDayKeys = new Set<string>();
           const returnDayKeys = new Set<string>();
-          (borrowRequests ?? []).forEach((r) => {
+          (borrowRequests ?? []).filter((r) => r.status !== "denied").forEach((r) => {
             if (r.pickup_start !== null) {
               const d = new Date(r.pickup_start);
               pickupDayKeys.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
@@ -1112,9 +1112,9 @@ export default function AdminPage(): JSX.Element {
 
               {selectedScheduleDay !== null ? (() => {
                 const sel = selectedScheduleDay;
-                const pickupReqs = (borrowRequests ?? []).filter((r) => matchesSchedDay(r.pickup_start, sel));
+                const pickupReqs = (borrowRequests ?? []).filter((r) => r.status !== "denied" && matchesSchedDay(r.pickup_start, sel));
                 const returnReqs = (borrowRequests ?? []).filter((r) =>
-                  matchesSchedDay(r.return_start, sel) || (!r.return_start && matchesSchedDay(r.return_date, sel))
+                  r.status !== "denied" && (matchesSchedDay(r.return_start, sel) || (!r.return_start && matchesSchedDay(r.return_date, sel)))
                 );
                 const pickupBatches = toBatches(pickupReqs);
                 const returnBatches = toBatches(returnReqs);
