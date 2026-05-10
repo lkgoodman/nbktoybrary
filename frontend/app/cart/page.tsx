@@ -53,7 +53,11 @@ export default function CartPage(): JSX.Element {
   const cartToys: Toy[] = (allToys ?? []).filter((toy: Toy) => cartIds.includes(toy.id));
 
   const now = new Date();
-  const availableTimeframes: TimeframeRead[] = (allTimeframes ?? []).filter((tf) => new Date(tf.start_time) > now);
+  const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const availableTimeframes: TimeframeRead[] = (allTimeframes ?? []).filter((tf) => {
+    const start = new Date(tf.start_time);
+    return start > now && start <= oneWeekFromNow;
+  });
 
   const selectedTimeframe = availableTimeframes.find((tf) => tf.id === selectedTimeframeId) ?? null;
   const pickupDate = selectedTimeframe !== null ? new Date(selectedTimeframe.start_time) : null;
@@ -227,6 +231,9 @@ export default function CartPage(): JSX.Element {
 
             <Stack spacing={2}>
               <Typography variant="bodyStrong">Choose a pickup date and time</Typography>
+              <Typography variant="label" color="text.secondary">
+                Toys should be picked up within 1 week of making the reservation.
+              </Typography>
               {availableTimeframes.length === 0 ? (
                 <Typography variant="body1" color="text.secondary">
                   No pickup times are currently scheduled. Check back soon.
