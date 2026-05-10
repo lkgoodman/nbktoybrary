@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -24,6 +24,8 @@ export default function BorrowRequestDetailPage({
 }): JSX.Element {
   const { isAdmin, token, isAuthenticated, authReady } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const backHref = searchParams.get("from") === "schedule" ? "/admin?tab=schedule" : "/admin?tab=borrow";
   const queryClient = useQueryClient();
 
   const { data: allRequests, isPending, isError } = useAdminBorrowRequests(token);
@@ -141,12 +143,12 @@ export default function BorrowRequestDetailPage({
         <Stack spacing={1}>
           <Button
             component={NextLink}
-            href="/admin?tab=borrow"
+            href={backHref}
             variant="text"
             size="small"
             sx={{ alignSelf: "flex-start", pl: 0 }}
           >
-            ← Borrow requests
+            {searchParams.get("from") === "schedule" ? "← Schedule" : "← Borrow requests"}
           </Button>
           <Typography variant="pageTitle" component="h1">
             Borrow request

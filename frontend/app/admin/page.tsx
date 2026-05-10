@@ -1137,7 +1137,7 @@ export default function AdminPage(): JSX.Element {
                             {pendingCount > 0 ? `${pendingCount} pending` : batch.every((r) => r.status === "approved") ? "all approved" : "resolved"}
                           </Typography>
                         </Stack>
-                        <Button component={NextLink} href={`/admin/borrow-requests/${batch[0].batch_id}`} variant="outlined" size="small">View</Button>
+                        <Button component={NextLink} href={`/admin/borrow-requests/${batch[0].batch_id}?from=schedule`} variant="outlined" size="small">View</Button>
                       </Stack>
                     </Paper>
                   );
