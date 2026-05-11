@@ -231,7 +231,7 @@ export default function ToyPage({ params }: Props): JSX.Element {
                       <Button component={NextLink} href="/login" variant="contained">
                         Sign in
                       </Button>
-                      <Button component={NextLink} href="/apply" variant="outlined">
+                      <Button component="a" href="https://nbktoybrary.org/membership-application" target="_blank" rel="noopener noreferrer" variant="outlined">
                         Apply for membership
                       </Button>
                     </Stack>

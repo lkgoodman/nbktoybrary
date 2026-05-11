@@ -81,7 +81,7 @@ export default function LoginPage(): JSX.Element {
 
           <Typography variant="body1" color="text.secondary" textAlign="center">
             Don&apos;t have an account?{" "}
-            <Box component={NextLink} href="/apply" sx={{ color: "secondary.main" }}>
+            <Box component="a" href="https://nbktoybrary.org/membership-application" target="_blank" rel="noopener noreferrer" sx={{ color: "secondary.main" }}>
               Apply for membership
             </Box>
           </Typography>
