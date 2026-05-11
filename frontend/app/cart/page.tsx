@@ -12,7 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "../lib/AuthContext";
 import { useCart } from "../lib/CartContext";
-import { useToys, useCreateBorrowRequests, useTimeframes, queryKeys } from "../lib/queries";
+import { useToys, useCreateBorrowRequests, useTimeframes, useSettings, queryKeys } from "../lib/queries";
 import type { TimeframeRead, Toy, ToyImage } from "../lib/types";
 
 function getFeaturedImage(toy: Toy): ToyImage | null {
@@ -42,6 +42,10 @@ export default function CartPage(): JSX.Element {
   const createBorrowRequests = useCreateBorrowRequests();
   const queryClient = useQueryClient();
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [submittedToys, setSubmittedToys] = useState<Toy[]>([]);
+  const [submittedPickup, setSubmittedPickup] = useState<TimeframeRead | null>(null);
+  const [submittedReturn, setSubmittedReturn] = useState<TimeframeRead | null>(null);
+  const { data: siteSettings } = useSettings();
   const [selectedTimeframeId, setSelectedTimeframeId] = useState<string | null>(null);
   const [pickupCalendarMonth, setPickupCalendarMonth] = useState<Date>(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [selectedPickupDay, setSelectedPickupDay] = useState<{ year: number; month: number; day: number } | null>(null);
@@ -119,6 +123,9 @@ export default function CartPage(): JSX.Element {
       { toyIds: cartIds, timeframeId: selectedTimeframeId, returnDate, returnTimeframeId: selectedReturnTimeframeId, token },
       {
         onSuccess: () => {
+          setSubmittedToys(cartToys);
+          setSubmittedPickup(selectedTimeframe);
+          setSubmittedReturn(returnTimeframes.find((tf) => tf.id === selectedReturnTimeframeId) ?? null);
           clearCart();
           void queryClient.invalidateQueries({ queryKey: queryKeys.borrowRequests.list() });
           setSubmitted(true);
@@ -145,6 +152,64 @@ export default function CartPage(): JSX.Element {
           <Typography variant="body1" color="text.secondary">
             Your borrow request has been received.
           </Typography>
+
+          <Paper elevation={0} sx={{ p: 3 }}>
+            <Stack spacing={2}>
+              <Typography variant="bodyStrong">Toys requested</Typography>
+              <Stack spacing={1}>
+                {submittedToys.map((toy) => {
+                  const image = getFeaturedImage(toy);
+                  return (
+                    <Stack key={toy.id} direction="row" alignItems="center" spacing={2}>
+                      {image !== null ? (
+                        <Box
+                          component="img"
+                          src={image.image_url}
+                          alt={toy.name}
+                          sx={{ width: 48, height: 48, objectFit: "cover", borderRadius: 1, flexShrink: 0 }}
+                        />
+                      ) : null}
+                      <Typography variant="body1">{toy.name}</Typography>
+                    </Stack>
+                  );
+                })}
+              </Stack>
+            </Stack>
+          </Paper>
+
+          <Paper elevation={0} sx={{ p: 3 }}>
+            <Stack spacing={2}>
+              {submittedPickup !== null ? (
+                <Stack spacing={0.5}>
+                  <Typography variant="bodyStrong">Pickup</Typography>
+                  <Typography variant="body1">
+                    {formatTimeframeDate(submittedPickup.start_time)}
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    {formatTimeframeTime(submittedPickup.start_time)} – {formatTimeframeTime(submittedPickup.end_time)}
+                  </Typography>
+                  {siteSettings !== undefined && siteSettings.address.trim() !== "" ? (
+                    <Typography variant="body1" color="text.secondary">{siteSettings.address}</Typography>
+                  ) : null}
+                </Stack>
+              ) : null}
+              {submittedReturn !== null ? (
+                <Stack spacing={0.5}>
+                  <Typography variant="bodyStrong">Return</Typography>
+                  <Typography variant="body1">
+                    {formatTimeframeDate(submittedReturn.start_time)}
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    {formatTimeframeTime(submittedReturn.start_time)} – {formatTimeframeTime(submittedReturn.end_time)}
+                  </Typography>
+                  {siteSettings !== undefined && siteSettings.address.trim() !== "" ? (
+                    <Typography variant="body1" color="text.secondary">{siteSettings.address}</Typography>
+                  ) : null}
+                </Stack>
+              ) : null}
+            </Stack>
+          </Paper>
+
           <Box>
             <Button component={NextLink} href="/" variant="contained">Browse more toys</Button>
           </Box>
