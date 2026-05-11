@@ -145,7 +145,14 @@ export async function uploadToyImage(toyId: string, file: File, token: string): 
     headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
-  if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+  if (!res.ok) {
+    let detail: string | null = null;
+    try {
+      const body = await res.json() as { detail?: string };
+      if (typeof body.detail === "string") detail = body.detail;
+    } catch { /* ignore */ }
+    throw new Error(detail ?? `Upload failed: ${res.status}`);
+  }
   return res.json() as Promise<ToyImage>;
 }
 

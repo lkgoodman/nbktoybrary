@@ -189,6 +189,9 @@ export default function EditToyPage({ params }: Props): JSX.Element {
                     >
                       {uploadImage.isPending ? "Uploading…" : "Add photos"}
                     </Button>
+                    {uploadImage.isError ? (
+                      <Typography variant="body1" color="error">{uploadImage.error.message}</Typography>
+                    ) : null}
                   </Box>
                 </Stack>
               ) : null}
