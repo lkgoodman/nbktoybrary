@@ -439,9 +439,7 @@ export default function CartPage(): JSX.Element {
             <Divider />
 
             <Stack spacing={1}>
-              <Typography variant="label" color="text.secondary">
-                {cartIds.length} of 5 toys selected
-              </Typography>
+
               {createBorrowRequests.isError ? (
                 <Typography variant="body1" color="error">
                   {createBorrowRequests.error.message}
