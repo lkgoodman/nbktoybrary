@@ -4,6 +4,7 @@ import { useState } from "react";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import AppBar from "@mui/material/AppBar";
+import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
@@ -70,6 +71,19 @@ export default function NavBar(): JSX.Element {
 
         {isAuthenticated ? (
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            {cartIds.length > 0 ? (
+              <IconButton component={NextLink} href="/cart" sx={{ color: "inherit" }}>
+                <Badge badgeContent={cartIds.length} color="error">
+                  <Box
+                    component="svg"
+                    viewBox="0 0 24 24"
+                    sx={{ width: 24, height: 24, fill: "currentColor" }}
+                  >
+                    <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM5.07 4H2v2h2l3.6 7.59L6.25 15c-.16.28-.25.61-.25.95C6 17.1 6.9 18 8 18h12v-2H8.42c-.14 0-.25-.11-.25-.25l.03-.12L9.1 14h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 21 5H7.21l-.27-1H5.07z" />
+                  </Box>
+                </Badge>
+              </IconButton>
+            ) : null}
             <IconButton
               onClick={handleOpenBrowse}
               sx={{ width: 40, height: 40, bgcolor: "brand.name", "&:hover": { bgcolor: "brand.name" } }}

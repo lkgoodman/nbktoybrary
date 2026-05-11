@@ -439,7 +439,7 @@ export default function Page(): JSX.Element {
                             {favoriteIds.has(toy.id) ? "♥" : "♡"}
                           </IconButton>
                         ) : null}
-                        <Stack spacing={1}>
+                        <Stack spacing={1} sx={{ height: "100%" }}>
                           {featuredImage !== null ? (
                             <Box sx={{ position: "relative" }}>
                               <Box
@@ -474,7 +474,7 @@ export default function Page(): JSX.Element {
                               ) : null}
                             </Box>
                           ) : null}
-                          <Typography variant="sectionTitle" component="h2">
+                          <Typography variant="sectionTitle" component="h2" sx={{ flex: 1 }}>
                             {toy.name}
                           </Typography>
                           {isMember && toy.is_available ? (
