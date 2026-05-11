@@ -38,7 +38,7 @@ export default function HoursPage(): JSX.Element {
   const [selectedDay, setSelectedDay] = useState<{ year: number; month: number; day: number } | null>(null);
 
   return (
-    <Box component="main" sx={{ p: 4, maxWidth: 700, mx: "auto" }}>
+    <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 700, mx: "auto" }}>
       <Stack spacing={3}>
         <Typography variant="pageTitle" component="h1">Open Hours</Typography>
         <Typography variant="body1" color="text.secondary">

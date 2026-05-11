@@ -129,7 +129,7 @@ export default function CartPage(): JSX.Element {
 
   if (!isMember) {
     return (
-      <Box component="main" sx={{ p: 4, maxWidth: 600, mx: "auto" }}>
+      <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 600, mx: "auto" }}>
         <Typography variant="body1" color="text.secondary">
           Membership is required to check out toys.
         </Typography>
@@ -139,7 +139,7 @@ export default function CartPage(): JSX.Element {
 
   if (submitted) {
     return (
-      <Box component="main" sx={{ p: 4, maxWidth: 600, mx: "auto" }}>
+      <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 600, mx: "auto" }}>
         <Stack spacing={3}>
           <Typography variant="pageTitle" component="h1">Request submitted</Typography>
           <Typography variant="body1" color="text.secondary">
@@ -176,7 +176,7 @@ export default function CartPage(): JSX.Element {
   while (calCells.length % 7 !== 0) calCells.push(null);
 
   return (
-    <Box component="main" sx={{ p: 4, maxWidth: 600, mx: "auto" }}>
+    <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 600, mx: "auto" }}>
       <Stack spacing={4}>
         <Typography variant="pageTitle" component="h1">Your cart</Typography>
 

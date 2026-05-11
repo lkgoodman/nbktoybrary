@@ -138,7 +138,7 @@ export default function BorrowRequestDetailPage({
   }
 
   return (
-    <Box component="main" sx={{ p: 4, maxWidth: 800, mx: "auto" }}>
+    <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 800, mx: "auto" }}>
       <Stack spacing={4}>
         <Stack spacing={1}>
           <Button

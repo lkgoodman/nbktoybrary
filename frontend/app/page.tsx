@@ -297,7 +297,7 @@ export default function Page(): JSX.Element {
   );
 
   return (
-    <Box component="main" sx={{ p: 4 }}>
+    <Box component="main" sx={{ p: { xs: 2, md: 4 } }}>
       <Stack spacing={3}>
         {welcomeName !== null ? (
           <Alert severity="success" onClose={() => setWelcomeName(null)}>

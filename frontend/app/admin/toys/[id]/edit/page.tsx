@@ -96,7 +96,7 @@ export default function EditToyPage({ params }: Props): JSX.Element {
   if (!isAuthenticated || !isAdmin) return <Box />;
 
   return (
-    <Box component="main" sx={{ p: 4, maxWidth: 700, mx: "auto" }}>
+    <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 700, mx: "auto" }}>
       <Stack spacing={3}>
         <Box>
           <Button component={NextLink} href="/admin?tab=inventory" variant="text" size="small" sx={{ pl: 0 }}>

@@ -19,7 +19,7 @@ export default function RequestsPage(): JSX.Element {
 
   if (!isMember) {
     return (
-      <Box component="main" sx={{ p: 4, maxWidth: 600, mx: "auto" }}>
+      <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 600, mx: "auto" }}>
         <Typography variant="body1" color="text.secondary">
           Membership is required to view requests.
         </Typography>
@@ -53,7 +53,7 @@ export default function RequestsPage(): JSX.Element {
   function BatchCard({ batch }: { batch: BorrowRequestRead[] }): JSX.Element {
     return (
       <Paper elevation={0} sx={{ p: 3 }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+        <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "flex-start", sm: "center" }} justifyContent="space-between" spacing={2}>
           <Stack spacing={0.5}>
             <Typography variant="bodyStrong">
               {batch.length} {batch.length === 1 ? "toy" : "toys"} requested
@@ -79,7 +79,7 @@ export default function RequestsPage(): JSX.Element {
   }
 
   return (
-    <Box component="main" sx={{ p: 4, maxWidth: 600, mx: "auto" }}>
+    <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 600, mx: "auto" }}>
       <Stack spacing={4}>
         <Typography variant="pageTitle" component="h1">Checkout history</Typography>
 

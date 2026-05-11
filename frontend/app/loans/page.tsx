@@ -22,7 +22,7 @@ export default function LoansPage(): JSX.Element {
 
   if (!isMember) {
     return (
-      <Box component="main" sx={{ p: 4, maxWidth: 600, mx: "auto" }}>
+      <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 600, mx: "auto" }}>
         <Typography variant="body1" color="text.secondary">
           Membership is required to view loans.
         </Typography>
@@ -33,7 +33,7 @@ export default function LoansPage(): JSX.Element {
   const toysById = new Map((toys ?? []).map((t: Toy) => [t.id, t]));
 
   return (
-    <Box component="main" sx={{ p: 4, maxWidth: 600, mx: "auto" }}>
+    <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 600, mx: "auto" }}>
       <Stack spacing={4}>
         <Typography variant="pageTitle" component="h1">Current loans</Typography>
 

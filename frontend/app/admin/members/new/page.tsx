@@ -70,7 +70,7 @@ export default function NewMemberPage(): JSX.Element {
   const isPending = register.isPending || createMembership.isPending;
 
   return (
-    <Box component="main" sx={{ p: 4, maxWidth: 520, mx: "auto" }}>
+    <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 520, mx: "auto" }}>
       <Stack spacing={3}>
         <Stack spacing={1}>
           <Button

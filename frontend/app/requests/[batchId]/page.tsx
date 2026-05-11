@@ -28,7 +28,7 @@ export default function RequestBatchPage({
 
   if (!isMember) {
     return (
-      <Box component="main" sx={{ p: 4, maxWidth: 600, mx: "auto" }}>
+      <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 600, mx: "auto" }}>
         <Typography variant="body1" color="text.secondary">
           Membership is required to view requests.
         </Typography>
@@ -40,7 +40,7 @@ export default function RequestBatchPage({
   const toysById = new Map((toys ?? []).map((t: Toy) => [t.id, t]));
 
   return (
-    <Box component="main" sx={{ p: 4, maxWidth: 600, mx: "auto" }}>
+    <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 600, mx: "auto" }}>
       <Stack spacing={4}>
         <Stack spacing={1}>
           <Button

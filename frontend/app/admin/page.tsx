@@ -207,7 +207,7 @@ export default function AdminPage(): JSX.Element {
   if (!isAuthenticated || !isAdmin) return <Box />;
 
   return (
-    <Box component="main" sx={{ p: 4, maxWidth: 1100, mx: "auto" }}>
+    <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 1100, mx: "auto" }}>
       <Stack spacing={4}>
         {welcomeName !== null ? (
           <Alert severity="success" onClose={() => setWelcomeName(null)}>
@@ -218,7 +218,7 @@ export default function AdminPage(): JSX.Element {
           Admin
         </Typography>
 
-        <Stack direction="row" spacing={4} alignItems="flex-start">
+        <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 2, md: 4 }} alignItems="flex-start">
           <Tabs
             value={tab}
             onChange={(_e, v: number) => {
@@ -228,7 +228,15 @@ export default function AdminPage(): JSX.Element {
               router.replace(name === "" ? "/admin" : `/admin?tab=${name}`);
             }}
             orientation="vertical"
-            sx={{ borderRight: 1, borderColor: "divider", minWidth: 180, flexShrink: 0 }}
+            variant="scrollable"
+            sx={{
+              borderRight: { xs: 0, md: 1 },
+              borderBottom: { xs: 1, md: 0 },
+              borderColor: "divider",
+              minWidth: { xs: "100%", md: 180 },
+              flexShrink: 0,
+              "& .MuiTabs-flexContainer": { flexDirection: { xs: "row", md: "column" } },
+            }}
           >
             <Tab label="Inventory" sx={{ alignItems: "flex-start" }} />
             <Tab label="Schedule" sx={{ alignItems: "flex-start" }} />
@@ -245,7 +253,7 @@ export default function AdminPage(): JSX.Element {
             <Tab label="Open hours" sx={{ alignItems: "flex-start" }} />
             <Tab label="Settings" sx={{ alignItems: "flex-start" }} />
           </Tabs>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
 
         {tab === 0 ? (
           <Stack spacing={2}>

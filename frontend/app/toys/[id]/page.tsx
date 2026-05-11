@@ -43,7 +43,7 @@ export default function ToyPage({ params }: Props): JSX.Element {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   return (
-    <Box component="main" sx={{ p: 4, maxWidth: 800, mx: "auto" }}>
+    <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 800, mx: "auto" }}>
       <Stack spacing={3}>
         <Box>
           <Button

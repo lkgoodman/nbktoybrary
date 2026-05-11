@@ -104,7 +104,7 @@ export default function ProfilePage(): JSX.Element {
   }
 
   return (
-    <Box component="main" sx={{ p: 4, maxWidth: 600, mx: "auto" }}>
+    <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 600, mx: "auto" }}>
       <Stack spacing={4}>
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Typography variant="pageTitle" component="h1">My profile</Typography>
@@ -147,7 +147,7 @@ export default function ProfilePage(): JSX.Element {
               value={addressLine2}
               onChange={(e) => { setAddressLine2(e.target.value); setInfoSaved(false); setInfoError(null); }}
             />
-            <Stack direction="row" spacing={2}>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
               <TextField
                 label="City"
                 size="small"
@@ -160,14 +160,14 @@ export default function ProfilePage(): JSX.Element {
                 size="small"
                 value={state}
                 onChange={(e) => { setState(e.target.value); setInfoSaved(false); setInfoError(null); }}
-                sx={{ width: 80 }}
+                sx={{ width: { xs: "100%", sm: 80 } }}
               />
               <TextField
                 label="ZIP"
                 size="small"
                 value={zip}
                 onChange={(e) => { setZip(e.target.value); setInfoSaved(false); setInfoError(null); }}
-                sx={{ width: 100 }}
+                sx={{ width: { xs: "100%", sm: 100 } }}
               />
             </Stack>
             {infoError !== null ? (
@@ -194,7 +194,7 @@ export default function ProfilePage(): JSX.Element {
         <Paper elevation={0} sx={{ p: 3 }}>
           <Stack spacing={2}>
             <Typography variant="sectionTitle" component="h2">Change password</Typography>
-            <Stack direction="row" spacing={2} alignItems="flex-start">
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ xs: "stretch", sm: "flex-start" }}>
               <TextField
                 label="New password"
                 type="password"

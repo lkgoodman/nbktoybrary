@@ -64,7 +64,7 @@ export default function AdminMemberPage({
   const toyMap = new Map((toys ?? []).map((t: Toy) => [t.id, t]));
 
   return (
-    <Box component="main" sx={{ p: 4, maxWidth: 700, mx: "auto" }}>
+    <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 700, mx: "auto" }}>
       <Stack spacing={4}>
         <Stack spacing={1}>
           <Button

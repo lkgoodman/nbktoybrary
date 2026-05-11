@@ -137,7 +137,7 @@ export default function AdminToyDetailPage({
   }
 
   return (
-    <Box component="main" sx={{ p: 4, maxWidth: 800, mx: "auto" }}>
+    <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 800, mx: "auto" }}>
       <Stack spacing={3}>
         <Button
           component={NextLink}

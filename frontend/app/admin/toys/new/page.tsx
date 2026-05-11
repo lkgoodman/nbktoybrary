@@ -117,7 +117,7 @@ export default function NewToyPage(): JSX.Element {
   const isSubmitting = createToy.isPending || uploadImage.isPending;
 
   return (
-    <Box component="main" sx={{ p: 4, maxWidth: 700, mx: "auto" }}>
+    <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 700, mx: "auto" }}>
       <Stack spacing={3}>
         <Box>
           <Button component={NextLink} href="/admin" variant="text" size="small" sx={{ pl: 0 }}>

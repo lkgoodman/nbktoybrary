@@ -38,7 +38,7 @@ export default function LoginPage(): JSX.Element {
   }
 
   return (
-    <Box component="main" sx={{ p: 4, maxWidth: 480, mx: "auto" }}>
+    <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 480, mx: "auto" }}>
       <Paper elevation={0} sx={{ p: 4 }}>
         <Stack spacing={3} component="form" onSubmit={handleSubmit}>
           <Typography variant="pageTitle" component="h1">

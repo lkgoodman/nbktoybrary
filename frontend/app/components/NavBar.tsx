@@ -60,9 +60,9 @@ export default function NavBar(): JSX.Element {
               component="img"
               src="/logo.png"
               alt="North Brooklyn Community Toybrary"
-              sx={{ height: 112, width: 112 }}
+              sx={{ height: { xs: 64, md: 112 }, width: { xs: 64, md: 112 }, flexShrink: 0 }}
             />
-            <Typography variant="navTitle" sx={{ color: "brand.name" }}>
+            <Typography variant="navTitle" sx={{ color: "brand.name", display: { xs: "none", md: "block" } }}>
               North Brooklyn Community Toybrary
             </Typography>
           </Box>
@@ -94,7 +94,7 @@ export default function NavBar(): JSX.Element {
               variant="contained"
               size="large"
               onClick={handleOpenMenu}
-              sx={{ px: 4, py: 1.5, fontSize: "1.1rem", bgcolor: "brand.name", "&:hover": { bgcolor: "brand.name" } }}
+              sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 1.5 }, fontSize: { xs: "0.85rem", md: "1.1rem" }, bgcolor: "brand.name", "&:hover": { bgcolor: "brand.name" } }}
             >
               {user?.name ?? "My account"}
             </Button>
@@ -139,7 +139,7 @@ export default function NavBar(): JSX.Element {
               href="/hours"
               variant="text"
               size="large"
-              sx={{ px: 2, py: 1.5, fontSize: "1.1rem", color: "inherit" }}
+              sx={{ px: { xs: 1, md: 2 }, py: { xs: 1, md: 1.5 }, fontSize: { xs: "0.85rem", md: "1.1rem" }, color: "inherit" }}
             >
               Hours
             </Button>
@@ -148,7 +148,7 @@ export default function NavBar(): JSX.Element {
               href="/login"
               variant="contained"
               size="large"
-              sx={{ px: 4, py: 1.5, fontSize: "1.1rem", bgcolor: "brand.name", "&:hover": { bgcolor: "brand.name" } }}
+              sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 1.5 }, fontSize: { xs: "0.85rem", md: "1.1rem" }, bgcolor: "brand.name", "&:hover": { bgcolor: "brand.name" } }}
             >
               Sign in
             </Button>
