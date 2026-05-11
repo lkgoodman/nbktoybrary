@@ -109,8 +109,8 @@ class Checkout(AuditMixin, Base):
     membership_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("memberships.id", ondelete="RESTRICT"), nullable=False
     )
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
     )
     request_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("requests.id", ondelete="SET NULL"), unique=True, nullable=True
@@ -123,7 +123,7 @@ class Checkout(AuditMixin, Base):
 
     toy: Mapped["Toy"] = relationship(back_populates="checkouts")
     membership: Mapped["Membership"] = relationship(back_populates="checkouts")
-    user: Mapped["User"] = relationship(back_populates="checkouts", foreign_keys=[user_id])
+    user: Mapped["User | None"] = relationship(back_populates="checkouts", foreign_keys=[user_id])
     request: Mapped["Request | None"] = relationship(back_populates="checkout")
     return_timeframes: Mapped[list["ReturnTimeframe"]] = relationship(
         back_populates="checkout", cascade="all, delete-orphan"
