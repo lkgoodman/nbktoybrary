@@ -107,6 +107,7 @@ export default function NewMemberPage(): JSX.Element {
             <TextField
               label="Phone"
               size="small"
+              required
               fullWidth
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
