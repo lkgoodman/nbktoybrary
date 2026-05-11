@@ -93,6 +93,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                     text("DELETE FROM tags WHERE id = :old").bindparams(old=puzzle_tag.id)
                 )
             await session.commit()
+    # Approve all lingering pending requests (auto-approval added retroactively)
+    async with SessionLocal() as session:
+        from app.models.scheduling import Request, RequestStatus as RS
+        await session.execute(
+            text("UPDATE requests SET status = 'approved' WHERE status = 'pending'")
+        )
+        await session.commit()
     # Seed default site settings
     async with SessionLocal() as session:
         result = await session.execute(select(SiteSettings).where(SiteSettings.id == 1))

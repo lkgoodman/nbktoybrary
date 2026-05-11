@@ -91,10 +91,10 @@ async def create_checkout(
     req = req_result.scalar_one_or_none()
     if req is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
-    if req.status != RequestStatus.approved:
+    if req.status == RequestStatus.denied:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Only approved requests can be checked out",
+            detail="Denied requests cannot be checked out",
         )
 
     existing = await db.execute(
