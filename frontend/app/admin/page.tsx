@@ -145,7 +145,6 @@ export default function AdminPage(): JSX.Element {
 
   const pending = requests?.filter((r: MembershipRequestRead) => r.status === "pending") ?? [];
   const reviewed = requests?.filter((r: MembershipRequestRead) => r.status !== "pending") ?? [];
-  const pendingBorrowCount = (borrowRequests ?? []).filter((r) => r.status === "pending").length;
   const pendingMembershipCount = pending.length;
 
   function handleReview(id: string, status: "approved" | "denied"): void {
@@ -240,11 +239,7 @@ export default function AdminPage(): JSX.Element {
           >
             <Tab label="Inventory" sx={{ alignItems: "flex-start" }} />
             <Tab label="Schedule" sx={{ alignItems: "flex-start" }} />
-            <Tab sx={{ alignItems: "flex-start" }} label={
-              <Badge badgeContent={pendingBorrowCount} color="error" sx={{ pr: pendingBorrowCount > 0 ? 2 : 0 }}>
-                Borrow requests
-              </Badge>
-            } />
+            <Tab label="Borrow requests" sx={{ alignItems: "flex-start" }} />
             <Tab sx={{ alignItems: "flex-start" }} label={
               <Badge badgeContent={pendingMembershipCount} color="error" sx={{ pr: pendingMembershipCount > 0 ? 2 : 0 }}>
                 Members

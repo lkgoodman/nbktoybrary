@@ -140,7 +140,7 @@ async def create_borrow_requests(
     batch_id = uuid_lib.uuid4()
     created: list[Request] = []
     for toy_id in payload.toy_ids:
-        req = Request(toy_id=toy_id, membership_id=membership.id, batch_id=batch_id, created_by=current_user.id, return_date=payload.return_date, return_timeframe_id=payload.return_timeframe_id)
+        req = Request(toy_id=toy_id, membership_id=membership.id, batch_id=batch_id, created_by=current_user.id, return_date=payload.return_date, return_timeframe_id=payload.return_timeframe_id, status=RequestStatus.approved)
         db.add(req)
         created.append(req)
     await db.commit()
