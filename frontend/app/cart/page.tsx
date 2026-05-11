@@ -179,6 +179,12 @@ export default function CartPage(): JSX.Element {
 
           <Paper elevation={0} sx={{ p: 3 }}>
             <Stack spacing={2}>
+              {siteSettings !== undefined && siteSettings.address.trim() !== "" ? (
+                <Stack spacing={0.5}>
+                  <Typography variant="bodyStrong">Location</Typography>
+                  <Typography variant="body1" color="text.secondary">{siteSettings.address}</Typography>
+                </Stack>
+              ) : null}
               {submittedPickup !== null ? (
                 <Stack spacing={0.5}>
                   <Typography variant="bodyStrong">Pickup</Typography>
@@ -188,9 +194,6 @@ export default function CartPage(): JSX.Element {
                   <Typography variant="body1" color="text.secondary">
                     {formatTimeframeTime(submittedPickup.start_time)} – {formatTimeframeTime(submittedPickup.end_time)}
                   </Typography>
-                  {siteSettings !== undefined && siteSettings.address.trim() !== "" ? (
-                    <Typography variant="body1" color="text.secondary">{siteSettings.address}</Typography>
-                  ) : null}
                 </Stack>
               ) : null}
               {submittedReturn !== null ? (
@@ -202,9 +205,6 @@ export default function CartPage(): JSX.Element {
                   <Typography variant="body1" color="text.secondary">
                     {formatTimeframeTime(submittedReturn.start_time)} – {formatTimeframeTime(submittedReturn.end_time)}
                   </Typography>
-                  {siteSettings !== undefined && siteSettings.address.trim() !== "" ? (
-                    <Typography variant="body1" color="text.secondary">{siteSettings.address}</Typography>
-                  ) : null}
                 </Stack>
               ) : null}
             </Stack>
