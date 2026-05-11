@@ -29,12 +29,14 @@ declare module "@mui/material/styles" {
     brand: { name: string };
     filterBar: { main: string };
     toyCard: { main: string };
+    cartAction: { main: string; contrastText: string };
   }
   interface PaletteOptions {
     header?: { main: string };
     brand?: { name: string };
     filterBar?: { main: string };
     toyCard?: { main: string };
+    cartAction?: { main: string; contrastText: string };
   }
   interface Theme {
     layout: { sidebarWidth: number };
@@ -106,6 +108,7 @@ const themeOptions: ThemeOptions = {
     brand: { name: "#000000" },
     filterBar: { main: "#C1B2F0" },
     toyCard: { main: "#EFF483" },
+    cartAction: { main: "#194027", contrastText: "#ffffff" },
   },
   spacing: 8,
   shape: { borderRadius: 8 },

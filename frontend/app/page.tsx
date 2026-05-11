@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import NextLink from "next/link";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
@@ -67,7 +68,7 @@ function toyMatchesAgeBucket(toy: Toy, bucket: AgeBucket): boolean {
 
 export default function Page(): JSX.Element {
   const { data, isPending, isError, error } = useToys();
-  const { isInCart } = useCart();
+  const { isInCart, addToCart, removeFromCart, cartIds } = useCart();
   const { isAuthenticated, isMember, token } = useAuth();
   const queryClient = useQueryClient();
   const { data: favorites } = useFavorites(isMember ? token : null);
@@ -476,6 +477,30 @@ export default function Page(): JSX.Element {
                           <Typography variant="sectionTitle" component="h2">
                             {toy.name}
                           </Typography>
+                          {isMember && toy.is_available ? (
+                            <Box onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} sx={{ display: "flex", justifyContent: "center" }}>
+                              {isInCart(toy.id) ? (
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  color="error"
+                                  onClick={() => removeFromCart(toy.id)}
+                                >
+                                  Remove from cart
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  disabled={cartIds.length >= 3}
+                                  onClick={() => addToCart(toy.id)}
+                                  sx={{ bgcolor: "cartAction.main", color: "cartAction.contrastText", "&:hover": { bgcolor: "cartAction.main" } }}
+                                >
+                                  {cartIds.length >= 3 ? "Cart full" : "Add to cart"}
+                                </Button>
+                              )}
+                            </Box>
+                          ) : null}
                         </Stack>
                       </Paper>
                     </Box>
