@@ -1,6 +1,6 @@
 import { useMutation, useQuery, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 
-import { addFavorite, checkinCheckout, createBorrowRequests, createCheckout, createMembership, createTimeframe, createToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, fetchSettings, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listFavorites, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, removeFavorite, resetUserPassword, setFeaturedImage, updateMembershipRequest, updateMembershipStanding, updateSettings, updateToy, updateUser, uploadToyImage } from "./api";
+import { addFavorite, checkinCheckout, createBorrowRequests, createCheckout, createMembership, createTimeframe, createToy, deleteBorrowRequest, updateBorrowRequest, deleteTimeframe, deleteToyImage, fetchSettings, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listFavorites, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, removeFavorite, resetUserPassword, setFeaturedImage, updateMembershipRequest, updateMembershipStanding, updateSettings, updateToy, updateUser, uploadToyImage } from "./api";
 import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, MembershipRead, MembershipRequestRead, RegisterRequest, SiteSettingsRead, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead, UserUpdate } from "./types";
 
 
@@ -150,6 +150,12 @@ export function useAdminBorrowRequests(token: string | null): UseQueryResult<Bor
 export function useUpdateBorrowRequest(): UseMutationResult<BorrowRequestRead, Error, { id: string; status: "pending" | "approved" | "denied"; token: string; denialNote?: string }> {
   return useMutation<BorrowRequestRead, Error, { id: string; status: "pending" | "approved" | "denied"; token: string; denialNote?: string }>({
     mutationFn: ({ id, status, token, denialNote }) => updateBorrowRequest(id, status, token, denialNote),
+  });
+}
+
+export function useCancelBorrowRequest(): UseMutationResult<void, Error, { id: string; token: string }> {
+  return useMutation<void, Error, { id: string; token: string }>({
+    mutationFn: ({ id, token }) => deleteBorrowRequest(id, token),
   });
 }
 

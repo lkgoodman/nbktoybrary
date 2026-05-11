@@ -42,6 +42,7 @@ export const endpoints = {
     adminList: (): string => `${BACKEND_URL}/borrow-requests/admin`,
     create: (): string => `${BACKEND_URL}/borrow-requests`,
     update: (id: string): string => `${BACKEND_URL}/borrow-requests/${id}`,
+    delete: (id: string): string => `${BACKEND_URL}/borrow-requests/${id}`,
   },
   timeframes: {
     list: (): string => `${BACKEND_URL}/timeframes`,
@@ -204,6 +205,14 @@ export async function listAdminBorrowRequests(token: string): Promise<BorrowRequ
   return request<BorrowRequestReadWithDetails[]>(endpoints.borrowRequests.adminList(), {
     headers: { Authorization: `Bearer ${token}` },
   });
+}
+
+export async function deleteBorrowRequest(id: string, token: string): Promise<void> {
+  const res = await fetch(endpoints.borrowRequests.delete(id), {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`Cancel failed: ${res.status}`);
 }
 
 export async function updateBorrowRequest(id: string, status: "pending" | "approved" | "denied", token: string, denialNote?: string): Promise<BorrowRequestRead> {

@@ -13,7 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import NextLink from "next/link";
 import { useAuth } from "../../../lib/AuthContext";
-import { useAdminBorrowRequests, useToys, useCheckouts, useCreateCheckout, useCheckinCheckout, queryKeys } from "../../../lib/queries";
+import { useAdminBorrowRequests, useToys, useCheckouts, useCreateCheckout, useCheckinCheckout, useCancelBorrowRequest, queryKeys } from "../../../lib/queries";
 import type { BorrowRequestReadWithDetails, CheckoutRead, Toy, ToyImage } from "../../../lib/types";
 
 export default function BorrowRequestDetailPage({
@@ -32,6 +32,7 @@ export default function BorrowRequestDetailPage({
   const { data: activeCheckouts } = useCheckouts(token, { returned: false });
   const createCheckout = useCreateCheckout();
   const checkinCheckout = useCheckinCheckout();
+  const cancelBorrowRequest = useCancelBorrowRequest();
 
   useEffect(() => {
     if (!isAuthenticated || !isAdmin) {
@@ -61,6 +62,20 @@ export default function BorrowRequestDetailPage({
         onSuccess: () => {
           void queryClient.invalidateQueries({ queryKey: queryKeys.checkouts.list({ returned: false }) });
           void queryClient.invalidateQueries({ queryKey: queryKeys.toys.list() });
+        },
+      },
+    );
+  }
+
+  function handleCancel(requestId: string): void {
+    if (token === null) return;
+    cancelBorrowRequest.mutate(
+      { id: requestId, token },
+      {
+        onSuccess: () => {
+          void queryClient.invalidateQueries({ queryKey: queryKeys.borrowRequests.adminList() });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.toys.list() });
+          router.push(backHref);
         },
       },
     );
@@ -181,14 +196,25 @@ export default function BorrowRequestDetailPage({
                             </Button>
                           </>
                         ) : (
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            disabled={createCheckout.isPending}
-                            onClick={() => handleCheckout(req.id)}
-                          >
-                            Check out
-                          </Button>
+                          <>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              disabled={createCheckout.isPending || cancelBorrowRequest.isPending}
+                              onClick={() => handleCheckout(req.id)}
+                            >
+                              Check out
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                              disabled={cancelBorrowRequest.isPending}
+                              onClick={() => handleCancel(req.id)}
+                            >
+                              Cancel
+                            </Button>
+                          </>
                         )}
                       </Stack>
                     </Stack>

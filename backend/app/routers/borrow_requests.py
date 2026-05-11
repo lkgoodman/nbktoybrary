@@ -218,6 +218,21 @@ async def list_borrow_requests(
     ]
 
 
+@router.delete("/{request_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_borrow_request(
+    request_id: uuid_lib.UUID,
+    db: AsyncSession = Depends(get_db),
+    _current_user: User = Depends(require_roles("admin", "superadmin")),
+) -> Response:
+    result = await db.execute(select(Request).where(Request.id == request_id))
+    req = result.scalar_one_or_none()
+    if req is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
+    await db.delete(req)
+    await db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.patch("/{request_id}", response_model=BorrowRequestRead)
 async def update_borrow_request(
     request_id: uuid_lib.UUID,
