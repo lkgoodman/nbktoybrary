@@ -372,7 +372,6 @@ export default function AdminPage(): JSX.Element {
                             href={`/admin/toys/${toy.id}/edit`}
                             variant="outlined"
                             size="small"
-                            sx={{ flex: 1 }}
                           >
                             Edit
                           </Button>
