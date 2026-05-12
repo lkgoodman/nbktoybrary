@@ -19,6 +19,7 @@ class ToyBase(BaseModel):
     age_min: int | None = Field(default=None, ge=0)
     age_max: int | None = Field(default=None, ge=0)
     piece_count: int | None = Field(default=None, ge=0)
+    quantity: int = Field(default=1, ge=1)
     materials: list[str] = Field(default_factory=list)
     keywords: list[str] = Field(default_factory=list)
 
@@ -38,6 +39,7 @@ class ToyUpdate(BaseModel):
     age_min: int | None = Field(default=None, ge=0)
     age_max: int | None = Field(default=None, ge=0)
     piece_count: int | None = Field(default=None, ge=0)
+    quantity: int | None = Field(default=None, ge=1)
     materials: list[str] | None = None
     keywords: list[str] | None = None
     tags: list[str] | None = None
@@ -89,15 +91,17 @@ class ToyReadWithImages(ToyRead):
         result["images"] = getattr(data, "images", [])
         requests = getattr(data, "requests", [])
         checkouts = getattr(data, "checkouts", [])
-        has_open_request = any(
-            getattr(r, "status", None) in ("pending", "approved")
+        quantity = result.get("quantity") or 1
+        active_request_count = sum(
+            1 for r in requests
+            if getattr(r, "status", None) in ("pending", "approved")
             and (getattr(r, "checkout", None) is None or r.checkout.returned_at is None)
-            for r in requests
         )
-        has_active_checkout = any(c.returned_at is None for c in checkouts)
-        result["is_available"] = not has_open_request and not has_active_checkout
-        result["is_checked_out"] = has_active_checkout
-        result["is_requested"] = has_open_request and not has_active_checkout
+        active_checkout_count = sum(1 for c in checkouts if c.returned_at is None)
+        active_total = active_request_count + active_checkout_count
+        result["is_available"] = active_total < quantity
+        result["is_checked_out"] = active_checkout_count > 0
+        result["is_requested"] = active_request_count > 0 and active_total < quantity
         return result
 
 

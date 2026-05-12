@@ -29,6 +29,7 @@ class Toy(AuditMixin, Base):
     age_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
     age_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
     piece_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
 
     images: Mapped[list["ToyImage"]] = relationship(
         back_populates="toy", cascade="all, delete-orphan"

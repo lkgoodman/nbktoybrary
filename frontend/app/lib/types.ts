@@ -20,6 +20,7 @@ export interface Toy {
   age_min: number | null;
   age_max: number | null;
   piece_count: number | null;
+  quantity: number;
   images: ToyImage[];
   tags: string[];
   materials: string[];
@@ -90,6 +91,7 @@ export interface ToyCreate {
   age_min: number | null;
   age_max: number | null;
   piece_count: number | null;
+  quantity: number;
   materials: string[];
   keywords: string[];
   tags: string[];
@@ -116,6 +118,7 @@ export interface ToyUpdate {
   age_min?: number | null;
   age_max?: number | null;
   piece_count?: number | null;
+  quantity?: number;
   materials?: string[];
   keywords?: string[];
   tags?: string[];

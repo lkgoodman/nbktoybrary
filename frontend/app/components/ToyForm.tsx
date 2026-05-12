@@ -198,6 +198,14 @@ export default function ToyForm({
             sx={{ flex: 1 }}
             inputProps={{ min: 0 }}
           />
+          <TextField
+            label="Quantity"
+            type="number"
+            value={values.quantity ?? 1}
+            onChange={(e) => set("quantity", Math.max(1, parseInt(e.target.value, 10) || 1))}
+            sx={{ width: 100, flexShrink: 0 }}
+            inputProps={{ min: 1 }}
+          />
         </Stack>
         <Box>
           <FormControlLabel

@@ -26,6 +26,7 @@ const EMPTY: ToyCreate = {
   age_min: null,
   age_max: null,
   piece_count: null,
+  quantity: 1,
   materials: [],
   keywords: [],
   tags: [],
