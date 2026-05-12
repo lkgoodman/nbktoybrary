@@ -113,7 +113,7 @@ export default function ToyPage({ params }: Props): JSX.Element {
                     {toy.name}
                   </Typography>
                   {isAdmin ? (
-                    <Button component={NextLink} href={`/admin/toys/${toy.id}/edit`} variant="outlined" size="small">
+                    <Button component={NextLink} href={`/admin/toys/${toy.id}/edit`} variant="outlined" size="small" sx={{ alignSelf: "flex-start", flexShrink: 0 }}>
                       Edit
                     </Button>
                   ) : null}
