@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-const backendUrl = process.env.RAILWAY_ENVIRONMENT
+const backendUrl = (process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_ENVIRONMENT_NAME)
   ? "http://backend.railway.internal:8000"
   : (process.env.BACKEND_URL ?? "http://backend:8000");
 
