@@ -24,6 +24,7 @@ export default function EditToyPage({ params }: Props): JSX.Element {
   const { data: toy, isPending } = useToy(params.id, token, { enabled: authReady });
   const { data: allToys } = useToys(token, { enabled: authReady });
   const tagOptions = [...new Set((allToys ?? []).flatMap((t) => t.tags))].sort();
+  const brandOptions = [...new Set((allToys ?? []).map((t) => t.brand).filter((b): b is string => b !== null))].sort();
   const updateToy = useUpdateToy();
   const uploadImage = useUploadToyImage();
   const setFeatured = useSetFeaturedImage();
@@ -118,6 +119,7 @@ export default function EditToyPage({ params }: Props): JSX.Element {
               error={updateToy.isError ? updateToy.error.message : null}
               submitLabel="Save changes"
               tagOptions={tagOptions}
+              brandOptions={brandOptions}
             >
               {toy !== undefined ? (
                 <Stack spacing={2}>

@@ -42,6 +42,7 @@ export default function NewToyPage(): JSX.Element {
   const setFeatured = useSetFeaturedImage();
   const { data: allToys } = useToys(token, { enabled: authReady });
   const tagOptions = [...new Set((allToys ?? []).flatMap((t) => t.tags))].sort();
+  const brandOptions = [...new Set((allToys ?? []).map((t) => t.brand).filter((b): b is string => b !== null))].sort();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [values, setValues] = useState<ToyCreate>(EMPTY);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -136,6 +137,7 @@ export default function NewToyPage(): JSX.Element {
             error={createToy.isError ? createToy.error.message : uploadError}
             submitLabel={isSubmitting ? (uploadImage.isPending ? "Uploading photos…" : "Creating…") : "Create toy"}
             tagOptions={tagOptions}
+            brandOptions={brandOptions}
           />
         </Paper>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
@@ -28,6 +29,7 @@ interface ToyFormProps {
   error: string | null;
   submitLabel: string;
   tagOptions?: string[];
+  brandOptions?: string[];
   children?: React.ReactNode;
 }
 
@@ -39,6 +41,7 @@ export default function ToyForm({
   error,
   submitLabel,
   tagOptions = [],
+  brandOptions = [],
   children,
 }: ToyFormProps): JSX.Element {
   function set<K extends keyof ToyCreate>(key: K, value: ToyCreate[K]): void {
@@ -87,11 +90,12 @@ export default function ToyForm({
           multiline
           rows={3}
         />
-        <TextField
-          label="Brand (optional)"
+        <Autocomplete
+          freeSolo
+          options={brandOptions}
           value={values.brand ?? ""}
-          onChange={(e) => set("brand", e.target.value.trim() === "" ? null : e.target.value)}
-          fullWidth
+          onInputChange={(_e, val) => set("brand", val.trim() === "" ? null : val)}
+          renderInput={(params) => <TextField {...params} label="Brand (optional)" fullWidth />}
         />
         <FormControl fullWidth>
           <InputLabel>Language (optional)</InputLabel>
