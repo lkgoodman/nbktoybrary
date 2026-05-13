@@ -112,3 +112,17 @@ async def update_toy(
     await db.commit()
     result = await db.execute(select(Toy).options(*_load_options).where(Toy.id == toy_id))
     return result.scalar_one()
+
+
+@router.delete("/{toy_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_toy(
+    toy_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _current_user: User = Depends(require_roles("admin", "superadmin")),
+) -> None:
+    result = await db.execute(select(Toy).where(Toy.id == toy_id))
+    toy = result.scalar_one_or_none()
+    if toy is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Toy not found")
+    await db.delete(toy)
+    await db.commit()

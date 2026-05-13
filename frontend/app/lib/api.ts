@@ -311,6 +311,14 @@ export async function listToys(token?: string): Promise<Toy[]> {
   });
 }
 
+export async function deleteToy(id: string, token: string): Promise<void> {
+  const res = await fetch(endpoints.toys.detail(id), {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
+}
+
 export async function getToy(id: string, token?: string): Promise<Toy> {
   return request<Toy>(endpoints.toys.detail(id), {
     headers: token !== undefined ? { Authorization: `Bearer ${token}` } : {},

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import NextLink from "next/link";
 import Box from "@mui/material/Box";
@@ -13,7 +13,7 @@ import Typography from "@mui/material/Typography";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "../../../lib/AuthContext";
-import { useToy, useAdminBorrowRequests, useCheckouts, useCreateCheckout, useCheckinCheckout, useUploadToyImage, useSetFeaturedImage, useDeleteToyImage, queryKeys } from "../../../lib/queries";
+import { useToy, useAdminBorrowRequests, useCheckouts, useCreateCheckout, useCheckinCheckout, useDeleteToy, useUploadToyImage, useSetFeaturedImage, useDeleteToyImage, queryKeys } from "../../../lib/queries";
 import type { BorrowRequestReadWithDetails, CheckoutRead, Toy, ToyImage } from "../../../lib/types";
 
 function getFeaturedImage(toy: Toy): ToyImage | null {
@@ -41,6 +41,8 @@ export default function AdminToyDetailPage({
   const router = useRouter();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
+  const deleteToy = useDeleteToy();
 
   const { data: toy, isPending: toyPending, isError: toyError } = useToy(params.id, token, { enabled: authReady });
   const { data: allRequests } = useAdminBorrowRequests(token);
@@ -170,16 +172,46 @@ export default function AdminToyDetailPage({
               <Stack spacing={2} sx={{ flex: 1, minWidth: 0 }}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
                   <Typography variant="pageTitle" component="h1">{toy.name}</Typography>
-                  <Button
-                    component={NextLink}
-                    href={`/admin/toys/${toy.id}/edit`}
-                    variant="outlined"
-                    size="small"
-                    sx={{ flexShrink: 0 }}
-                  >
-                    Edit
-                  </Button>
+                  <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+                    <Button component={NextLink} href={`/admin/toys/${toy.id}/edit`} variant="outlined" size="small">
+                      Edit
+                    </Button>
+                    {!confirmDelete ? (
+                      <Button variant="outlined" size="small" color="error" onClick={() => setConfirmDelete(true)}>
+                        Delete
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          color="error"
+                          disabled={deleteToy.isPending}
+                          onClick={() => {
+                            if (token === null) return;
+                            deleteToy.mutate(
+                              { id: params.id, token },
+                              {
+                                onSuccess: () => {
+                                  void queryClient.invalidateQueries({ queryKey: queryKeys.toys.list() });
+                                  router.push("/admin");
+                                },
+                              },
+                            );
+                          }}
+                        >
+                          Confirm delete
+                        </Button>
+                        <Button variant="outlined" size="small" onClick={() => setConfirmDelete(false)}>
+                          Cancel
+                        </Button>
+                      </>
+                    )}
+                  </Stack>
                 </Stack>
+                {deleteToy.isError ? (
+                  <Typography variant="body1" color="error">{deleteToy.error.message}</Typography>
+                ) : null}
 
                 <Stack spacing={0.5}>
                   {formatAgeRange(toy) !== null ? (
