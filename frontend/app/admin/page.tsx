@@ -23,8 +23,8 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import NextLink from "next/link";
 import { useAuth } from "../lib/AuthContext";
-import { useMembershipRequests, useUpdateMembershipRequest, useToys, useAdminBorrowRequests, useTimeframes, useCreateTimeframe, useDeleteTimeframe, useUsers, useCreateMembership, useSettings, useUpdateSettings, queryKeys } from "../lib/queries";
-import type { BorrowRequestReadWithDetails, MembershipRequestRead, TimeframeRead, Toy, ToyImage, UserRead } from "../lib/types";
+import { useMembershipRequests, useUpdateMembershipRequest, useToys, useAdminBorrowRequests, useTimeframes, useCreateTimeframe, useDeleteTimeframe, useUsers, useCreateMembership, useSettings, useUpdateSettings, useCheckouts, queryKeys } from "../lib/queries";
+import type { BorrowRequestReadWithDetails, CheckoutRead, MembershipRequestRead, TimeframeRead, Toy, ToyImage, UserRead } from "../lib/types";
 
 export default function AdminPage(): JSX.Element {
   const { isAdmin, isSuperadmin, token, isAuthenticated, authReady } = useAuth();
@@ -32,7 +32,7 @@ export default function AdminPage(): JSX.Element {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<number>(
-    searchParams.get("tab") === "schedule" ? 1 : searchParams.get("tab") === "borrow" ? 2 : searchParams.get("tab") === "members" || searchParams.get("tab") === "membership" ? 3 : searchParams.get("tab") === "pickup" ? 4 : searchParams.get("tab") === "settings" ? 5 : 0
+    searchParams.get("tab") === "schedule" ? 1 : searchParams.get("tab") === "borrow" ? 2 : searchParams.get("tab") === "members" || searchParams.get("tab") === "membership" ? 3 : searchParams.get("tab") === "pickup" ? 4 : searchParams.get("tab") === "settings" ? 5 : searchParams.get("tab") === "stats" ? 6 : 0
   );
   const [inventorySearch, setInventorySearch] = useState<string>("");
   const [inventoryTags, setInventoryTags] = useState<Set<string>>(new Set());
@@ -96,6 +96,7 @@ export default function AdminPage(): JSX.Element {
   const { data: requests, isPending: requestsPending, isError: requestsError } = useMembershipRequests(token);
   const updateRequest = useUpdateMembershipRequest();
   const { data: toys, isPending: toysPending, isError: toysError } = useToys(token, { enabled: authReady });
+  const { data: allCheckouts } = useCheckouts(token);
   const { data: borrowRequests, isPending: borrowPending, isError: borrowError } = useAdminBorrowRequests(token);
   const { data: timeframes, isPending: timeframesPending, isError: timeframesError } = useTimeframes(token);
   const { data: users, isPending: usersPending, isError: usersError } = useUsers(token);
@@ -222,7 +223,7 @@ export default function AdminPage(): JSX.Element {
             value={tab}
             onChange={(_e, v: number) => {
               setTab(v);
-              const tabNames = ["", "schedule", "borrow", "members", "pickup", "settings"] as const;
+              const tabNames = ["", "schedule", "borrow", "members", "pickup", "settings", "stats"] as const;
               const name = tabNames[v];
               router.replace(name === "" ? "/admin" : `/admin?tab=${name}`);
             }}
@@ -247,6 +248,7 @@ export default function AdminPage(): JSX.Element {
             } />
             <Tab label="Open hours" sx={{ alignItems: "flex-start" }} />
             <Tab label="Settings" sx={{ alignItems: "flex-start" }} />
+            <Tab label="Stats" sx={{ alignItems: "flex-start" }} />
           </Tabs>
           <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
 
@@ -1164,6 +1166,89 @@ export default function AdminPage(): JSX.Element {
                   </Stack>
                 );
               })() : null}
+            </Stack>
+          );
+        })() : null}
+
+        {tab === 6 ? (() => {
+          const toyList = toys ?? [];
+          const checkouts = allCheckouts ?? [];
+          const totalToys = toyList.length;
+          const availableNow = toyList.filter((t: Toy) => t.is_available).length;
+          const checkedOutNow = toyList.filter((t: Toy) => t.is_checked_out).length;
+
+          // Count all-time checkouts per toy
+          const countMap = new Map<string, { name: string; count: number; available: boolean }>();
+          checkouts.forEach((c: CheckoutRead) => {
+            const existing = countMap.get(c.toy_id);
+            if (existing !== undefined) {
+              existing.count++;
+            } else {
+              const toy = toyList.find((t: Toy) => t.id === c.toy_id);
+              countMap.set(c.toy_id, { name: c.toy_name, count: 1, available: toy?.is_available ?? false });
+            }
+          });
+          const ranked = [...countMap.values()].sort((a, b) => b.count - a.count);
+          const neverBorrowed = toyList.filter((t: Toy) => !countMap.has(t.id));
+
+          return (
+            <Stack spacing={4}>
+              <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                {([
+                  { label: "Total toys", value: totalToys },
+                  { label: "Available now", value: availableNow },
+                  { label: "Checked out now", value: checkedOutNow },
+                  { label: "All-time checkouts", value: checkouts.length },
+                ] as const).map(({ label, value }) => (
+                  <Paper key={label} elevation={0} sx={{ p: 3, minWidth: 140, flex: 1 }}>
+                    <Stack spacing={0.5}>
+                      <Typography variant="label" color="text.secondary">{label}</Typography>
+                      <Typography variant="pageTitle" component="p">{value}</Typography>
+                    </Stack>
+                  </Paper>
+                ))}
+              </Stack>
+
+              <Stack spacing={2}>
+                <Typography variant="sectionTitle" component="h2">Most checked out</Typography>
+                {ranked.length === 0 ? (
+                  <Typography variant="body1" color="text.secondary">No checkouts recorded yet.</Typography>
+                ) : (
+                  <Stack spacing={1}>
+                    {ranked.map((entry, i) => (
+                      <Paper key={entry.name} elevation={0} sx={{ p: 2 }}>
+                        <Stack direction="row" alignItems="center" justifyContent="space-between">
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <Typography variant="label" color="text.secondary" sx={{ minWidth: 24 }}>{i + 1}.</Typography>
+                            <Typography variant="body1">{entry.name}</Typography>
+                          </Stack>
+                          <Stack direction="row" spacing={2} alignItems="center">
+                            <Typography variant="body1" color="text.secondary">
+                              {entry.count} {entry.count === 1 ? "checkout" : "checkouts"}
+                            </Typography>
+                            {entry.available ? (
+                              <Typography variant="label" color="success.main">Available</Typography>
+                            ) : (
+                              <Typography variant="label" color="warning.main">Out</Typography>
+                            )}
+                          </Stack>
+                        </Stack>
+                      </Paper>
+                    ))}
+                  </Stack>
+                )}
+              </Stack>
+
+              {neverBorrowed.length > 0 ? (
+                <Stack spacing={2}>
+                  <Typography variant="sectionTitle" component="h2">Never borrowed ({neverBorrowed.length})</Typography>
+                  <Stack spacing={1}>
+                    {neverBorrowed.map((t: Toy) => (
+                      <Typography key={t.id} variant="body1" color="text.secondary">{t.name}</Typography>
+                    ))}
+                  </Stack>
+                </Stack>
+              ) : null}
             </Stack>
           );
         })() : null}
