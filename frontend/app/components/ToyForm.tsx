@@ -226,7 +226,7 @@ export default function ToyForm({
                 onChange={(e) => set("shareable", e.target.checked)}
               />
             }
-            label="Shareable"
+            label={values.shareable ? "Shareable: Yes (visible to members)" : "Shareable: No (hidden from members)"}
           />
         </Box>
       </Stack>
