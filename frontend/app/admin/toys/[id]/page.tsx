@@ -211,6 +211,12 @@ export default function AdminToyDetailPage({
                 {toy.description.trim().length > 0 ? (
                   <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>{toy.description}</Typography>
                 ) : null}
+                {toy.admin_notes !== null && toy.admin_notes.trim().length > 0 ? (
+                  <Stack spacing={0.5} sx={{ bgcolor: "filterBar.main", p: 1.5, borderRadius: 1 }}>
+                    <Typography variant="label" color="text.secondary">Admin notes</Typography>
+                    <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>{toy.admin_notes}</Typography>
+                  </Stack>
+                ) : null}
               </Stack>
             </Stack>
 

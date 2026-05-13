@@ -25,6 +25,7 @@ export interface Toy {
   tags: string[];
   materials: string[];
   keywords: string[];
+  admin_notes: string | null;
   is_available: boolean;
   is_checked_out: boolean;
   is_requested: boolean;
@@ -93,6 +94,7 @@ export interface ToyCreate {
   age_max: number | null;
   piece_count: number | null;
   quantity: number;
+  admin_notes: string | null;
   materials: string[];
   keywords: string[];
   tags: string[];
@@ -120,6 +122,7 @@ export interface ToyUpdate {
   age_max?: number | null;
   piece_count?: number | null;
   quantity?: number;
+  admin_notes?: string | null;
   materials?: string[];
   keywords?: string[];
   tags?: string[];

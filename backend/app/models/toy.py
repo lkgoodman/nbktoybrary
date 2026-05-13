@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, ForeignKey, Integer, JSON, LargeBinary, String, UniqueConstraint, Uuid
+from sqlalchemy import Boolean, ForeignKey, Integer, JSON, LargeBinary, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import AuditMixin, Base, TimestampMixin, UuidPK
@@ -30,6 +30,7 @@ class Toy(AuditMixin, Base):
     age_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
     piece_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
+    admin_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     images: Mapped[list["ToyImage"]] = relationship(
         back_populates="toy", cascade="all, delete-orphan"

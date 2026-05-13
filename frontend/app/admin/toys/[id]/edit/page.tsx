@@ -72,6 +72,7 @@ export default function EditToyPage({ params }: Props): JSX.Element {
         age_max: toy.age_max,
         piece_count: toy.piece_count,
         quantity: toy.quantity,
+        admin_notes: toy.admin_notes,
         materials: toy.materials,
         keywords: toy.keywords,
         tags: toy.tags,

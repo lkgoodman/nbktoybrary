@@ -231,6 +231,20 @@ export default function ToyForm({
         </Box>
       </Stack>
 
+      <Divider />
+
+      <Stack spacing={2}>
+        <Typography variant="label" color="text.secondary">Admin only</Typography>
+        <TextField
+          label="Admin notes (not visible to members)"
+          value={values.admin_notes ?? ""}
+          onChange={(e) => set("admin_notes", e.target.value.trim() === "" ? null : e.target.value)}
+          fullWidth
+          multiline
+          rows={3}
+        />
+      </Stack>
+
       {children}
 
       <Button type="submit" variant="contained" disabled={isLoading}>

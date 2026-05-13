@@ -20,6 +20,7 @@ class ToyBase(BaseModel):
     age_max: int | None = Field(default=None, ge=0)
     piece_count: int | None = Field(default=None, ge=0)
     quantity: int = Field(default=1, ge=1)
+    admin_notes: str | None = None
     materials: list[str] = Field(default_factory=list)
     keywords: list[str] = Field(default_factory=list)
 
@@ -40,6 +41,7 @@ class ToyUpdate(BaseModel):
     age_max: int | None = Field(default=None, ge=0)
     piece_count: int | None = Field(default=None, ge=0)
     quantity: int | None = Field(default=None, ge=1)
+    admin_notes: str | None = None
     materials: list[str] | None = None
     keywords: list[str] | None = None
     tags: list[str] | None = None
