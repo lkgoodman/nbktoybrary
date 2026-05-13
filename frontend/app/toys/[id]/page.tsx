@@ -37,9 +37,8 @@ type Props = { params: { id: string } };
 export default function ToyPage({ params }: Props): JSX.Element {
   const { isAuthenticated, isMember, isAdmin, token, authReady } = useAuth();
   const { data: toy, isPending, isError, error } = useToy(params.id, token, { enabled: authReady });
-  const { addToCart, removeFromCart, isInCart, cartIds } = useCart();
-  const inCart = isInCart(params.id);
-  const cartFull = cartIds.length >= 5;
+  const { addToCart, removeFromCart, cartIds, countInCart } = useCart();
+  const cartFull = cartIds.length >= 3;
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   return (
@@ -189,18 +188,23 @@ export default function ToyPage({ params }: Props): JSX.Element {
                 </Typography>
                 {isMember ? (
                   <Stack direction="row" spacing={1} alignItems="center">
-                    {!toy.is_available ? (
+                    {toy.available_count === 0 ? (
                       <Typography variant="body1" color="text.secondary">
                         This toy is currently unavailable.
                       </Typography>
-                    ) : inCart ? (
+                    ) : countInCart(params.id) > 0 ? (
                       <>
-                        <Button variant="contained" disabled>In cart</Button>
-                        <Button component={NextLink} href="/" variant="outlined" size="small">
-                          Keep browsing
-                        </Button>
-                        <Button variant="outlined" size="small" color="error" onClick={() => removeFromCart(params.id)}>
-                          Remove
+                        <Button size="small" variant="outlined" onClick={() => removeFromCart(params.id)} sx={{ minWidth: 32, px: 1 }}>−</Button>
+                        <Typography variant="body1">{countInCart(params.id)} in cart</Typography>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          disabled={cartFull || countInCart(params.id) >= toy.available_count}
+                          onClick={() => addToCart(params.id)}
+                          sx={{ minWidth: 32, px: 1 }}
+                        >+</Button>
+                        <Button component={NextLink} href="/cart" variant="outlined" size="small">
+                          View cart
                         </Button>
                       </>
                     ) : (
@@ -209,10 +213,10 @@ export default function ToyPage({ params }: Props): JSX.Element {
                         disabled={cartFull}
                         onClick={() => addToCart(params.id)}
                       >
-                        {cartFull ? "Cart full (5 max)" : "Add to cart"}
+                        {cartFull ? "Cart full (3 max)" : "Add to cart"}
                       </Button>
                     )}
-                    {cartIds.length > 0 ? (
+                    {cartIds.length > 0 && countInCart(params.id) === 0 ? (
                       <Button component={NextLink} href="/cart" variant="outlined">
                         View cart ({cartIds.length})
                       </Button>

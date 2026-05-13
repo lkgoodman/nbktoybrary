@@ -68,7 +68,7 @@ function toyMatchesAgeBucket(toy: Toy, bucket: AgeBucket): boolean {
 
 export default function Page(): JSX.Element {
   const { data, isPending, isError, error } = useToys();
-  const { isInCart, addToCart, removeFromCart, cartIds } = useCart();
+  const { isInCart, addToCart, removeFromCart, cartIds, countInCart } = useCart();
   const { isAuthenticated, isMember, token } = useAuth();
   const queryClient = useQueryClient();
   const { data: favorites } = useFavorites(isMember ? token : null);
@@ -454,7 +454,7 @@ export default function Page(): JSX.Element {
                                   display: "block",
                                 }}
                               />
-                              {isAuthenticated && (isInCart(toy.id) || !toy.is_available) ? (
+                              {isAuthenticated && (countInCart(toy.id) >= toy.available_count) ? (
                                 <Box
                                   sx={{
                                     position: "absolute",
@@ -468,7 +468,7 @@ export default function Page(): JSX.Element {
                                   }}
                                 >
                                   <Typography variant="sectionTitle" sx={{ color: "white" }}>
-                                    {isInCart(toy.id) ? "IN CART" : "UNAVAILABLE"}
+                                    {toy.available_count === 0 ? "UNAVAILABLE" : "IN CART"}
                                   </Typography>
                                 </Box>
                               ) : null}
@@ -477,17 +477,20 @@ export default function Page(): JSX.Element {
                           <Typography variant="sectionTitle" component="h2" sx={{ flex: 1 }}>
                             {toy.name}
                           </Typography>
-                          {isMember && toy.is_available ? (
+                          {isMember && toy.available_count > 0 ? (
                             <Box onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} sx={{ display: "flex", justifyContent: "center" }}>
-                              {isInCart(toy.id) ? (
-                                <Button
-                                  size="small"
-                                  variant="outlined"
-                                  color="error"
-                                  onClick={() => removeFromCart(toy.id)}
-                                >
-                                  Remove from cart
-                                </Button>
+                              {countInCart(toy.id) > 0 ? (
+                                <Stack direction="row" spacing={1} alignItems="center">
+                                  <Button size="small" variant="outlined" onClick={() => removeFromCart(toy.id)} sx={{ minWidth: 32, px: 1 }}>−</Button>
+                                  <Typography variant="body1">{countInCart(toy.id)}</Typography>
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    disabled={cartIds.length >= 3 || countInCart(toy.id) >= toy.available_count}
+                                    onClick={() => addToCart(toy.id)}
+                                    sx={{ minWidth: 32, px: 1, bgcolor: "cartAction.main", color: "cartAction.contrastText", "&:hover": { bgcolor: "cartAction.main" } }}
+                                  >+</Button>
+                                </Stack>
                               ) : (
                                 <Button
                                   size="small"

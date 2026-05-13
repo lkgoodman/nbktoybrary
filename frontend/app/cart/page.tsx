@@ -36,7 +36,7 @@ function formatTimeframeTime(isoString: string): string {
 
 export default function CartPage(): JSX.Element {
   const { token, isMember } = useAuth();
-  const { cartIds, removeFromCart, clearCart } = useCart();
+  const { cartIds, addToCart, removeFromCart, clearCart, countInCart } = useCart();
   const { data: allToys } = useToys();
   const { data: allTimeframes } = useTimeframes(token);
   const createBorrowRequests = useCreateBorrowRequests();
@@ -54,7 +54,21 @@ export default function CartPage(): JSX.Element {
   const [returnCalendarMonth, setReturnCalendarMonth] = useState<Date>(() => new Date());
   const [selectedReturnDay, setSelectedReturnDay] = useState<{ year: number; month: number; day: number } | null>(null);
 
-  const cartToys: Toy[] = (allToys ?? []).filter((toy: Toy) => cartIds.includes(toy.id));
+  // Deduplicated list of toys in cart with their counts
+  const cartEntries: Array<{ toy: Toy; count: number }> = [];
+  const seen = new Map<string, number>();
+  cartIds.forEach((id) => {
+    const toy = (allToys ?? []).find((t: Toy) => t.id === id);
+    if (toy === undefined) return;
+    const idx = seen.get(id);
+    if (idx !== undefined) {
+      cartEntries[idx].count++;
+    } else {
+      seen.set(id, cartEntries.length);
+      cartEntries.push({ toy, count: 1 });
+    }
+  });
+  const cartToys: Toy[] = cartEntries.map((e) => e.toy);
 
   const now = new Date();
   const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -264,7 +278,7 @@ export default function CartPage(): JSX.Element {
         ) : (
           <>
             <Stack spacing={2}>
-              {cartToys.map((toy: Toy) => {
+              {cartEntries.map(({ toy, count }) => {
                 const image = getFeaturedImage(toy);
                 return (
                 <Paper key={toy.id} elevation={0} sx={{ p: 3 }}>
@@ -277,15 +291,18 @@ export default function CartPage(): JSX.Element {
                         sx={{ width: 64, height: 64, objectFit: "cover", borderRadius: 1 }}
                       />
                     ) : <Box />}
-                    <Typography variant="bodyStrong" sx={{ textAlign: "center" }}>{toy.name}</Typography>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="error"
-                      onClick={() => removeFromCart(toy.id)}
-                    >
-                      Remove
-                    </Button>
+                    <Typography variant="bodyStrong">{toy.name}</Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Button size="small" variant="outlined" onClick={() => removeFromCart(toy.id)} sx={{ minWidth: 32, px: 1 }}>−</Button>
+                      <Typography variant="body1">{count}</Typography>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        disabled={cartIds.length >= 3 || countInCart(toy.id) >= toy.available_count}
+                        onClick={() => addToCart(toy.id)}
+                        sx={{ minWidth: 32, px: 1 }}
+                      >+</Button>
+                    </Stack>
                   </Box>
                 </Paper>
                 );

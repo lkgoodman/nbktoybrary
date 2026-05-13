@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 const STORAGE_KEY = "nbktoybrary_cart";
-const MAX_CART_SIZE = 5;
+const MAX_CART_SIZE = 3;
 
 interface CartContextValue {
   cartIds: string[];
@@ -11,6 +11,7 @@ interface CartContextValue {
   removeFromCart: (id: string) => void;
   clearCart: () => void;
   isInCart: (id: string) => boolean;
+  countInCart: (id: string) => number;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -39,7 +40,7 @@ export function CartProvider({ children }: { children: React.ReactNode }): JSX.E
 
   const addToCart = useCallback((id: string): void => {
     setCartIds((prev) => {
-      if (prev.includes(id) || prev.length >= MAX_CART_SIZE) return prev;
+      if (prev.length >= MAX_CART_SIZE) return prev;
       const next = [...prev, id];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       return next;
@@ -48,7 +49,9 @@ export function CartProvider({ children }: { children: React.ReactNode }): JSX.E
 
   const removeFromCart = useCallback((id: string): void => {
     setCartIds((prev) => {
-      const next = prev.filter((x) => x !== id);
+      const lastIndex = prev.lastIndexOf(id);
+      if (lastIndex === -1) return prev;
+      const next = [...prev.slice(0, lastIndex), ...prev.slice(lastIndex + 1)];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       return next;
     });
@@ -62,8 +65,12 @@ export function CartProvider({ children }: { children: React.ReactNode }): JSX.E
     return cartIds.includes(id);
   }, [cartIds]);
 
+  const countInCart = useCallback((id: string): number => {
+    return cartIds.filter((x) => x === id).length;
+  }, [cartIds]);
+
   return (
-    <CartContext.Provider value={{ cartIds, addToCart, removeFromCart, clearCart, isInCart }}>
+    <CartContext.Provider value={{ cartIds, addToCart, removeFromCart, clearCart, isInCart, countInCart }}>
       {children}
     </CartContext.Provider>
   );

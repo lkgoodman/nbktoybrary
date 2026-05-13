@@ -28,6 +28,7 @@ export interface Toy {
   is_available: boolean;
   is_checked_out: boolean;
   is_requested: boolean;
+  available_count: number;
   created_at: string;
   updated_at: string;
   created_by: string | null;

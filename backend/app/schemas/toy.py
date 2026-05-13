@@ -73,6 +73,7 @@ class ToyReadWithImages(ToyRead):
     is_available: bool = True
     is_checked_out: bool = False
     is_requested: bool = False
+    available_count: int = 0
 
     @model_validator(mode="before")
     @classmethod
@@ -102,6 +103,7 @@ class ToyReadWithImages(ToyRead):
         result["is_available"] = active_total < quantity
         result["is_checked_out"] = active_checkout_count > 0
         result["is_requested"] = active_request_count > 0 and active_total < quantity
+        result["available_count"] = max(0, quantity - active_total)
         return result
 
 
