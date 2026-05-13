@@ -11,7 +11,7 @@ import Typography from "@mui/material/Typography";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "../../../../lib/AuthContext";
-import { useToy, useToys, useUpdateToy, useUploadToyImage, useSetFeaturedImage, useDeleteToyImage, queryKeys } from "../../../../lib/queries";
+import { useToy, useToys, useUpdateToy, useUploadToyImage, useSetFeaturedImage, useDeleteToyImage, useDeleteToy, queryKeys } from "../../../../lib/queries";
 import ToyForm from "../../../../components/ToyForm";
 import type { ToyCreate, ToyImage } from "../../../../lib/types";
 
@@ -29,8 +29,10 @@ export default function EditToyPage({ params }: Props): JSX.Element {
   const uploadImage = useUploadToyImage();
   const setFeatured = useSetFeaturedImage();
   const deleteImage = useDeleteToyImage();
+  const deleteToy = useDeleteToy();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [values, setValues] = useState<ToyCreate | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
 
   function invalidateToy(): void {
     void queryClient.invalidateQueries({ queryKey: queryKeys.toys.detail(params.id) });
@@ -106,7 +108,43 @@ export default function EditToyPage({ params }: Props): JSX.Element {
             ← Inventory
           </Button>
         </Box>
-        <Typography variant="pageTitle" component="h1">Edit toy</Typography>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+          <Typography variant="pageTitle" component="h1">Edit toy</Typography>
+          {!confirmDelete ? (
+            <Button variant="outlined" color="error" size="small" onClick={() => setConfirmDelete(true)}>
+              Delete toy
+            </Button>
+          ) : (
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="contained"
+                color="error"
+                size="small"
+                disabled={deleteToy.isPending}
+                onClick={() => {
+                  if (token === null) return;
+                  deleteToy.mutate(
+                    { id: params.id, token },
+                    {
+                      onSuccess: () => {
+                        void queryClient.invalidateQueries({ queryKey: queryKeys.toys.list() });
+                        router.push("/admin");
+                      },
+                    },
+                  );
+                }}
+              >
+                Confirm delete
+              </Button>
+              <Button variant="outlined" size="small" onClick={() => setConfirmDelete(false)}>
+                Cancel
+              </Button>
+            </Stack>
+          )}
+        </Stack>
+        {deleteToy.isError ? (
+          <Typography variant="body1" color="error">{deleteToy.error.message}</Typography>
+        ) : null}
         <Paper elevation={0} sx={{ p: 4 }}>
           {isPending || values === null ? (
             <Typography variant="body1" color="text.secondary">Loading…</Typography>
@@ -202,6 +240,7 @@ export default function EditToyPage({ params }: Props): JSX.Element {
             </ToyForm>
           )}
         </Paper>
+
       </Stack>
     </Box>
   );
