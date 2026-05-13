@@ -1220,18 +1220,15 @@ export default function AdminPage(): JSX.Element {
                         <Stack direction="row" alignItems="center" justifyContent="space-between">
                           <Stack direction="row" spacing={1} alignItems="center">
                             <Typography variant="label" color="text.secondary" sx={{ minWidth: 24 }}>{i + 1}.</Typography>
-                            <Typography variant="body1">{entry.name}</Typography>
-                          </Stack>
-                          <Stack direction="row" spacing={2} alignItems="center">
-                            <Typography variant="body1" color="text.secondary">
-                              {entry.count} {entry.count === 1 ? "checkout" : "checkouts"}
+                            <Typography variant="body1">
+                              {entry.name}: {entry.count} {entry.count === 1 ? "checkout" : "checkouts"}
                             </Typography>
-                            {entry.available ? (
-                              <Typography variant="label" color="success.main">Available</Typography>
-                            ) : (
-                              <Typography variant="label" color="warning.main">Out</Typography>
-                            )}
                           </Stack>
+                          {entry.available ? (
+                            <Typography variant="label" color="success.main">Available</Typography>
+                          ) : (
+                            <Typography variant="label" color="warning.main">Out</Typography>
+                          )}
                         </Stack>
                       </Paper>
                     ))}
