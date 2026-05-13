@@ -37,12 +37,12 @@ export default function AdminToyDetailPage({
 }: {
   params: { id: string };
 }): JSX.Element {
-  const { isAdmin, token, isAuthenticated } = useAuth();
+  const { isAdmin, token, isAuthenticated, authReady } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: toy, isPending: toyPending, isError: toyError } = useToy(params.id);
+  const { data: toy, isPending: toyPending, isError: toyError } = useToy(params.id, token, { enabled: authReady });
   const { data: allRequests } = useAdminBorrowRequests(token);
   const { data: activeCheckouts, isPending: checkoutsPending } = useCheckouts(token, { toyId: params.id, returned: false });
   const createCheckout = useCreateCheckout();

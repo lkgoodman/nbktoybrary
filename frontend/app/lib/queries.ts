@@ -70,10 +70,11 @@ export function useToys(token?: string | null, options?: { enabled?: boolean }):
   });
 }
 
-export function useToy(id: string): UseQueryResult<Toy, Error> {
+export function useToy(id: string, token?: string | null, options?: { enabled?: boolean }): UseQueryResult<Toy, Error> {
   return useQuery<Toy, Error>({
-    queryKey: queryKeys.toys.detail(id),
-    queryFn: () => getToy(id),
+    queryKey: [...queryKeys.toys.detail(id), token ?? null],
+    queryFn: () => getToy(id, token ?? undefined),
+    enabled: options?.enabled !== false,
   });
 }
 

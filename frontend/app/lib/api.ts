@@ -311,8 +311,10 @@ export async function listToys(token?: string): Promise<Toy[]> {
   });
 }
 
-export async function getToy(id: string): Promise<Toy> {
-  return request<Toy>(endpoints.toys.detail(id));
+export async function getToy(id: string, token?: string): Promise<Toy> {
+  return request<Toy>(endpoints.toys.detail(id), {
+    headers: token !== undefined ? { Authorization: `Bearer ${token}` } : {},
+  });
 }
 
 export async function listFavorites(token: string): Promise<FavoriteRead[]> {

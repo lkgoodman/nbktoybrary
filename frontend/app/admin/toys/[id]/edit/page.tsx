@@ -21,7 +21,7 @@ export default function EditToyPage({ params }: Props): JSX.Element {
   const { isAdmin, isAuthenticated, token, authReady } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: toy, isPending } = useToy(params.id);
+  const { data: toy, isPending } = useToy(params.id, token, { enabled: authReady });
   const { data: allToys } = useToys(token, { enabled: authReady });
   const tagOptions = [...new Set((allToys ?? []).flatMap((t) => t.tags))].sort();
   const updateToy = useUpdateToy();

@@ -35,8 +35,8 @@ function formatAgeRange(toy: Toy): string | null {
 type Props = { params: { id: string } };
 
 export default function ToyPage({ params }: Props): JSX.Element {
-  const { data: toy, isPending, isError, error } = useToy(params.id);
-  const { isAuthenticated, isMember, isAdmin } = useAuth();
+  const { isAuthenticated, isMember, isAdmin, token, authReady } = useAuth();
+  const { data: toy, isPending, isError, error } = useToy(params.id, token, { enabled: authReady });
   const { addToCart, removeFromCart, isInCart, cartIds } = useCart();
   const inCart = isInCart(params.id);
   const cartFull = cartIds.length >= 5;
