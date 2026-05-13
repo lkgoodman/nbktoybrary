@@ -114,15 +114,16 @@ async def update_toy(
     return result.scalar_one()
 
 
-@router.delete("/{toy_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{toy_id}", status_code=status.HTTP_200_OK)
 async def delete_toy(
     toy_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     _current_user: User = Depends(require_roles("admin", "superadmin")),
-) -> None:
+) -> dict[str, str]:
     result = await db.execute(select(Toy).where(Toy.id == toy_id))
     toy = result.scalar_one_or_none()
     if toy is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Toy not found")
     await db.delete(toy)
     await db.commit()
+    return {"ok": "deleted"}
