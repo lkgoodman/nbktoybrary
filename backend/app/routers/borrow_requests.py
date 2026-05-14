@@ -111,21 +111,25 @@ async def create_borrow_requests(
     if return_timeframe is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Return timeframe not found")
 
+    pickup_date = timeframe.start_time.date()
+
+    # Only count requests that overlap with the new pickup date.
+    # Requests whose return_date is on or before the pickup date don't conflict
+    # (the member is returning those toys on or before they pick up the new ones).
     MAX_TOYS = 3
     count_result = await db.execute(
         select(func.count()).where(
             Request.membership_id == membership.id,
             Request.status.in_([RequestStatus.pending, RequestStatus.approved]),
+            Request.return_date > pickup_date,
         )
     )
     active_count = count_result.scalar_one()
     if active_count + len(payload.toy_ids) > MAX_TOYS:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"You already have {active_count} pending or approved request(s). You can have at most {MAX_TOYS} toys out at a time.",
+            detail=f"You already have {active_count} pending or approved request(s) that overlap with your requested pickup date. You can have at most {MAX_TOYS} toys out at a time.",
         )
-
-    pickup_date = timeframe.start_time.date()
     if payload.return_date < pickup_date:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
