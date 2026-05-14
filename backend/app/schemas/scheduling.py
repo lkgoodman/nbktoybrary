@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, Field, field_serializer
+from pydantic import BaseModel, Field, field_serializer, model_validator
 
 from app.models.scheduling import TimeframeStatus
 from app.schemas.base import AuditRead
@@ -20,7 +20,11 @@ class TimeframeBase(BaseModel):
 
 
 class TimeframeCreate(TimeframeBase):
-    pass
+    @model_validator(mode="after")
+    def end_after_start(self) -> "TimeframeCreate":
+        if self.end_time <= self.start_time:
+            raise ValueError("End time must be after start time.")
+        return self
 
 
 class TimeframeRead(TimeframeBase, AuditRead):
