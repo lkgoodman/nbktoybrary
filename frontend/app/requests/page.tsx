@@ -27,6 +27,8 @@ export default function RequestsPage(): JSX.Element {
     );
   }
 
+  const now = new Date();
+
   const batches = Object.values(
     (requests ?? []).reduce<Record<string, BorrowRequestRead[]>>(
       (groups, req) => {
@@ -37,8 +39,17 @@ export default function RequestsPage(): JSX.Element {
     )
   ).sort((a, b) => new Date(b[0].created_at).getTime() - new Date(a[0].created_at).getTime());
 
+  const upcomingBatches = batches.filter(
+    (b) =>
+      b.every((r) => r.status === "approved") &&
+      b[0].pickup_start !== null &&
+      b[0].pickup_start !== undefined &&
+      new Date(b[0].pickup_start) > now,
+  );
   const pendingBatches = batches.filter((b) => b.some((r) => r.status === "pending"));
-  const resolvedBatches = batches.filter((b) => b.every((r) => r.status !== "pending"));
+  const historyBatches = batches.filter(
+    (b) => !upcomingBatches.includes(b) && !pendingBatches.includes(b),
+  );
 
   function batchStatusChip(batch: BorrowRequestRead[]): JSX.Element {
     const hasPending = batch.some((r) => r.status === "pending");
@@ -96,19 +107,36 @@ export default function RequestsPage(): JSX.Element {
           </Stack>
         ) : (
           <Stack spacing={3}>
-            {pendingBatches.length > 0 ? (
-              <Stack spacing={1}>
-                {pendingBatches.map((batch) => <BatchCard key={batch[0].batch_id} batch={batch} />)}
+            {upcomingBatches.length > 0 ? (
+              <Stack spacing={2}>
+                <Typography variant="sectionTitle" component="h2">Upcoming</Typography>
+                <Stack spacing={1}>
+                  {upcomingBatches.map((batch) => <BatchCard key={batch[0].batch_id} batch={batch} />)}
+                </Stack>
               </Stack>
-            ) : (
-              <Typography variant="body1" color="text.secondary">No pending requests.</Typography>
-            )}
-            {resolvedBatches.length > 0 ? (
+            ) : null}
+            {pendingBatches.length > 0 ? (
+              <>
+                {upcomingBatches.length > 0 ? <Divider /> : null}
+                <Stack spacing={2}>
+                  <Typography variant="sectionTitle" component="h2">Pending review</Typography>
+                  <Stack spacing={1}>
+                    {pendingBatches.map((batch) => <BatchCard key={batch[0].batch_id} batch={batch} />)}
+                  </Stack>
+                </Stack>
+              </>
+            ) : null}
+            {upcomingBatches.length === 0 && pendingBatches.length === 0 ? (
+              <Typography variant="body1" color="text.secondary">No upcoming requests.</Typography>
+            ) : null}
+            {historyBatches.length > 0 ? (
               <>
                 <Divider />
-                <Typography variant="label" color="text.secondary">Resolved</Typography>
-                <Stack spacing={1}>
-                  {resolvedBatches.map((batch) => <BatchCard key={batch[0].batch_id} batch={batch} />)}
+                <Stack spacing={2}>
+                  <Typography variant="sectionTitle" component="h2">History</Typography>
+                  <Stack spacing={1}>
+                    {historyBatches.map((batch) => <BatchCard key={batch[0].batch_id} batch={batch} />)}
+                  </Stack>
                 </Stack>
               </>
             ) : null}
