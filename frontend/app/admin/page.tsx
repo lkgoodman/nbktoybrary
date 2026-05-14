@@ -38,8 +38,7 @@ export default function AdminPage(): JSX.Element {
   const [inventoryTags, setInventoryTags] = useState<Set<string>>(new Set());
   const [inventoryAge, setInventoryAge] = useState<number | null>(null);
   const [inventoryLanguage, setInventoryLanguage] = useState<string | null>(null);
-  const [inventoryAvailability, setInventoryAvailability] = useState<"available" | "requested" | "checked_out" | null>(null);
-  const [inventoryShareable, setInventoryShareable] = useState<boolean | null>(null);
+  const [inventoryAvailability, setInventoryAvailability] = useState<"available" | "requested" | "checked_out" | "shareable" | "not_shareable" | null>(null);
   const [newTfDate, setNewTfDate] = useState<string>("");
   const [newTfStartHour, setNewTfStartHour] = useState<string>("");
   const [newTfEndHour, setNewTfEndHour] = useState<string>("");
@@ -141,9 +140,10 @@ export default function AdminPage(): JSX.Element {
       inventoryAvailability === null ||
       (inventoryAvailability === "available" && toy.is_available) ||
       (inventoryAvailability === "requested" && toy.is_requested) ||
-      (inventoryAvailability === "checked_out" && toy.is_checked_out);
-    const shareableMatch = inventoryShareable === null || toy.shareable === inventoryShareable;
-    return searchMatch && tagMatch && ageMatch && languageMatch && availabilityMatch && shareableMatch;
+      (inventoryAvailability === "checked_out" && toy.is_checked_out) ||
+      (inventoryAvailability === "shareable" && toy.shareable) ||
+      (inventoryAvailability === "not_shareable" && !toy.shareable);
+    return searchMatch && tagMatch && ageMatch && languageMatch && availabilityMatch;
   });
 
   const pending = requests?.filter((r: MembershipRequestRead) => r.status === "pending") ?? [];
@@ -308,34 +308,21 @@ export default function AdminPage(): JSX.Element {
                 </Select>
               </FormControl>
               <FormControl size="small" sx={{ minWidth: 140 }}>
-                <InputLabel>Availability</InputLabel>
+                <InputLabel>Status</InputLabel>
                 <Select
-                  label="Availability"
+                  label="Status"
                   value={inventoryAvailability ?? ""}
                   onChange={(e) => {
                     const val = e.target.value;
-                    setInventoryAvailability(val === "" ? null : val as "available" | "requested" | "checked_out");
+                    setInventoryAvailability(val === "" ? null : val as "available" | "requested" | "checked_out" | "shareable" | "not_shareable");
                   }}
                 >
                   <MenuItem value="">Any</MenuItem>
                   <MenuItem value="available">Available</MenuItem>
                   <MenuItem value="requested">Requested</MenuItem>
                   <MenuItem value="checked_out">Checked out</MenuItem>
-                </Select>
-              </FormControl>
-              <FormControl size="small" sx={{ minWidth: 140 }}>
-                <InputLabel>Shareable</InputLabel>
-                <Select
-                  label="Shareable"
-                  value={inventoryShareable === null ? "" : String(inventoryShareable)}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setInventoryShareable(val === "" ? null : val === "true");
-                  }}
-                >
-                  <MenuItem value="">Any</MenuItem>
-                  <MenuItem value="true">Shareable</MenuItem>
-                  <MenuItem value="false">Not shareable</MenuItem>
+                  <MenuItem value="shareable">Shareable</MenuItem>
+                  <MenuItem value="not_shareable">Not shareable</MenuItem>
                 </Select>
               </FormControl>
               <Button component={NextLink} href="/admin/toys/new" variant="contained" sx={{ whiteSpace: "nowrap", flexShrink: 0 }}>
