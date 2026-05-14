@@ -95,32 +95,42 @@ export default function LoansPage(): JSX.Element {
         {upcomingBatches.length > 0 ? (
           <Stack spacing={2}>
             <Typography variant="sectionTitle" component="h2">Upcoming</Typography>
-            {upcomingBatches.map((batch) => {
-              const toyNames = batch.map((r) => toysById.get(r.toy_id)?.name ?? "Unknown toy");
-              return (
-                <Paper key={batch[0].batch_id} elevation={0} sx={{ p: 3 }}>
-                  <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
-                    <Stack spacing={0.5}>
-                      <Typography variant="bodyStrong">{toyNames.join(", ")}</Typography>
-                      {batch[0].pickup_start !== null && batch[0].pickup_end !== null ? (
-                        <Typography variant="label" color="text.secondary">
-                          Pickup: {new Date(batch[0].pickup_start).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{" "}
-                          {new Date(batch[0].pickup_start).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
-                          {" – "}
-                          {new Date(batch[0].pickup_end).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
-                        </Typography>
-                      ) : null}
+            {upcomingBatches.map((batch) => (
+              <Paper key={batch[0].batch_id} elevation={0} sx={{ p: 3 }}>
+                <Stack spacing={2}>
+                  {batch[0].pickup_start !== null && batch[0].pickup_end !== null ? (
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+                      <Typography variant="label" color="text.secondary">
+                        Pickup: {new Date(batch[0].pickup_start).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{" "}
+                        {new Date(batch[0].pickup_start).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                        {" – "}
+                        {new Date(batch[0].pickup_end).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                      </Typography>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Chip label="Upcoming" size="small" color="info" variant="outlined" />
+                        <Button component={NextLink} href={`/requests/${batch[0].batch_id}`} variant="outlined" size="small">
+                          View
+                        </Button>
+                      </Stack>
                     </Stack>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Chip label="Upcoming" size="small" color="info" variant="outlined" />
-                      <Button component={NextLink} href={`/requests/${batch[0].batch_id}`} variant="outlined" size="small">
-                        View
-                      </Button>
-                    </Stack>
-                  </Stack>
-                </Paper>
-              );
-            })}
+                  ) : null}
+                  {batch.map((req: BorrowRequestRead) => {
+                    const toy = toysById.get(req.toy_id);
+                    const image = toy !== undefined ? getFeaturedImage(toy) : null;
+                    return (
+                      <Stack key={req.id} direction="row" alignItems="center" spacing={2}>
+                        <Box sx={{ width: 64, height: 64, flexShrink: 0, bgcolor: "grey.100", borderRadius: 1, overflow: "hidden" }}>
+                          {image !== null ? (
+                            <Box component="img" src={image.image_url} alt={toy?.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ) : null}
+                        </Box>
+                        <Typography variant="bodyStrong" sx={{ flex: 1, minWidth: 0 }}>{toy?.name ?? "Unknown toy"}</Typography>
+                      </Stack>
+                    );
+                  })}
+                </Stack>
+              </Paper>
+            ))}
           </Stack>
         ) : null}
 
