@@ -19,7 +19,7 @@ import Typography from "@mui/material/Typography";
 
 const LANGUAGES: string[] = ["French", "Spanish"];
 
-const DEFAULT_TAGS: string[] = ["art", "babies", "blocks", "games", "music", "outdoor", "pretend play", "puzzles", "stem"];
+const DEFAULT_TAGS: string[] = ["art"];
 
 import type { ToyCreate } from "../lib/types";
 
