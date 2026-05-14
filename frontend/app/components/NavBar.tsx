@@ -130,11 +130,6 @@ export default function NavBar(): JSX.Element {
                 </MenuItem>
               ) : null}
               {isMember ? (
-                <MenuItem component={NextLink} href="/requests" onClick={handleCloseMenu}>
-                  Checkout history
-                </MenuItem>
-              ) : null}
-              {isMember ? (
                 <MenuItem component={NextLink} href="/cart" onClick={handleCloseMenu}>
                   Cart {cartIds.length > 0 ? `(${cartIds.length})` : ""}
                 </MenuItem>
