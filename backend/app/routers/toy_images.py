@@ -30,7 +30,7 @@ async def upload_toy_image(
             detail="Only JPEG, PNG, WebP, and GIF images are supported",
         )
 
-    existing = await db.execute(select(ToyImage).where(ToyImage.toy_id == toy_id))
+    existing = await db.execute(select(ToyImage).where(ToyImage.toy_id == toy_id).limit(1))
     is_first = existing.scalar_one_or_none() is None
 
     contents = await file.read()
