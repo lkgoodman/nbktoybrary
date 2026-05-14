@@ -91,7 +91,7 @@ const typography: TypographyVariantsOptions = {
   },
   navTitle: {
     fontFamily: displayFont,
-    fontSize: "1.5rem",
+    fontSize: "1.75rem",
     fontWeight: 700,
     lineHeight: 1.3,
   },
