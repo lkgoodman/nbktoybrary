@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import NextLink from "next/link";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -7,9 +9,10 @@ import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "../../lib/AuthContext";
-import { useBorrowRequests, useSettings, useToys } from "../../lib/queries";
+import { useBorrowRequests, useCancelBorrowRequest, useSettings, useToys, queryKeys } from "../../lib/queries";
 import type { BorrowRequestRead, Toy, ToyImage } from "../../lib/types";
 
 function getFeaturedImage(toy: Toy): ToyImage | null {
@@ -22,9 +25,14 @@ export default function RequestBatchPage({
   params: { batchId: string };
 }): JSX.Element {
   const { token, isMember } = useAuth();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: requests, isPending, isError } = useBorrowRequests(token);
   const { data: toys } = useToys();
   const { data: siteSettings } = useSettings();
+  const cancelRequest = useCancelBorrowRequest();
+  const [confirmCancel, setConfirmCancel] = useState<boolean>(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   if (!isMember) {
     return (
@@ -63,6 +71,82 @@ export default function RequestBatchPage({
           <Typography variant="body1" color="text.secondary">Request not found.</Typography>
         ) : (
           <Stack spacing={2}>
+            {(() => {
+              const cancellable = batch.some((r) => r.status === "pending" || r.status === "approved");
+              const pickupStart = batch[0].pickup_start;
+              const withinDeadline =
+                pickupStart !== null &&
+                pickupStart !== undefined &&
+                new Date(pickupStart).getTime() - Date.now() < 24 * 60 * 60 * 1000 &&
+                new Date(pickupStart).getTime() > Date.now();
+              if (!cancellable) return null;
+              return (
+                <Paper elevation={0} sx={{ p: 3 }}>
+                  <Stack spacing={1}>
+                    <Typography variant="bodyStrong">Cancel this request</Typography>
+                    {withinDeadline ? (
+                      <Typography variant="body1" color="text.secondary">
+                        Your pickup is within 24 hours. To cancel, email{" "}
+                        <Box component="a" href="mailto:nbktoybrary@gmail.com" sx={{ color: "primary.main" }}>
+                          nbktoybrary@gmail.com
+                        </Box>.
+                      </Typography>
+                    ) : !confirmCancel ? (
+                      <Box>
+                        <Button variant="outlined" color="error" size="small" onClick={() => { setConfirmCancel(true); setCancelError(null); }}>
+                          Cancel request
+                        </Button>
+                      </Box>
+                    ) : (
+                      <Stack spacing={1}>
+                        <Typography variant="body1" color="text.secondary">Are you sure you want to cancel all toys in this request?</Typography>
+                        <Stack direction="row" spacing={1}>
+                          <Button
+                            variant="contained"
+                            color="error"
+                            size="small"
+                            disabled={cancelRequest.isPending}
+                            onClick={() => {
+                              if (token === null) return;
+                              const cancelable = batch.filter((r) => r.status === "pending" || r.status === "approved");
+                              let chain = Promise.resolve();
+                              cancelable.forEach((r) => {
+                                chain = chain.then(
+                                  () =>
+                                    new Promise<void>((resolve, reject) => {
+                                      cancelRequest.mutate(
+                                        { id: r.id, token },
+                                        { onSuccess: () => resolve(), onError: (err) => reject(err) },
+                                      );
+                                    }),
+                                );
+                              });
+                              chain
+                                .then(() => {
+                                  void queryClient.invalidateQueries({ queryKey: queryKeys.borrowRequests.list() });
+                                  router.push("/requests");
+                                })
+                                .catch((err: unknown) => {
+                                  setCancelError(err instanceof Error ? err.message : "Failed to cancel request.");
+                                  setConfirmCancel(false);
+                                });
+                            }}
+                          >
+                            Yes, cancel
+                          </Button>
+                          <Button variant="outlined" size="small" onClick={() => setConfirmCancel(false)}>
+                            Keep request
+                          </Button>
+                        </Stack>
+                        {cancelError !== null ? (
+                          <Typography variant="body1" color="error">{cancelError}</Typography>
+                        ) : null}
+                      </Stack>
+                    )}
+                  </Stack>
+                </Paper>
+              );
+            })()}
             {(batch[0].pickup_start !== null || batch[0].return_start !== null || batch[0].return_date !== null) ? (
               <Paper elevation={0} sx={{ p: 3 }}>
                 <Stack spacing={1}>

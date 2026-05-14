@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import uuid as uuid_lib
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import get_current_user, require_roles
+from app.core.auth import get_current_user, require_roles, _is_admin
 from app.db.session import get_db
 from app.models.membership import AccountStanding, Membership, MembershipUser
 from app.models.scheduling import CheckoutTimeframe, Request, RequestStatus, Timeframe
@@ -222,19 +222,53 @@ async def list_borrow_requests(
     ]
 
 
-@router.delete("/{request_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{request_id}", status_code=status.HTTP_200_OK)
 async def delete_borrow_request(
     request_id: uuid_lib.UUID,
     db: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(require_roles("admin", "superadmin")),
-) -> Response:
-    result = await db.execute(select(Request).where(Request.id == request_id))
+    current_user: User = Depends(get_current_user),
+) -> dict[str, str]:
+    result = await db.execute(
+        select(Request)
+        .options(
+            selectinload(Request.checkout_timeframes).selectinload(CheckoutTimeframe.timeframe),
+            selectinload(Request.checkout),
+        )
+        .where(Request.id == request_id)
+    )
     req = result.scalar_one_or_none()
     if req is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
+
+    if not _is_admin(current_user):
+        # Check that this request belongs to the current user's membership
+        membership = await _get_membership(current_user, db)
+        if req.membership_id != membership.id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+
+        # Cannot cancel a request that has already been checked out
+        if req.checkout is not None and req.checkout.returned_at is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="This toy is already checked out and cannot be cancelled online. Please email nbktoybrary@gmail.com.",
+            )
+
+        # Block cancellation within 24 hours of pickup
+        ct = req.checkout_timeframes[0] if req.checkout_timeframes else None
+        if ct is not None:
+            pickup = ct.timeframe.start_time
+            if pickup.tzinfo is None:
+                pickup = pickup.replace(tzinfo=timezone.utc)
+            now = datetime.now(timezone.utc)
+            if pickup > now and (pickup - now).total_seconds() < 24 * 3600:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Your pickup is within 24 hours. Please email nbktoybrary@gmail.com to cancel.",
+                )
+
     await db.delete(req)
     await db.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return {"ok": "cancelled"}
 
 
 @router.patch("/{request_id}", response_model=BorrowRequestRead)
