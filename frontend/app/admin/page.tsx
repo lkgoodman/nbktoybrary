@@ -457,16 +457,19 @@ export default function AdminPage(): JSX.Element {
               function groupByDate(batchList: BorrowRequestReadWithDetails[][]): { dateLabel: string; batches: BorrowRequestReadWithDetails[][] }[] {
                 const map = new Map<string, BorrowRequestReadWithDetails[][]>();
                 for (const batch of batchList) {
-                  const d = new Date(batch[0].created_at);
+                  const raw = batch[0].pickup_start ?? batch[0].created_at;
+                  const d = new Date(raw);
                   const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
                   const existing = map.get(key) ?? [];
                   existing.push(batch);
                   map.set(key, existing);
                 }
-                return [...map.entries()].map(([key, bs]) => ({
-                  dateLabel: new Date(key + "T12:00:00").toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" }),
-                  batches: bs,
-                }));
+                return [...map.entries()]
+                  .sort(([a], [b]) => a.localeCompare(b))
+                  .map(([key, bs]) => ({
+                    dateLabel: new Date(key + "T12:00:00").toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" }),
+                    batches: bs,
+                  }));
               }
 
               const pendingByDate = groupByDate(pendingBatches);
