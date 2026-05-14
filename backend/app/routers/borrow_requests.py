@@ -91,7 +91,6 @@ async def list_all_borrow_requests(
     requests = list(result.scalars().all())
     requests.sort(
         key=lambda r: r.checkout_timeframes[0].timeframe.start_time if r.checkout_timeframes else r.created_at,
-        reverse=True,
     )
     return [_to_details(r) for r in requests]
 
