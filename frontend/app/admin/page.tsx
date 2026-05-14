@@ -39,6 +39,7 @@ export default function AdminPage(): JSX.Element {
   const [inventoryAge, setInventoryAge] = useState<number | null>(null);
   const [inventoryLanguage, setInventoryLanguage] = useState<string | null>(null);
   const [inventoryAvailability, setInventoryAvailability] = useState<"available" | "requested" | "checked_out" | null>(null);
+  const [inventoryShareable, setInventoryShareable] = useState<boolean | null>(null);
   const [newTfDate, setNewTfDate] = useState<string>("");
   const [newTfStartHour, setNewTfStartHour] = useState<string>("");
   const [newTfEndHour, setNewTfEndHour] = useState<string>("");
@@ -141,7 +142,8 @@ export default function AdminPage(): JSX.Element {
       (inventoryAvailability === "available" && toy.is_available) ||
       (inventoryAvailability === "requested" && toy.is_requested) ||
       (inventoryAvailability === "checked_out" && toy.is_checked_out);
-    return searchMatch && tagMatch && ageMatch && languageMatch && availabilityMatch;
+    const shareableMatch = inventoryShareable === null || toy.shareable === inventoryShareable;
+    return searchMatch && tagMatch && ageMatch && languageMatch && availabilityMatch && shareableMatch;
   });
 
   const pending = requests?.filter((r: MembershipRequestRead) => r.status === "pending") ?? [];
@@ -319,6 +321,21 @@ export default function AdminPage(): JSX.Element {
                   <MenuItem value="available">Available</MenuItem>
                   <MenuItem value="requested">Requested</MenuItem>
                   <MenuItem value="checked_out">Checked out</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <InputLabel>Shareable</InputLabel>
+                <Select
+                  label="Shareable"
+                  value={inventoryShareable === null ? "" : String(inventoryShareable)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setInventoryShareable(val === "" ? null : val === "true");
+                  }}
+                >
+                  <MenuItem value="">Any</MenuItem>
+                  <MenuItem value="true">Shareable</MenuItem>
+                  <MenuItem value="false">Not shareable</MenuItem>
                 </Select>
               </FormControl>
               <Button component={NextLink} href="/admin/toys/new" variant="contained" sx={{ whiteSpace: "nowrap", flexShrink: 0 }}>
