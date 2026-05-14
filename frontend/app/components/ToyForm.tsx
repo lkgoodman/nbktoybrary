@@ -164,7 +164,7 @@ export default function ToyForm({
             }}
             renderValue={(selected: string[]) => selected.join(", ")}
           >
-            {["Wood", "Plastic", "Metal", "Paper", "Magnet"].map((m) => (
+            {["Fabric", "Magnet", "Metal", "Paper", "Plastic", "Wood"].map((m) => (
               <MenuItem key={m} value={m}>
                 <Checkbox checked={values.materials.includes(m)} size="small" />
                 <ListItemText primary={m} />
