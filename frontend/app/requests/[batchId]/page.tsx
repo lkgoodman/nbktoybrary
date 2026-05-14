@@ -192,9 +192,6 @@ export default function RequestBatchPage({
                 </Stack>
               </Paper>
             ) : null}
-            <Typography variant="label" color="text.secondary">
-              Submitted {new Date(batch[0].created_at).toLocaleDateString()}
-            </Typography>
 
             {batch.map((req: BorrowRequestRead) => {
               const toy = toysById.get(req.toy_id);

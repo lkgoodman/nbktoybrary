@@ -134,9 +134,6 @@ export default function BorrowRequestDetailPage({
           <Stack spacing={3}>
             <Stack spacing={0.5}>
               <Typography variant="bodyStrong">{batch[0].member_name}</Typography>
-              <Typography variant="label" color="text.secondary">
-                Submitted {new Date(batch[0].created_at).toLocaleDateString()}
-              </Typography>
               {pickupStart !== null && pickupEnd !== null ? (
                 <Typography variant="label" color="text.secondary">
                   Pickup: {formatPickup(pickupStart, pickupEnd)}
