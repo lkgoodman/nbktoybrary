@@ -19,6 +19,8 @@ import Typography from "@mui/material/Typography";
 
 const LANGUAGES: string[] = ["French", "Spanish"];
 
+const DEFAULT_TAGS: string[] = ["art", "babies", "blocks", "games", "music", "outdoor", "pretend play", "puzzles", "stem"];
+
 import type { ToyCreate } from "../lib/types";
 
 interface ToyFormProps {
@@ -134,7 +136,7 @@ export default function ToyForm({
               </Box>
             )}
           >
-            {[...new Set([...tagOptions, ...values.tags])].sort().map((tag) => (
+            {[...new Set([...DEFAULT_TAGS, ...tagOptions, ...values.tags])].sort().map((tag) => (
               <MenuItem key={tag} value={tag}>
                 <Checkbox checked={values.tags.includes(tag)} size="small" />
                 <ListItemText primary={tag} />
