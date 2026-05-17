@@ -108,47 +108,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         if result.scalar_one_or_none() is None:
             session.add(SiteSettings(id=1, address="171 Calyer"))
             await session.commit()
-    # Migrate any images still stored as binary in the DB to S3 object storage
-    import logging as _logging
-    _migrate_log = _logging.getLogger("image_migration")
-    if os.getenv("BUCKET_ENDPOINT_URL"):
-        import asyncio as _asyncio
-        from app.core import storage as _storage
-        from sqlalchemy import text as _text
-        # Fetch only IDs first — do not load binary data into memory all at once
-        async with engine.begin() as conn:
-            id_rows = await conn.execute(
-                _text("SELECT id FROM toy_images WHERE data IS NOT NULL")
-            )
-            pending_ids = [str(r.id) for r in id_rows.fetchall()]
-        _migrate_log.warning("IMAGE MIGRATION: found %d images to migrate", len(pending_ids))
-        for image_id in pending_ids:
-            try:
-                # Fetch one image at a time to avoid loading all blobs into memory
-                async with engine.begin() as conn:
-                    row = await conn.execute(
-                        _text("SELECT content_type, data FROM toy_images WHERE id = :id"),
-                        {"id": image_id},
-                    )
-                    record = row.fetchone()
-                if record is None or record.data is None:
-                    continue
-                await _asyncio.to_thread(
-                    _storage.upload_image,
-                    image_id,
-                    bytes(record.data),
-                    record.content_type or "application/octet-stream",
-                )
-                async with engine.begin() as conn:
-                    await conn.execute(
-                        _text("UPDATE toy_images SET data = NULL WHERE id = :id"),
-                        {"id": image_id},
-                    )
-                _migrate_log.warning("IMAGE MIGRATION: migrated %s", image_id)
-            except Exception as _e:
-                _migrate_log.error("IMAGE MIGRATION: failed %s: %s", image_id, _e)
-    else:
-        _migrate_log.warning("IMAGE MIGRATION: skipped, BUCKET_ENDPOINT_URL not set")
     yield
     await engine.dispose()
 
