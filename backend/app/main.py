@@ -113,24 +113,25 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         import asyncio as _asyncio
         from app.core import storage as _storage
         from app.models.toy import ToyImage as _ToyImage
-        async with SessionLocal() as session:
-            result = await session.execute(
-                select(_ToyImage).where(_ToyImage.data.isnot(None))
+        from sqlalchemy import text as _text
+        async with engine.begin() as conn:
+            rows = await conn.execute(
+                _text("SELECT id, content_type, data FROM toy_images WHERE data IS NOT NULL")
             )
-            images_to_migrate = result.scalars().all()
-        for img in images_to_migrate:
+            pending = rows.fetchall()
+        for row in pending:
             try:
                 await _asyncio.to_thread(
                     _storage.upload_image,
-                    str(img.id),
-                    bytes(img.data),  # type: ignore[arg-type]
-                    img.content_type or "application/octet-stream",
+                    str(row.id),
+                    bytes(row.data),
+                    row.content_type or "application/octet-stream",
                 )
-                async with SessionLocal() as session:
-                    db_img = await session.get(_ToyImage, img.id)
-                    if db_img is not None:
-                        db_img.data = None
-                        await session.commit()
+                async with engine.begin() as conn:
+                    await conn.execute(
+                        _text("UPDATE toy_images SET data = NULL WHERE id = :id"),
+                        {"id": row.id},
+                    )
             except Exception:
                 pass  # leave binary data intact so the image still serves
     yield
