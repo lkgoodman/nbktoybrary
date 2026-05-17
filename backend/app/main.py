@@ -108,6 +108,31 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         if result.scalar_one_or_none() is None:
             session.add(SiteSettings(id=1, address="171 Calyer"))
             await session.commit()
+    # Migrate any images still stored as binary in the DB to S3 object storage
+    if os.getenv("BUCKET_ENDPOINT_URL"):
+        import asyncio as _asyncio
+        from app.core import storage as _storage
+        from app.models.toy import ToyImage as _ToyImage
+        async with SessionLocal() as session:
+            result = await session.execute(
+                select(_ToyImage).where(_ToyImage.data.isnot(None))
+            )
+            images_to_migrate = result.scalars().all()
+        for img in images_to_migrate:
+            try:
+                await _asyncio.to_thread(
+                    _storage.upload_image,
+                    str(img.id),
+                    bytes(img.data),  # type: ignore[arg-type]
+                    img.content_type or "application/octet-stream",
+                )
+                async with SessionLocal() as session:
+                    db_img = await session.get(_ToyImage, img.id)
+                    if db_img is not None:
+                        db_img.data = None
+                        await session.commit()
+            except Exception:
+                pass  # leave binary data intact so the image still serves
     yield
     await engine.dispose()
 
