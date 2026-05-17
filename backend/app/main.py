@@ -109,6 +109,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             session.add(SiteSettings(id=1, address="171 Calyer"))
             await session.commit()
     # Migrate any images still stored as binary in the DB to S3 object storage
+    import logging as _logging
+    _migrate_log = _logging.getLogger("image_migration")
     if os.getenv("BUCKET_ENDPOINT_URL"):
         import asyncio as _asyncio
         from app.core import storage as _storage
@@ -119,6 +121,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 _text("SELECT id, content_type, data FROM toy_images WHERE data IS NOT NULL")
             )
             pending = rows.fetchall()
+        _migrate_log.warning("IMAGE MIGRATION: found %d images to migrate", len(pending))
         for row in pending:
             try:
                 await _asyncio.to_thread(
@@ -132,8 +135,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                         _text("UPDATE toy_images SET data = NULL WHERE id = :id"),
                         {"id": row.id},
                     )
-            except Exception:
-                pass  # leave binary data intact so the image still serves
+                _migrate_log.warning("IMAGE MIGRATION: migrated %s", row.id)
+            except Exception as _e:
+                _migrate_log.error("IMAGE MIGRATION: failed %s: %s", row.id, _e)
+    else:
+        _migrate_log.warning("IMAGE MIGRATION: skipped, BUCKET_ENDPOINT_URL not set")
     yield
     await engine.dispose()
 
