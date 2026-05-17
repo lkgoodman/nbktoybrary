@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile, status
@@ -7,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_current_user, require_roles
+from app.core import storage
 from app.db.session import get_db
 from app.models.toy import ToyImage
 from app.models.user import User
@@ -35,15 +37,20 @@ async def upload_toy_image(
 
     contents = await file.read()
 
+    # Create the DB record first to get a stable UUID for the S3 key
     image = ToyImage(
         toy_id=toy_id,
-        image_url="",
+        image_url="",  # filled in after we know the id
         is_featured=is_first,
-        data=contents,
+        data=None,
         content_type=file.content_type,
     )
     db.add(image)
-    await db.flush()
+    await db.flush()  # populates image.id
+
+    s3_key = str(image.id)
+    await asyncio.to_thread(storage.upload_image, s3_key, contents, file.content_type or "application/octet-stream")
+
     image.image_url = f"/api/toy-images/{image.id}/file"
     await db.commit()
     await db.refresh(image)
@@ -56,9 +63,19 @@ async def get_toy_image_file(
     db: AsyncSession = Depends(get_db),
 ) -> Response:
     image = await db.get(ToyImage, image_id)
-    if image is None or image.data is None:
+    if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
-    return Response(content=image.data, media_type=image.content_type or "application/octet-stream")
+
+    # Support legacy images that still have binary data in the DB
+    if image.data is not None:
+        return Response(content=image.data, media_type=image.content_type or "application/octet-stream")
+
+    try:
+        data = await asyncio.to_thread(storage.download_image, str(image_id))
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+
+    return Response(content=data, media_type=image.content_type or "application/octet-stream")
 
 
 @router.patch("/toy-images/{image_id}", response_model=ToyImageRead)
@@ -94,6 +111,11 @@ async def delete_toy_image(
     image = await db.get(ToyImage, image_id)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+
     await db.delete(image)
     await db.commit()
+
+    # Delete from S3 (best-effort; DB record is already gone)
+    await asyncio.to_thread(storage.delete_image, str(image_id))
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)
