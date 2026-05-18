@@ -12,15 +12,15 @@ from app.models.user import Role, User, UserRole
 
 TOYS: list[dict[str, Any]] = [
     {
-        "name": "Lincoln Logs",
-        "description": "Lincoln Logs are classic wooden building toys made of notched pieces that fit together to create structures like cabins, houses, and forts. They encourage creativity, problem-solving, and fine motor skill development through hands-on construction. Simple yet timeless, they let kids design and rebuild endlessly using their imagination.",
-        "brand": None, "language": None, "link": None,
+        "name": "Triange, Circle, Square Building Set",
+        "description": "These colorful blocks are for both building and puzzle. Open a whole new world with these geometrical shapes.",
+        "brand": "Grimm's", "language": None, "link": "https://www.grimms.eu/en/products/building-set-triangle-square-circle?srsltid=AfmBOopVwbl5fxw1jxQy63DSmgHpIy_BSTt6SveSOvHMRw6ydPTLgY76",
         "battery_operated": False, "shareable": True,
-        "materials": ["plastic", "wood"], "age_min": 36, "age_max": None, "piece_count": 100, "keywords": [],
+        "materials": ["wood"], "age_min": 12, "age_max": None, "piece_count": 30, "keywords": [],
         "admin_notes": None,
         "tags": ["building"],
         "images": [
-            {"url": "/toys/lincoln-logs-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/23c245d3-72ee-4f29-95df-07202c7245ff/file", "is_featured": True},
         ],
     },
     {
@@ -458,7 +458,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["active", "baby"],
         "images": [
-            {"url": "/toys/doll-stroller-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/de39ea42-516b-450d-83ab-8be8461984f5/file", "is_featured": True},
             {"url": "/toys/doll-stroller-2.jpg", "is_featured": False},
         ],
     },
@@ -728,7 +728,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["building", "learning"],
         "images": [
-            {"url": "/toys/alphabet-blocks-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/7d498887-4749-4302-ba0d-ae0404e843d3/file", "is_featured": True},
         ],
     },
     {
@@ -744,26 +744,16 @@ TOYS: list[dict[str, Any]] = [
         ],
     },
     {
-        "name": "Triange, Circle, Square Building Set",
-        "description": "These colorful blocks are for both building and puzzle. Open a whole new world with these geometrical shapes.",
-        "brand": "Grimm's", "language": None, "link": "https://www.grimms.eu/en/products/building-set-triangle-square-circle?srsltid=AfmBOopVwbl5fxw1jxQy63DSmgHpIy_BSTt6SveSOvHMRw6ydPTLgY76",
+        "name": "Lincoln Logs",
+        "description": "Lincoln Logs are classic wooden building toys made of notched pieces that fit together to create structures like cabins, houses, and forts. They encourage creativity, problem-solving, and fine motor skill development through hands-on construction. Simple yet timeless, they let kids design and rebuild endlessly using their imagination.",
+        "brand": None, "language": None, "link": None,
         "battery_operated": False, "shareable": True,
-        "materials": ["wood"], "age_min": 12, "age_max": None, "piece_count": 30, "keywords": [],
+        "materials": ["plastic", "wood"], "age_min": 36, "age_max": None, "piece_count": 100, "keywords": [],
         "admin_notes": None,
         "tags": ["building"],
         "images": [
-            {"url": "/api/toy-images/23c245d3-72ee-4f29-95df-07202c7245ff/file", "is_featured": True},
+            {"url": "/toys/lincoln-logs-1.jpg", "is_featured": True},
         ],
-    },
-    {
-        "name": "Community Garden Puzzle",
-        "description": " ",
-        "brand": "Lovevery", "language": None, "link": None,
-        "battery_operated": False, "shareable": True,
-        "materials": ["wood"], "age_min": 12, "age_max": None, "piece_count": 6, "keywords": [],
-        "admin_notes": None,
-        "tags": ["puzzles"],
-        "images": [],
     },
     {
         "name": "Cranium Junior",
@@ -835,7 +825,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["learning"],
         "images": [
-            {"url": "/toys/drop-match-dot-catcher-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/549be75c-618b-4ef3-b899-1f40b87affa0/file", "is_featured": True},
         ],
     },
     {
@@ -882,7 +872,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["sensory"],
         "images": [
-            {"url": "/toys/fruit-fidget-poppers-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/c92570f3-4717-42ac-a0b7-d451ec73636f/file", "is_featured": False},
         ],
     },
     {
@@ -911,18 +901,6 @@ TOYS: list[dict[str, Any]] = [
         ],
     },
     {
-        "name": "Clock",
-        "description": " ",
-        "brand": "Lakeshore", "language": None, "link": None,
-        "battery_operated": False, "shareable": True,
-        "materials": ["wood", "plastic"], "age_min": 60, "age_max": None, "piece_count": 1, "keywords": [],
-        "admin_notes": None,
-        "tags": ["learning"],
-        "images": [
-            {"url": "/api/toy-images/0d0ccef6-a69a-4c9d-9b99-8f54282e474c/file", "is_featured": True},
-        ],
-    },
-    {
         "name": "Dinosaur Stacking Blocks",
         "description": " ",
         "brand": None, "language": None, "link": None,
@@ -944,6 +922,79 @@ TOYS: list[dict[str, Any]] = [
         "tags": ["building"],
         "images": [
             {"url": "/api/toy-images/24975c41-e74e-4358-9169-801d41345983/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Clock",
+        "description": "This learning clock features large, easy-to-read numbers from 1 to 12 with two distinct hands. The movable hands can be manually set to any time, allowing practice of both reading a displayed time and setting the clock to match a written time.",
+        "brand": "Lakeshore", "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["wood", "plastic"], "age_min": 60, "age_max": None, "piece_count": 1, "keywords": [],
+        "admin_notes": None,
+        "tags": ["learning"],
+        "images": [
+            {"url": "/api/toy-images/0d0ccef6-a69a-4c9d-9b99-8f54282e474c/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Community Garden Puzzle",
+        "description": " ",
+        "brand": "Lovevery", "language": None, "link": None,
+        "battery_operated": False, "shareable": False,
+        "materials": ["wood"], "age_min": 12, "age_max": None, "piece_count": 6, "keywords": [],
+        "admin_notes": None,
+        "tags": ["puzzles"],
+        "images": [
+            {"url": "/api/toy-images/723e8c20-fad1-4307-b83f-a873ee0c6ef3/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Tinker Toys",
+        "description": "Tinkertoys are a classic American construction toy introduced in 1914, consisting of spools and rods that snap together to build three-dimensional structures, vehicles, and figures. The spools have holes arranged around their edges and center, allowing rods of varying lengths to connect at multiple angles, giving builders flexibility to create complex designs. They have been a staple childhood toy for over a century, encouraging spatial reasoning, creativity, and basic engineering thinking in children.",
+        "brand": None, "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["Plastic"], "age_min": None, "age_max": None, "piece_count": 100, "keywords": [],
+        "admin_notes": None,
+        "tags": ["building"],
+        "images": [
+            {"url": "/api/toy-images/57c7c3b5-a225-41e6-8618-18df18e64a2f/file", "is_featured": True},
+            {"url": "/api/toy-images/956b1884-9afe-4f5f-98ca-83c4d1d3099c/file", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Pattern Match Boats ",
+        "description": "Translate 2D pictures into 3D objects\u2014all while having fun! From the Lovevery Analyst Play Kit from months 46-48. ",
+        "brand": "Lovevery", "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["Wood", "Paper"], "age_min": 36, "age_max": None, "piece_count": 14, "keywords": [],
+        "admin_notes": None,
+        "tags": ["learning", "pretend play"],
+        "images": [
+            {"url": "/api/toy-images/493094b5-c7a0-4a88-a5f2-db24ee029163/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Street Sweeper",
+        "description": "Tyler the Street Sweeper is a battery-free, push-and-go toy vehicle for children ages 1 to 5, featuring a realistic rotating brush mechanism and mechanical engine sounds that spring to life with just a push. The set includes spinning rubbish sorting panels and a removable driver figure, encouraging imaginative role-play while helping toddlers develop fine motor skills. ",
+        "brand": "WOW Toys", "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["Plastic"], "age_min": 12, "age_max": None, "piece_count": 2, "keywords": [],
+        "admin_notes": None,
+        "tags": ["pretend play", "vehicles"],
+        "images": [
+            {"url": "/api/toy-images/d8b4d937-e8dc-4262-88ce-4a8677491fcb/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Spirograph",
+        "description": "A Spirograph is a classic drawing toy that uses a set of interlocking plastic rings and gears to create intricate, perfectly symmetrical geometric patterns with colored pens or pencils. By placing a pen in one of the small holes of a rotating gear and tracing it around the inside or outside of a larger ring, children and adults alike can produce endlessly varied flower-like and spiral designs. It's a creative tool that blends art with basic math concepts like geometry and symmetry, making it both a fun artistic outlet and a subtle educational experience.",
+        "brand": None, "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["Plastic"], "age_min": 84, "age_max": None, "piece_count": 7, "keywords": [],
+        "admin_notes": None,
+        "tags": ["art"],
+        "images": [
+            {"url": "/api/toy-images/a9a7a083-4054-4aa5-b69c-10586ad764b3/file", "is_featured": True},
         ],
     },
 ]
