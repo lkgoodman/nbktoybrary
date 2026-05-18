@@ -35,12 +35,14 @@ async def upload_toy_image(
     image_id = uuid.uuid4()
     key = f"toys/{toy_id}/{image_id}{ext}"
     await asyncio.to_thread(upload_image, key, data, content_type)
+    existing = await db.execute(select(ToyImage).where(ToyImage.toy_id == toy_id))
+    is_first = existing.scalars().first() is None
     image = ToyImage(
         id=image_id,
         toy_id=toy_id,
         image_url=f"/api/toy-images/{image_id}/file",
         storage_key=key,
-        is_featured=False,
+        is_featured=is_first,
         created_by=current_user.id,
     )
     db.add(image)
