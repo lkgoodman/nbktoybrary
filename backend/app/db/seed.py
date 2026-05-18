@@ -12,15 +12,16 @@ from app.models.user import Role, User, UserRole
 
 TOYS: list[dict[str, Any]] = [
     {
-        "name": "Triange, Circle, Square Building Set",
-        "description": "These colorful blocks are for both building and puzzle. Open a whole new world with these geometrical shapes.",
-        "brand": "Grimm's", "language": None, "link": "https://www.grimms.eu/en/products/building-set-triangle-square-circle?srsltid=AfmBOopVwbl5fxw1jxQy63DSmgHpIy_BSTt6SveSOvHMRw6ydPTLgY76",
+        "name": "Cranium Junior",
+        "description": "Cranium Junior, often called Cranium Cadoo is the outrageously fun game designed especially for kids. With a variety of hilarious activities, the game gets kids thinking, creating, giggling, and grinning as they try to get four tokens in a row to win. Can you sculpt a taco? Act out a hula dancer? Think of a word that means to bounce a basketball and to drip milk from your chin? Which is strongest for its size: an ant, a human, or a chimp? Whether kids love to act, puzzle, sketch, sculpt, or even crack secret codes, Cadoo has something for them. Two or more kids will have a blast playing Cadoo -- even grown-ups will love to play and show what they can do! 2+ players",
+        "brand": "Hasbro", "language": None, "link": None,
         "battery_operated": False, "shareable": True,
-        "materials": ["wood"], "age_min": 12, "age_max": None, "piece_count": 30, "keywords": [],
+        "materials": ["paper", "plastic"], "age_min": 84, "age_max": None, "piece_count": 100, "keywords": [],
         "admin_notes": None,
-        "tags": ["building"],
+        "tags": ["games"],
         "images": [
-            {"url": "/api/toy-images/23c245d3-72ee-4f29-95df-07202c7245ff/file", "is_featured": True},
+            {"url": "/api/toy-images/e673642d-f597-4c03-8a3c-24ac28289035/file", "is_featured": True},
+            {"url": "/toys/cranium-junior-1.jpg", "is_featured": False},
         ],
     },
     {
@@ -44,8 +45,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["puzzles"],
         "images": [
-            {"url": "/toys/under-the-sea-puzzle-48-pieces-1.jpg", "is_featured": True},
-            {"url": "/toys/under-the-sea-puzzle-48-pieces-2.jpg", "is_featured": False},
+            {"url": "/api/toy-images/5f9894c5-2e2f-4002-b07e-67b3e09c468d/file", "is_featured": True},
         ],
     },
     {
@@ -73,19 +73,6 @@ TOYS: list[dict[str, Any]] = [
         ],
     },
     {
-        "name": "Thomas and Friends Puzzle (48 pieces)",
-        "description": "This 24-piece Thomas the Tank Engine puzzle features bright, colorful artwork with Thomas and friends that kids will love. Designed for little hands, the sturdy pieces fit together easily while building confidence and problem-solving skills. Perfect for early puzzlers, it encourages focus, patience, and imaginative play.",
-        "brand": None, "language": None, "link": None,
-        "battery_operated": False, "shareable": True,
-        "materials": ["paper"], "age_min": 36, "age_max": None, "piece_count": 24, "keywords": [],
-        "admin_notes": None,
-        "tags": ["puzzles"],
-        "images": [
-            {"url": "/toys/thomas-and-friends-puzzle-48-pieces-1.jpg", "is_featured": True},
-            {"url": "/toys/thomas-and-friends-puzzle-48-pieces-2.jpg", "is_featured": False},
-        ],
-    },
-    {
         "name": "Thomas the Tank Engine Puzzle (24 pieces)",
         "description": "This 24-piece Thomas the Tank Engine puzzle features bright, colorful artwork with Thomas that kids will love. Designed for little hands, the sturdy pieces fit together easily while building confidence and problem-solving skills. Perfect for early puzzlers, it encourages focus, patience, and imaginative play.",
         "brand": None, "language": None, "link": None,
@@ -94,7 +81,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["puzzles"],
         "images": [
-            {"url": "/toys/thomas-the-tank-engine-puzzle-24-pieces-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/a8a3e7bd-0722-4727-96e8-eee01bc5a9e7/file", "is_featured": True},
             {"url": "/toys/thomas-the-tank-engine-puzzle-24-pieces-2.jpg", "is_featured": False},
         ],
     },
@@ -107,7 +94,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["learning"],
         "images": [
-            {"url": "/toys/abacus-1.png", "is_featured": True},
+            {"url": "/api/toy-images/5a5db8b6-72ab-4b9e-94e8-0ef5dd385f39/file", "is_featured": True},
         ],
     },
     {
@@ -131,7 +118,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["baby", "learning"],
         "images": [
-            {"url": "/toys/barn-shape-sorter-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/10b6277e-1a62-4578-8aa0-a1a6c726a4f4/file", "is_featured": False},
         ],
     },
     {
@@ -143,7 +130,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["baby"],
         "images": [
-            {"url": "/toys/spinning-aquarium-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/13334899-cd4c-4208-8d84-0e0b3eb8a5f2/file", "is_featured": False},
         ],
     },
     {
@@ -155,7 +142,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["building"],
         "images": [
-            {"url": "/toys/toppling-dominoes-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/579398e6-04ae-46d9-a791-c00acbdb09fd/file", "is_featured": True},
         ],
     },
     {
@@ -167,7 +154,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["learning"],
         "images": [
-            {"url": "/toys/pattern-blocks-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/7bf3caaf-770e-414a-b56b-b514b714f9e1/file", "is_featured": True},
         ],
     },
     {
@@ -180,6 +167,19 @@ TOYS: list[dict[str, Any]] = [
         "tags": ["active"],
         "images": [
             {"url": "/api/toy-images/927cd626-2707-4d94-8689-c029e8d83719/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Thomas and Friends Puzzle (24 pieces)",
+        "description": "This 24-piece Thomas the Tank Engine puzzle features bright, colorful artwork with Thomas and friends that kids will love. Designed for little hands, the sturdy pieces fit together easily while building confidence and problem-solving skills. Perfect for early puzzlers, it encourages focus, patience, and imaginative play.",
+        "brand": None, "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["paper"], "age_min": 36, "age_max": None, "piece_count": 24, "keywords": [],
+        "admin_notes": None,
+        "tags": ["puzzles"],
+        "images": [
+            {"url": "/api/toy-images/856781f3-0868-438a-b505-15d408abe826/file", "is_featured": True},
+            {"url": "/toys/thomas-and-friends-puzzle-48-pieces-2.jpg", "is_featured": False},
         ],
     },
     {
@@ -304,7 +304,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["puzzles"],
         "images": [
-            {"url": "/toys/forest-friends-block-puzzle-9-pieces-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/e36d7413-358a-4846-9ce8-627a38e55951/file", "is_featured": True},
             {"url": "/toys/forest-friends-block-puzzle-9-pieces-2.jpg", "is_featured": False},
         ],
     },
@@ -317,7 +317,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["sensory"],
         "images": [
-            {"url": "/toys/wooden-lacing-beads-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/e054c426-eee9-4276-a690-de88c94d63b3/file", "is_featured": True},
         ],
     },
     {
@@ -329,7 +329,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["baby"],
         "images": [
-            {"url": "/toys/roly-poly-koala-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/ba2928b6-a3fc-4a97-bdf4-4406d3561b94/file", "is_featured": True},
         ],
     },
     {
@@ -353,7 +353,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["building"],
         "images": [
-            {"url": "/toys/marble-run-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/ff2708bc-fa19-4980-9363-4d4e213a3dba/file", "is_featured": True},
             {"url": "/toys/marble-run-2.jpg", "is_featured": False},
         ],
     },
@@ -366,7 +366,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["baby"],
         "images": [
-            {"url": "/toys/corn-popper-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/4e4b683a-e5b8-4889-8ad5-14ed32aecf0e/file", "is_featured": True},
         ],
     },
     {
@@ -378,7 +378,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["baby"],
         "images": [
-            {"url": "/toys/poppitoppy-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/e8172100-79f9-47d6-b9ce-008afd9acaa0/file", "is_featured": True},
         ],
     },
     {
@@ -390,7 +390,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["baby"],
         "images": [
-            {"url": "/toys/magnetic-car-set-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/fe913d17-720e-4598-9bc3-a68c7e777938/file", "is_featured": True},
         ],
     },
     {
@@ -402,7 +402,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["games"],
         "images": [
-            {"url": "/toys/uno-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/49f63e2b-243c-4b80-b878-241e0804878a/file", "is_featured": False},
         ],
     },
     {
@@ -414,7 +414,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["baby"],
         "images": [
-            {"url": "/toys/tropical-popup-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/6500a846-4ae3-4340-af99-8cf12d1f5364/file", "is_featured": False},
         ],
     },
     {
@@ -446,7 +446,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["learning"],
         "images": [
-            {"url": "/toys/kidscope-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/31d8512c-1956-40bb-a6a3-bc06c9ed1704/file", "is_featured": True},
         ],
     },
     {
@@ -471,7 +471,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["vehicles"],
         "images": [
-            {"url": "/toys/ford-mustang-model-car-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/def12bc0-ff35-4879-af2b-38df4ee37d7e/file", "is_featured": True},
             {"url": "/toys/ford-mustang-model-car-2.jpg", "is_featured": False},
         ],
     },
@@ -497,7 +497,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["baby"],
         "images": [
-            {"url": "/toys/manhattan-toy-skwish-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/284044d0-d001-4c3e-a66a-d3f7a0b77a26/file", "is_featured": True},
         ],
     },
     {
@@ -509,7 +509,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["learning", "pretend play"],
         "images": [
-            {"url": "/toys/cubebot-1.png", "is_featured": True},
+            {"url": "/api/toy-images/1cd24966-240a-47e2-ab3c-d11d51ab16cf/file", "is_featured": True},
             {"url": "/toys/cubebot-2.png", "is_featured": False},
         ],
     },
@@ -704,7 +704,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["baby"],
         "images": [
-            {"url": "/toys/stacking-rainbow-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/57a3d2c6-0062-4587-8d51-b15b6b11568c/file", "is_featured": True},
         ],
     },
     {
@@ -716,7 +716,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["baby"],
         "images": [
-            {"url": "/toys/wooden-stacking-pegboard-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/221584c1-93c0-486c-b804-212f5bf85edd/file", "is_featured": True},
         ],
     },
     {
@@ -744,6 +744,18 @@ TOYS: list[dict[str, Any]] = [
         ],
     },
     {
+        "name": "Triange, Circle, Square Building Set",
+        "description": "These colorful blocks are for both building and puzzle. Open a whole new world with these geometrical shapes.",
+        "brand": "Grimm's", "language": None, "link": "https://www.grimms.eu/en/products/building-set-triangle-square-circle?srsltid=AfmBOopVwbl5fxw1jxQy63DSmgHpIy_BSTt6SveSOvHMRw6ydPTLgY76",
+        "battery_operated": False, "shareable": True,
+        "materials": ["wood"], "age_min": 12, "age_max": None, "piece_count": 30, "keywords": [],
+        "admin_notes": None,
+        "tags": ["building"],
+        "images": [
+            {"url": "/api/toy-images/23c245d3-72ee-4f29-95df-07202c7245ff/file", "is_featured": True},
+        ],
+    },
+    {
         "name": "Lincoln Logs",
         "description": "Lincoln Logs are classic wooden building toys made of notched pieces that fit together to create structures like cabins, houses, and forts. They encourage creativity, problem-solving, and fine motor skill development through hands-on construction. Simple yet timeless, they let kids design and rebuild endlessly using their imagination.",
         "brand": None, "language": None, "link": None,
@@ -752,20 +764,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["building"],
         "images": [
-            {"url": "/toys/lincoln-logs-1.jpg", "is_featured": True},
-        ],
-    },
-    {
-        "name": "Cranium Junior",
-        "description": "Cranium Junior, often called Cranium Cadoo is the outrageously fun game designed especially for kids. With a variety of hilarious activities, the game gets kids thinking, creating, giggling, and grinning as they try to get four tokens in a row to win. Can you sculpt a taco? Act out a hula dancer? Think of a word that means to bounce a basketball and to drip milk from your chin? Which is strongest for its size: an ant, a human, or a chimp? Whether kids love to act, puzzle, sketch, sculpt, or even crack secret codes, Cadoo has something for them. Two or more kids will have a blast playing Cadoo -- even grown-ups will love to play and show what they can do! 2+ players",
-        "brand": "Hasbro", "language": None, "link": None,
-        "battery_operated": False, "shareable": True,
-        "materials": ["paper", "plastic"], "age_min": 84, "age_max": None, "piece_count": 100, "keywords": [],
-        "admin_notes": None,
-        "tags": ["games"],
-        "images": [
-            {"url": "/toys/cranium-junior-1.jpg", "is_featured": True},
-            {"url": "/toys/cranium-junior-2.jpg", "is_featured": False},
+            {"url": "/api/toy-images/ee6653e7-ab73-4ac5-aa2e-c18bda44588f/file", "is_featured": True},
         ],
     },
     {
@@ -777,7 +776,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["games"],
         "images": [
-            {"url": "/toys/on-a-scale-of-1-to-trex-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/7cdb1761-05c0-433f-bf98-f526cad0ff04/file", "is_featured": True},
         ],
     },
     {
@@ -789,7 +788,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["pretend play"],
         "images": [
-            {"url": "/toys/firefighter-costume-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/9833f651-9c08-4361-8d37-f5b99f1194d4/file", "is_featured": True},
             {"url": "/toys/firefighter-costume-2.jpg", "is_featured": False},
         ],
     },
@@ -812,7 +811,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["pretend play"],
         "images": [
-            {"url": "/toys/felt-flowers-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/4995eff7-b4a2-4dde-8e49-aa4fde5668bc/file", "is_featured": True},
             {"url": "/toys/felt-flowers-2.jpg", "is_featured": False},
         ],
     },
@@ -837,7 +836,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["baby"],
         "images": [
-            {"url": "/toys/stacking-trio-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/46776ae5-7902-4fda-b9b5-9a8bcfe57222/file", "is_featured": True},
         ],
     },
     {
@@ -849,7 +848,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["puzzles"],
         "images": [
-            {"url": "/toys/double-sided-puzzle-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/bb9aafe1-2c85-4c2d-9ee5-54373578d45b/file", "is_featured": True},
             {"url": "/toys/double-sided-puzzle-2.jpg", "is_featured": False},
         ],
     },
@@ -884,20 +883,8 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["learning"],
         "images": [
-            {"url": "/toys/routine-cards-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/bdf39f44-9a3c-4cda-958c-d61f596179e4/file", "is_featured": True},
             {"url": "/toys/routine-cards-2.jpg", "is_featured": False},
-        ],
-    },
-    {
-        "name": "Chunky ABC Puzzle",
-        "description": "Help little ones learn their letters the hands-on way with this colorful chunky wooden alphabet puzzle, perfect for small fingers to grab, lift, and place! Each thick, oversized piece fits snugly into its matching slot, making it a fun and satisfying challenge for toddlers and early learners. It's a classic toy that makes learning the ABCs feel like playtime!",
-        "brand": "Little Tikes", "language": None, "link": None,
-        "battery_operated": False, "shareable": True,
-        "materials": ["wood"], "age_min": 36, "age_max": None, "piece_count": 27, "keywords": [],
-        "admin_notes": None,
-        "tags": ["learning", "puzzles"],
-        "images": [
-            {"url": "/toys/chunky-abc-puzzle-1.jpg", "is_featured": True},
         ],
     },
     {
@@ -909,7 +896,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["games"],
         "images": [
-            {"url": "/toys/dinosaur-stacking-blocks-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/29a9f0aa-2a64-4640-9524-7d3309e4e8b4/file", "is_featured": True},
         ],
     },
     {
@@ -946,6 +933,18 @@ TOYS: list[dict[str, Any]] = [
         "tags": ["puzzles"],
         "images": [
             {"url": "/api/toy-images/723e8c20-fad1-4307-b83f-a873ee0c6ef3/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Chunky ABC Puzzle",
+        "description": "Help little ones learn their letters the hands-on way with this colorful chunky wooden alphabet puzzle, perfect for small fingers to grab, lift, and place! Each thick, oversized piece fits snugly into its matching slot, making it a fun and satisfying challenge for toddlers and early learners. It's a classic toy that makes learning the ABCs feel like playtime!",
+        "brand": "Little Tikes", "language": None, "link": None,
+        "battery_operated": False, "shareable": False,
+        "materials": ["wood"], "age_min": 36, "age_max": None, "piece_count": 27, "keywords": [],
+        "admin_notes": None,
+        "tags": ["learning", "puzzles"],
+        "images": [
+            {"url": "/toys/chunky-abc-puzzle-1.jpg", "is_featured": True},
         ],
     },
     {
@@ -995,6 +994,18 @@ TOYS: list[dict[str, Any]] = [
         "tags": ["art"],
         "images": [
             {"url": "/api/toy-images/a9a7a083-4054-4aa5-b69c-10586ad764b3/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Mini Construction Set",
+        "description": "This 5-piece construction truck set includes a crane, excavator, road roller, dump truck, and front loader, giving kids everything they need for hours of imaginative construction site pretend play. As children dig, haul, and build their own truck stories, they develop key skills including fine motor control, creativity, and cognitive and social growth. It's an engaging, hands-on toy that sparks curiosity.",
+        "brand": "Tender Leaf Toys", "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["Wood"], "age_min": 36, "age_max": None, "piece_count": 5, "keywords": [],
+        "admin_notes": None,
+        "tags": ["vehicles"],
+        "images": [
+            {"url": "/api/toy-images/23bf639e-01f8-45ae-a70e-15bd5cdc7a41/file", "is_featured": True},
         ],
     },
 ]
