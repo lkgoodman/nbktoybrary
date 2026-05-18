@@ -50,6 +50,7 @@ class ToyImage(AuditMixin, Base):
         Uuid, ForeignKey("toys.id", ondelete="CASCADE"), nullable=False
     )
     image_url: Mapped[str] = mapped_column(String(1024), nullable=False)
+    storage_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     toy: Mapped["Toy"] = relationship(back_populates="images")

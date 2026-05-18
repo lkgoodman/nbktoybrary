@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import require_roles
-from app.core.storage import delete_image, key_from_public_url, upload_image
+from app.core.storage import delete_image, download_image, upload_image
 from app.db.session import get_db
 from app.models.toy import ToyImage
 from app.models.user import User
@@ -32,11 +32,14 @@ async def upload_toy_image(
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Unsupported image type")
     data = await file.read()
     ext = _EXTENSIONS[content_type]
-    key = f"toys/{toy_id}/{uuid.uuid4()}{ext}"
-    image_url = await asyncio.to_thread(upload_image, key, data, content_type)
+    image_id = uuid.uuid4()
+    key = f"toys/{toy_id}/{image_id}{ext}"
+    await asyncio.to_thread(upload_image, key, data, content_type)
     image = ToyImage(
+        id=image_id,
         toy_id=toy_id,
-        image_url=image_url,
+        image_url=f"/api/toy-images/{image_id}/file",
+        storage_key=key,
         is_featured=False,
         created_by=current_user.id,
     )
@@ -44,6 +47,22 @@ async def upload_toy_image(
     await db.commit()
     await db.refresh(image)
     return image
+
+
+@router.get("/toy-images/{image_id}/file")
+async def get_toy_image_file(
+    image_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    image = await db.get(ToyImage, image_id)
+    if image is None or image.storage_key is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+    data, content_type = await asyncio.to_thread(download_image, image.storage_key)
+    return Response(
+        content=data,
+        media_type=content_type,
+        headers={"Cache-Control": "public, max-age=31536000, immutable"},
+    )
 
 
 @router.patch("/toy-images/{image_id}", response_model=ToyImageRead)
@@ -79,10 +98,9 @@ async def delete_toy_image(
     image = await db.get(ToyImage, image_id)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
-    key = key_from_public_url(image.image_url)
-    if key is not None:
+    if image.storage_key is not None:
         try:
-            await asyncio.to_thread(delete_image, key)
+            await asyncio.to_thread(delete_image, image.storage_key)
         except Exception:
             pass
     await db.delete(image)
