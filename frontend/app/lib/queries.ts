@@ -1,6 +1,6 @@
 import { useMutation, useQuery, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 
-import { addFavorite, checkinCheckout, createBorrowRequests, createCheckout, createMembership, createTimeframe, createToy, deleteBorrowRequest, deleteToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, fetchSettings, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listFavorites, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, removeFavorite, resetUserPassword, setFeaturedImage, updateMembershipRequest, updateMembershipStanding, updateSettings, updateToy, updateUser, uploadToyImage } from "./api";
+import { addFavorite, checkinCheckout, createBorrowRequests, createCheckout, createMembership, createTimeframe, createToy, deleteBorrowRequest, deleteToy, updateBorrowRequest, deleteTimeframe, deleteToyImage, fetchSettings, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listFavorites, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, removeFavorite, resetUserPassword, setFeaturedImage, updateMembershipRequest, updateMembershipStanding, updateSettings, updateToy, updateUser } from "./api";
 import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, MembershipRead, MembershipRequestRead, RegisterRequest, SiteSettingsRead, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead, UserUpdate } from "./types";
 
 
@@ -91,12 +91,6 @@ export function useLogin(): UseMutationResult<
 export function useRegister(): UseMutationResult<UserRead, Error, RegisterRequest> {
   return useMutation<UserRead, Error, RegisterRequest>({
     mutationFn: registerUser,
-  });
-}
-
-export function useUploadToyImage(): UseMutationResult<ToyImage, Error, { toyId: string; file: File; token: string }> {
-  return useMutation<ToyImage, Error, { toyId: string; file: File; token: string }>({
-    mutationFn: ({ toyId, file, token }) => uploadToyImage(toyId, file, token),
   });
 }
 
