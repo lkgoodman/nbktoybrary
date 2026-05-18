@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import NextLink from "next/link";
 import Box from "@mui/material/Box";
@@ -11,7 +11,7 @@ import Typography from "@mui/material/Typography";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "../../../../lib/AuthContext";
-import { useToy, useToys, useUpdateToy, useSetFeaturedImage, useDeleteToyImage, useDeleteToy, queryKeys } from "../../../../lib/queries";
+import { useToy, useToys, useUpdateToy, useUploadToyImage, useSetFeaturedImage, useDeleteToyImage, useDeleteToy, queryKeys } from "../../../../lib/queries";
 import ToyForm from "../../../../components/ToyForm";
 import type { ToyCreate, ToyImage } from "../../../../lib/types";
 
@@ -26,14 +26,35 @@ export default function EditToyPage({ params }: Props): JSX.Element {
   const tagOptions = [...new Set((allToys ?? []).flatMap((t) => t.tags))].sort();
   const brandOptions = [...new Set((allToys ?? []).map((t) => t.brand).filter((b): b is string => b !== null))].sort();
   const updateToy = useUpdateToy();
+  const uploadImage = useUploadToyImage();
   const setFeatured = useSetFeaturedImage();
   const deleteImage = useDeleteToyImage();
   const deleteToy = useDeleteToy();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [values, setValues] = useState<ToyCreate | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
 
   function invalidateToy(): void {
     void queryClient.invalidateQueries({ queryKey: queryKeys.toys.detail(params.id) });
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>): void {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0 || token === null) return;
+    e.target.value = "";
+    files.reduce<Promise<void>>(
+      (chain, file) =>
+        chain.then(
+          () =>
+            new Promise<void>((resolve) => {
+              uploadImage.mutate(
+                { toyId: params.id, file, token },
+                { onSuccess: () => { invalidateToy(); resolve(); }, onError: () => resolve() },
+              );
+            }),
+        ),
+      Promise.resolve(),
+    );
   }
 
   useEffect(() => {
@@ -194,6 +215,26 @@ export default function EditToyPage({ params }: Props): JSX.Element {
                   ) : (
                     <Typography variant="body1" color="text.secondary">No photos yet.</Typography>
                   )}
+                  <Box>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      multiple
+                      style={{ display: "none" }}
+                      onChange={handleFileChange}
+                    />
+                    <Button
+                      variant="outlined"
+                      disabled={uploadImage.isPending}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {uploadImage.isPending ? "Uploading…" : "Add photos"}
+                    </Button>
+                    {uploadImage.isError ? (
+                      <Typography variant="body1" color="error">{uploadImage.error.message}</Typography>
+                    ) : null}
+                  </Box>
                 </Stack>
               ) : null}
             </ToyForm>

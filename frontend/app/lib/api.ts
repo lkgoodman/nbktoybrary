@@ -50,6 +50,7 @@ export const endpoints = {
     delete: (id: string): string => `${BACKEND_URL}/timeframes/${id}`,
   },
   toyImages: {
+    upload: (toyId: string): string => `${BACKEND_URL}/toys/${toyId}/images`,
     update: (imageId: string): string => `${BACKEND_URL}/toy-images/${imageId}`,
     delete: (imageId: string): string => `${BACKEND_URL}/toy-images/${imageId}`,
   },
@@ -134,6 +135,25 @@ export async function updateMembershipRequest(
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify({ status }),
   });
+}
+
+export async function uploadToyImage(toyId: string, file: File, token: string): Promise<ToyImage> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(endpoints.toyImages.upload(toyId), {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+  if (!res.ok) {
+    let detail: string | null = null;
+    try {
+      const body = await res.json() as { detail?: string };
+      if (typeof body.detail === "string") detail = body.detail;
+    } catch { /* ignore */ }
+    throw new Error(detail ?? `Upload failed: ${res.status}`);
+  }
+  return res.json() as Promise<ToyImage>;
 }
 
 export async function setFeaturedImage(imageId: string, token: string): Promise<ToyImage> {
