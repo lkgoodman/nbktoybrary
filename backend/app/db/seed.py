@@ -12,17 +12,14 @@ from app.models.user import Role, User, UserRole
 
 TOYS: list[dict[str, Any]] = [
     {
-        "name": "Cranium Junior",
-        "description": "Cranium Junior, often called Cranium Cadoo is the outrageously fun game designed especially for kids. With a variety of hilarious activities, the game gets kids thinking, creating, giggling, and grinning as they try to get four tokens in a row to win. Can you sculpt a taco? Act out a hula dancer? Think of a word that means to bounce a basketball and to drip milk from your chin? Which is strongest for its size: an ant, a human, or a chimp? Whether kids love to act, puzzle, sketch, sculpt, or even crack secret codes, Cadoo has something for them. Two or more kids will have a blast playing Cadoo -- even grown-ups will love to play and show what they can do! 2+ players",
-        "brand": "Hasbro", "language": None, "link": None,
-        "battery_operated": False, "shareable": True,
-        "materials": ["paper", "plastic"], "age_min": 84, "age_max": None, "piece_count": 100, "keywords": [],
+        "name": "My first 100 words",
+        "description": " ",
+        "brand": "Yoto", "language": None, "link": None,
+        "battery_operated": False, "shareable": False,
+        "materials": ["plastic"], "age_min": 0, "age_max": None, "piece_count": 1, "keywords": [],
         "admin_notes": None,
-        "tags": ["games"],
-        "images": [
-            {"url": "/api/toy-images/e673642d-f597-4c03-8a3c-24ac28289035/file", "is_featured": True},
-            {"url": "/toys/cranium-junior-1.jpg", "is_featured": False},
-        ],
+        "tags": ["yoto"],
+        "images": [],
     },
     {
         "name": "Bristle Blocks",
@@ -98,18 +95,6 @@ TOYS: list[dict[str, Any]] = [
         ],
     },
     {
-        "name": "Bee Tummy Time",
-        "description": "This crawl toy is designed to grow with babies through three developmental stages starting at 5 months. It encourages discovery, exploration, and the development of motor and sensory skills. The cloud toy moves in patterns that motivate beginner and more advanced crawlers to engage and chase. The movement starts in a gentle circular motion and later becomes more random as skills improve. Throughout all stages, colorful lights, sounds, and music provide multi-sensory stimulation that keeps babies entertained and motivated to crawl.",
-        "brand": None, "language": None, "link": None,
-        "battery_operated": True, "shareable": True,
-        "materials": ["plastic"], "age_min": 0, "age_max": None, "piece_count": 2, "keywords": [],
-        "admin_notes": None,
-        "tags": ["active", "baby"],
-        "images": [
-            {"url": "/toys/bee-tummy-time-1.jpg", "is_featured": True},
-        ],
-    },
-    {
         "name": "Barn Shape Sorter",
         "description": "The Barn Shape Sorter is a portable wooden farm toy that lets toddlers fit 10 chunky, farm-themed pieces into matching shaped holes in the barn or stand them up for imaginative play. Its sturdy barn with a flip-up roof and built-in handle makes it easy to take playtime anywhere, while the extra-thick pieces are perfect for little hands to grasp and maneuver. Designed to promote fine motor skills, sorting, and matching through hands-on, screen-free fun.",
         "brand": "Melissa & Doug", "language": None, "link": None,
@@ -180,6 +165,18 @@ TOYS: list[dict[str, Any]] = [
         "images": [
             {"url": "/api/toy-images/856781f3-0868-438a-b505-15d408abe826/file", "is_featured": True},
             {"url": "/toys/thomas-and-friends-puzzle-48-pieces-2.jpg", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Bee Tummy Time",
+        "description": "This crawl toy is designed to grow with babies through three developmental stages starting at 5 months. It encourages discovery, exploration, and the development of motor and sensory skills. The cloud toy moves in patterns that motivate beginner and more advanced crawlers to engage and chase. The movement starts in a gentle circular motion and later becomes more random as skills improve. Throughout all stages, colorful lights, sounds, and music provide multi-sensory stimulation that keeps babies entertained and motivated to crawl.",
+        "brand": None, "language": None, "link": None,
+        "battery_operated": True, "shareable": False,
+        "materials": ["plastic"], "age_min": 0, "age_max": None, "piece_count": 2, "keywords": [],
+        "admin_notes": None,
+        "tags": ["active", "baby"],
+        "images": [
+            {"url": "/toys/bee-tummy-time-1.jpg", "is_featured": True},
         ],
     },
     {
@@ -286,14 +283,16 @@ TOYS: list[dict[str, Any]] = [
         ],
     },
     {
-        "name": "My first 100 words",
-        "description": " ",
-        "brand": "Yoto", "language": None, "link": None,
-        "battery_operated": False, "shareable": False,
-        "materials": ["plastic"], "age_min": 0, "age_max": None, "piece_count": 1, "keywords": [],
+        "name": "Lincoln Logs",
+        "description": "Lincoln Logs are classic wooden building toys made of notched pieces that fit together to create structures like cabins, houses, and forts. They encourage creativity, problem-solving, and fine motor skill development through hands-on construction. Simple yet timeless, they let kids design and rebuild endlessly using their imagination.",
+        "brand": None, "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["plastic", "wood"], "age_min": 36, "age_max": None, "piece_count": 100, "keywords": [],
         "admin_notes": None,
-        "tags": ["yoto"],
-        "images": [],
+        "tags": ["building"],
+        "images": [
+            {"url": "/api/toy-images/ee6653e7-ab73-4ac5-aa2e-c18bda44588f/file", "is_featured": True},
+        ],
     },
     {
         "name": "Forest Friends Block Puzzle (9 pieces)",
@@ -341,7 +340,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["building"],
         "images": [
-            {"url": "/toys/knex-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/3bfe08b0-6df2-4f55-af3d-adaddb968230/file", "is_featured": True},
         ],
     },
     {
@@ -418,26 +417,6 @@ TOYS: list[dict[str, Any]] = [
         ],
     },
     {
-        "name": "Cash Register",
-        "description": " ",
-        "brand": "Melissa & Doug", "language": None, "link": None,
-        "battery_operated": False, "shareable": True,
-        "materials": ["wood", "plastic"], "age_min": 36, "age_max": None, "piece_count": None, "keywords": [],
-        "admin_notes": None,
-        "tags": ["learning"],
-        "images": [],
-    },
-    {
-        "name": "Ice Cream Truck & Tow Truck",
-        "description": " ",
-        "brand": "Fisher-Price", "language": None, "link": None,
-        "battery_operated": False, "shareable": True,
-        "materials": ["plastic"], "age_min": 12, "age_max": None, "piece_count": 4, "keywords": [],
-        "admin_notes": None,
-        "tags": ["vehicles"],
-        "images": [],
-    },
-    {
         "name": "Kidscope",
         "description": "Introduce children to a real scientific toy that sparks curiosity and encourages hands-on, interactive learning from an early age with this microscope. With science toys like the Kidscope, kids can start developing an interest in more than one field as young as 3 years old, from biology to astronomy and beyond. Designed with kid-friendly features such as a comfy double eyepiece (no need to close one eye!) low magnification to provide a wide field of view, easy-focus knob, and illuminating LED light\n\nThe Kidscope includes 15 slides with 60 real images, storage drawer, build-in LED light, and guide with over 200 facts to support scientific exploration.",
         "brand": None, "language": None, "link": None,
@@ -484,7 +463,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["vehicles"],
         "images": [
-            {"url": "/toys/mack-dump-truck-snowplow-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/3726d8cd-8d22-4898-8bdb-ac1513f97369/file", "is_featured": True},
             {"url": "/toys/mack-dump-truck-snowplow-2.jpg", "is_featured": False},
         ],
     },
@@ -522,7 +501,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["pretend play"],
         "images": [
-            {"url": "/toys/astronaut-costume-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/6b7c8691-ccc9-4afe-a962-5bb04e4449a8/file", "is_featured": True},
         ],
     },
     {
@@ -546,7 +525,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["pretend play"],
         "images": [
-            {"url": "/toys/knight-tunic-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/29987811-066b-4752-9beb-28afd56be6b3/file", "is_featured": True},
         ],
     },
     {
@@ -558,7 +537,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["puzzles"],
         "images": [
-            {"url": "/toys/quick-cube-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/d4759494-d034-4cf9-85e4-63036ef5ed92/file", "is_featured": True},
         ],
     },
     {
@@ -570,7 +549,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["games"],
         "images": [
-            {"url": "/toys/moose-match-mayhem-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/c5b6bc3a-582e-4b73-ad94-c0a0e09e7aff/file", "is_featured": True},
         ],
     },
     {
@@ -582,7 +561,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["puzzles"],
         "images": [
-            {"url": "/toys/clown-puzzle-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/a5954707-f780-40e5-b7cb-d9854a2239fc/file", "is_featured": True},
         ],
     },
     {
@@ -594,7 +573,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["games"],
         "images": [
-            {"url": "/toys/pickup-sticks-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/1c822914-6248-45a3-a4ba-f6ca9dfa32b3/file", "is_featured": True},
         ],
     },
     {
@@ -606,8 +585,28 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["sensory"],
         "images": [
-            {"url": "/toys/triangle-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/23c2db15-bf4b-4253-8541-c2c8fa663ca8/file", "is_featured": True},
         ],
+    },
+    {
+        "name": "Cash Register",
+        "description": " ",
+        "brand": "Melissa & Doug", "language": None, "link": None,
+        "battery_operated": False, "shareable": False,
+        "materials": ["wood", "plastic"], "age_min": 36, "age_max": None, "piece_count": None, "keywords": [],
+        "admin_notes": None,
+        "tags": ["learning"],
+        "images": [],
+    },
+    {
+        "name": "Ice Cream Truck & Tow Truck",
+        "description": " ",
+        "brand": "Fisher-Price", "language": None, "link": None,
+        "battery_operated": False, "shareable": False,
+        "materials": ["plastic"], "age_min": 12, "age_max": None, "piece_count": 4, "keywords": [],
+        "admin_notes": None,
+        "tags": ["vehicles"],
+        "images": [],
     },
     {
         "name": "Xylophone",
@@ -618,7 +617,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["sensory"],
         "images": [
-            {"url": "/toys/xylophone-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/5dd22cf2-af12-4eb7-9490-47f221082195/file", "is_featured": True},
         ],
     },
     {
@@ -630,7 +629,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["puzzles"],
         "images": [
-            {"url": "/toys/owl-puzzle-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/b2626221-1550-462e-97e3-80c389a74f2c/file", "is_featured": True},
         ],
     },
     {
@@ -642,7 +641,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["puzzles"],
         "images": [
-            {"url": "/toys/butterfly-matching-game-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/5dcfa24b-32f7-4604-91a0-02c19b89979b/file", "is_featured": True},
             {"url": "/toys/butterfly-matching-game-2.jpg", "is_featured": False},
         ],
     },
@@ -655,7 +654,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["puzzles"],
         "images": [
-            {"url": "/toys/deep-ocean-puzzle-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/192d4640-13f5-490e-9d0e-6ce9b511affe/file", "is_featured": True},
             {"url": "/toys/deep-ocean-puzzle-2.jpg", "is_featured": False},
         ],
     },
@@ -668,7 +667,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["baby"],
         "images": [
-            {"url": "/toys/rainbow-nesting-bowls-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/0ec342e6-3863-4a38-8c82-2f20ec29eeb5/file", "is_featured": True},
             {"url": "/toys/rainbow-nesting-bowls-2.jpg", "is_featured": False},
         ],
     },
@@ -681,7 +680,7 @@ TOYS: list[dict[str, Any]] = [
         "admin_notes": None,
         "tags": ["baby"],
         "images": [
-            {"url": "/toys/chunky-wooden-jigsaw-puzzle-1.jpg", "is_featured": True},
+            {"url": "/api/toy-images/ca01244e-ef37-4dca-a7f4-49d63d0ef204/file", "is_featured": True},
             {"url": "/toys/chunky-wooden-jigsaw-puzzle-2.jpg", "is_featured": False},
         ],
     },
@@ -693,7 +692,9 @@ TOYS: list[dict[str, Any]] = [
         "materials": ["wood"], "age_min": 12, "age_max": None, "piece_count": 6, "keywords": [],
         "admin_notes": None,
         "tags": ["baby"],
-        "images": [],
+        "images": [
+            {"url": "/api/toy-images/2befc8c3-658c-416e-9b0d-e32bf1de6db4/file", "is_featured": True},
+        ],
     },
     {
         "name": "Stacking Rainbow",
@@ -756,15 +757,16 @@ TOYS: list[dict[str, Any]] = [
         ],
     },
     {
-        "name": "Lincoln Logs",
-        "description": "Lincoln Logs are classic wooden building toys made of notched pieces that fit together to create structures like cabins, houses, and forts. They encourage creativity, problem-solving, and fine motor skill development through hands-on construction. Simple yet timeless, they let kids design and rebuild endlessly using their imagination.",
-        "brand": None, "language": None, "link": None,
+        "name": "Cranium Junior",
+        "description": "Cranium Junior, often called Cranium Cadoo is the outrageously fun game designed especially for kids. With a variety of hilarious activities, the game gets kids thinking, creating, giggling, and grinning as they try to get four tokens in a row to win. Can you sculpt a taco? Act out a hula dancer? Think of a word that means to bounce a basketball and to drip milk from your chin? Which is strongest for its size: an ant, a human, or a chimp? Whether kids love to act, puzzle, sketch, sculpt, or even crack secret codes, Cadoo has something for them. Two or more kids will have a blast playing Cadoo -- even grown-ups will love to play and show what they can do! 2+ players",
+        "brand": "Hasbro", "language": None, "link": None,
         "battery_operated": False, "shareable": True,
-        "materials": ["plastic", "wood"], "age_min": 36, "age_max": None, "piece_count": 100, "keywords": [],
+        "materials": ["paper", "plastic"], "age_min": 84, "age_max": None, "piece_count": 100, "keywords": [],
         "admin_notes": None,
-        "tags": ["building"],
+        "tags": ["games"],
         "images": [
-            {"url": "/api/toy-images/ee6653e7-ab73-4ac5-aa2e-c18bda44588f/file", "is_featured": True},
+            {"url": "/api/toy-images/e673642d-f597-4c03-8a3c-24ac28289035/file", "is_featured": True},
+            {"url": "/toys/cranium-junior-1.jpg", "is_featured": False},
         ],
     },
     {
@@ -853,16 +855,6 @@ TOYS: list[dict[str, Any]] = [
         ],
     },
     {
-        "name": "First Words Flashcards",
-        "description": " ",
-        "brand": None, "language": None, "link": None,
-        "battery_operated": False, "shareable": True,
-        "materials": ["paper"], "age_min": 12, "age_max": None, "piece_count": 22, "keywords": [],
-        "admin_notes": None,
-        "tags": ["learning"],
-        "images": [],
-    },
-    {
         "name": "Fruit Fidget Poppers",
         "description": "Pop, pop, pop your way through a whole fruit bowl with this super fun 3-piece fidget toy set, featuring a cool avocado, a colorful watermelon, and a silly bunch of bananas! Press the bubbly bumps in and out as many times as you want \u2014 they always bounce back for more popping fun! Grab all three fruity friends and see how fast your fingers can go!",
         "brand": None, "language": None, "link": None,
@@ -948,6 +940,16 @@ TOYS: list[dict[str, Any]] = [
         ],
     },
     {
+        "name": "First Words Flashcards",
+        "description": " ",
+        "brand": None, "language": None, "link": None,
+        "battery_operated": False, "shareable": False,
+        "materials": ["paper"], "age_min": 12, "age_max": None, "piece_count": 22, "keywords": [],
+        "admin_notes": None,
+        "tags": ["learning"],
+        "images": [],
+    },
+    {
         "name": "Tinker Toys",
         "description": "Tinkertoys are a classic American construction toy introduced in 1914, consisting of spools and rods that snap together to build three-dimensional structures, vehicles, and figures. The spools have holes arranged around their edges and center, allowing rods of varying lengths to connect at multiple angles, giving builders flexibility to create complex designs. They have been a staple childhood toy for over a century, encouraging spatial reasoning, creativity, and basic engineering thinking in children.",
         "brand": None, "language": None, "link": None,
@@ -1006,6 +1008,128 @@ TOYS: list[dict[str, Any]] = [
         "tags": ["vehicles"],
         "images": [
             {"url": "/api/toy-images/23bf639e-01f8-45ae-a70e-15bd5cdc7a41/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Farm Playset ",
+        "description": "This Farm Playset includes a musical red barn, tractor, farmer, and animal figurines that store neatly inside the barn for easy cleanup and travel. The figures encourage imaginative play while building animal vocabulary, language skills, and cognitive development in toddlers.",
+        "brand": None, "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["Plastic"], "age_min": 3, "age_max": None, "piece_count": 14, "keywords": [],
+        "admin_notes": None,
+        "tags": ["pretend play"],
+        "images": [
+            {"url": "/api/toy-images/566477b7-ce5e-4874-b12e-1253a6acd6a3/file", "is_featured": True},
+            {"url": "/api/toy-images/a1c558c7-1a43-45de-81e8-9f0806005dd3/file", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Count Your Chickens",
+        "description": "Count Your Chickens is an award-winning cooperative counting game designed for 2 to 4 players, where everyone works together to help Mother Hen collect her scattered chicks and return them safely to the coop. Unlike competitive games, all players win or lose as a team, making it an ideal introduction to cooperative play while naturally building counting skills \u2014 no reading required. The game has earned recognition for its success in combining early math learning with valuable social development skills.",
+        "brand": "Peaceable Kingdom", "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["Paper"], "age_min": 36, "age_max": None, "piece_count": None, "keywords": [],
+        "admin_notes": None,
+        "tags": ["games"],
+        "images": [
+            {"url": "/api/toy-images/381a5d0a-b3fe-4d02-9af6-b8d6df9aaa39/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Wooden Peg Drop",
+        "description": "Strengthen precise fine motor skills with this engaging problem-solving challenge. Part of the Lovevery Thinker Play Kit for ages 11-12 months.",
+        "brand": "Lovevery", "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["Wood"], "age_min": 9, "age_max": None, "piece_count": 4, "keywords": [],
+        "admin_notes": None,
+        "tags": ["baby"],
+        "images": [
+            {"url": "/api/toy-images/be03826b-5e6c-4bd6-9163-8b54c05958cd/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Brain Quest",
+        "description": "Brain Quest is an educational card game, designed to make learning fun for kids through hundreds of curriculum-based questions spanning subjects like math, reading, science, and social studies. Players draw cards and answer age-appropriate questions, with different editions tailored to specific grade levels and scoring evens the playing field so kids of different ages can all play together.",
+        "brand": None, "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["Paper"], "age_min": 72, "age_max": None, "piece_count": 100, "keywords": [],
+        "admin_notes": None,
+        "tags": ["games", "learning"],
+        "images": [
+            {"url": "/api/toy-images/25032158-b53d-46b0-8f33-35422c8ce927/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Compare and Contrast Cards",
+        "description": "These Compare and Contrast Cards are a set of colorful educational cards featuring characters and familiar objects designed to help toddlers and preschoolers identify similarities and differences. Children are encouraged to look at pairs or groups of images and describe what is the same and what is different, building critical thinking and early language skills.",
+        "brand": "Fisher-Price", "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["Paper"], "age_min": None, "age_max": None, "piece_count": None, "keywords": [],
+        "admin_notes": None,
+        "tags": ["games", "learning"],
+        "images": [
+            {"url": "/api/toy-images/0de66322-4520-49e6-9cee-e8e6d325b0bf/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Good Manners Conversation Cards",
+        "description": "the Good Manners Conversation Flash Card set is a perfect way to teach little ones about demonstrating good behavior in familiar situations.  Delightfully illustrated with polite pigs, one side of each card asks what approach or response is right for a situation; the reverse offers a good suggestion.",
+        "brand": "Eeboo", "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["Paper"], "age_min": None, "age_max": None, "piece_count": None, "keywords": [],
+        "admin_notes": "https://eeboo.com/products/good-manners-flash-cards?googlead&gad_source=1&gad_campaignid=22444482864&gbraid=0AAAAACreuVC6Pp07tzzXca1u8Bj9wnCdz&gclid=Cj0KCQjwlLDQBhDjARIsAPlIefHeirdaigNdycrTkr0BY-bUeohn1ScNx0ZmevWKWUH-hT_6l_XRl3kaAtbAEALw_wcB",
+        "tags": ["games", "learning"],
+        "images": [
+            {"url": "/api/toy-images/608d03ee-4389-460d-9710-872d85eaf64c/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Snap Circuits Jr",
+        "description": "Snap Circuits Jr. is a hands-on electronics kit that uses colorful, snap-together components to teach kids the basics of electrical circuits \u2014 no wires or tools required. With over 30 snap-on parts and an easy-to-follow instruction guide, children can complete more than 100 experiments involving light, sound, movement, and more, including building their own radios and electronic games. It's an engaging STEM toy that makes learning real-world science and engineering concepts fun, accessible, and safe for younger learners.",
+        "brand": "Elenco", "language": None, "link": None,
+        "battery_operated": True, "shareable": True,
+        "materials": [], "age_min": 84, "age_max": None, "piece_count": None, "keywords": [],
+        "admin_notes": None,
+        "tags": ["building", "games", "learning", "sensory"],
+        "images": [
+            {"url": "/api/toy-images/0c52e62d-c7ca-4390-80c5-55d5a7c2155a/file", "is_featured": True},
+            {"url": "/api/toy-images/4c482953-39d2-4149-a204-0b2dc7615295/file", "is_featured": False},
+        ],
+    },
+    {
+        "name": "Color Sorting Quiet Book",
+        "description": "This color sorting quiet book is an activity book designed for toddlers, featuring pages organized around different colors for kids to sort and match. Children practice placing colorful objects, shapes, or characters into their corresponding color-coded sections, building color recognition, fine motor skills, and hand-eye coordination through tactile, hands-on play.",
+        "brand": None, "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["Paper", "Plastic"], "age_min": 24, "age_max": None, "piece_count": None, "keywords": [],
+        "admin_notes": None,
+        "tags": ["learning"],
+        "images": [
+            {"url": "/api/toy-images/bceae7a9-1a2c-4d1b-b4b0-d695c6b34792/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Wooden Train",
+        "description": "A wooden train set features two chunky, smooth-finished cars that little hands can easily grasp, each topped with colorful stacking blocks in bright colors. As children load and unload the blocks, mix and match colors, and push the train along, they develop fine motor skills, color recognition, and early sorting and stacking abilities. ",
+        "brand": None, "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["Wood"], "age_min": 9, "age_max": None, "piece_count": None, "keywords": [],
+        "admin_notes": None,
+        "tags": [],
+        "images": [
+            {"url": "/api/toy-images/8d600cea-279b-4b65-bb03-a351cf6eaa1f/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Draw, Trace & Erase Board",
+        "description": "Freeform draw and trace words on the wipeable board to form the visual and muscle memory needed to write. From the Lovevery Persister Play Kit for ages 55-57 months.",
+        "brand": "Lovevery", "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["Paper", "Wood", "Fabric", "Plastic"], "age_min": None, "age_max": None, "piece_count": None, "keywords": [],
+        "admin_notes": None,
+        "tags": ["learning"],
+        "images": [
+            {"url": "/api/toy-images/b7dc9eb3-a4ed-41f2-82dd-50e92684c2e5/file", "is_featured": True},
         ],
     },
 ]
