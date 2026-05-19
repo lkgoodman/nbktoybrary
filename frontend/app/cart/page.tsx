@@ -314,7 +314,7 @@ export default function CartPage(): JSX.Element {
             <Stack spacing={2}>
               <Typography variant="bodyStrong">Choose a pickup date and time</Typography>
               <Typography variant="label" color="text.secondary">
-                Toys should be picked up within 1 week of making the reservation.
+                Toys should be picked up within 1 week of making the reservation (today). Pickup address is 171 Calyer St between Manhattan Ave and Lorimer St. in Greenpoint.
               </Typography>
               {availableTimeframes.length === 0 ? (
                 <Typography variant="body1" color="text.secondary">
