@@ -410,7 +410,7 @@ export default function CartPage(): JSX.Element {
             <Stack spacing={2}>
               <Typography variant="bodyStrong">Choose a return time</Typography>
               <Typography variant="label" color="text.secondary">
-                Toys should be returned within 4 weeks of when they are picked up.
+                Toys must be returned to the original pickup location within 4 weeks of initial pickup.
               </Typography>
               {selectedTimeframeId === null ? (
                 <Typography variant="label" color="text.secondary">Select a pickup time above first.</Typography>
