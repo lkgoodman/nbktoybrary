@@ -80,7 +80,7 @@ export default function NavBar(): JSX.Element {
               size="large"
               sx={{ px: { xs: 1, md: 2 }, py: { xs: 1, md: 1.5 }, fontSize: { xs: "0.85rem", md: "1.1rem" }, color: "inherit" }}
             >
-              Inventory
+              Toys
             </Button>
             <Button
               component={NextLink}
