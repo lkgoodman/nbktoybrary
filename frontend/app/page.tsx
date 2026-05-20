@@ -104,7 +104,7 @@ export default function Page(): JSX.Element {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [availableOnly, setAvailableOnly] = useState<boolean>(false);
 
-  const LANGUAGES_FIRST: string[] = ["No reading required"];
+  const LANGUAGES_FIRST: string[] = ["NA"];
   const LANGUAGES: string[] = ["English", "French", "Spanish"];
 
   const toys: Toy[] = useMemo(() => {
