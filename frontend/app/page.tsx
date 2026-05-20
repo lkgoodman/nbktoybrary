@@ -321,50 +321,9 @@ export default function Page(): JSX.Element {
         </Stack>
 
         {/* Mobile filter row */}
-        <Stack
-          spacing={2}
-          sx={{ display: { xs: "flex", md: "none" }, bgcolor: "filterBar.main", p: 2, borderRadius: 1 }}
-        >
-          <FormControl size="small" fullWidth>
-            <InputLabel>Age</InputLabel>
-            <Select
-              label="Age"
-              value={activeAgeBucket?.label ?? ""}
-              onChange={handleAgeChange}
-            >
-              <MenuItem value="">Any age</MenuItem>
-              {AGE_BUCKETS.map((bucket: AgeBucket) => (
-                <MenuItem key={bucket.label} value={bucket.label}>
-                  {bucket.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
-            size="small"
-            fullWidth
-            label="Search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <FormControl size="small" fullWidth>
-            <InputLabel>Category</InputLabel>
-            <Select
-              multiple
-              label="Category"
-              value={[...activeTags]}
-              onChange={handleTagsChange}
-              renderValue={(selected: string[]) => selected.join(", ")}
-            >
-              {allTags.map((tag: string) => (
-                <MenuItem key={tag} value={tag}>
-                  <Checkbox checked={activeTags.has(tag)} size="small" />
-                  <ListItemText primary={tag} />
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Stack>
+        <Box sx={{ display: { xs: "block", md: "none" }, bgcolor: "filterBar.main", p: 2, borderRadius: 1 }}>
+          {sidebarContent}
+        </Box>
 
         {/* Main content: sidebar + grid */}
         <Box sx={{ display: "flex", gap: 4, alignItems: "stretch" }}>
