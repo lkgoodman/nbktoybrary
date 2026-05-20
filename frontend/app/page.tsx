@@ -287,7 +287,7 @@ export default function Page(): JSX.Element {
           onChange={(e) => setActiveLanguage(e.target.value === "" ? null : e.target.value)}
           sx={{ bgcolor: "background.default" }}
         >
-          <MenuItem value="">Any language</MenuItem>
+          <MenuItem value="">All</MenuItem>
           {LANGUAGES.map((lang: string) => (
             <MenuItem key={lang} value={lang}>{lang}</MenuItem>
           ))}
