@@ -795,16 +795,6 @@ TOYS: list[dict[str, Any]] = [
         ],
     },
     {
-        "name": "Wooden Train",
-        "description": " ",
-        "brand": None, "language": None, "link": None,
-        "battery_operated": False, "shareable": True,
-        "materials": ["wood"], "age_min": 12, "age_max": None, "piece_count": 10, "keywords": [],
-        "admin_notes": None,
-        "tags": ["baby"],
-        "images": [],
-    },
-    {
         "name": "Felt Flowers",
         "description": "Plant them, pick them, and make a bouquet. Part of the Lovevery Helper Play Kit for ages 25-27 months.",
         "brand": "Lovevery", "language": None, "link": "https://lovevery.com/products/the-play-kits-the-helper?srsltid=AfmBOorkXkJczZecYnLmb-PDLfsEbkY_N8vk0SbZeNT23XoWGVzNVYUt",
@@ -1130,6 +1120,30 @@ TOYS: list[dict[str, Any]] = [
         "tags": ["learning"],
         "images": [
             {"url": "/api/toy-images/b7dc9eb3-a4ed-41f2-82dd-50e92684c2e5/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Magnetic Tiles",
+        "description": "Magnetic tiles are a set of colorful, translucent plastic shapes \u2014 squares, triangles, and more \u2014 with magnets embedded in every edge, allowing them to effortlessly snap together to form 2D patterns or impressive 3D structures. Children can build everything from simple houses and towers to complex castles and geometric designs, fostering creativity, spatial reasoning, and early STEM thinking through open-ended play. Please note that while younger children may enjoy the magnetic tiles, it is important to keep an eye on young children playing with any toy with magnets. ",
+        "brand": None, "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["Plastic", "Magnet"], "age_min": 36, "age_max": None, "piece_count": 52, "keywords": [],
+        "admin_notes": None,
+        "tags": ["building"],
+        "images": [
+            {"url": "/api/toy-images/0f048a3f-f5d9-4310-9b21-21b341557ccb/file", "is_featured": True},
+        ],
+    },
+    {
+        "name": "Vehicle Puzzles (4 puzzles, 12 pcs each)",
+        "description": "This set of four wooden vehicle puzzles offers toddlers four fun challenges in one box, each featuring a different colorful vehicle \u2014 like a race car, school bus, train, or fire engine \u2014 each made up of 12 pieces. As children work to complete each puzzle, they build problem-solving skills, shape recognition, hand-eye coordination, and fine motor development in an engaging, screen-free way. ",
+        "brand": "Melissa & Doug", "language": None, "link": None,
+        "battery_operated": False, "shareable": True,
+        "materials": ["Wood"], "age_min": 36, "age_max": None, "piece_count": 48, "keywords": [],
+        "admin_notes": None,
+        "tags": ["puzzles", "vehicles"],
+        "images": [
+            {"url": "/api/toy-images/3c9f3b88-d933-41ad-9707-baa24ce8706a/file", "is_featured": True},
         ],
     },
 ]
