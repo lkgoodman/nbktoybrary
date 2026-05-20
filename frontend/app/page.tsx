@@ -104,7 +104,8 @@ export default function Page(): JSX.Element {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [availableOnly, setAvailableOnly] = useState<boolean>(false);
 
-  const LANGUAGES: string[] = ["English", "French", "No reading required", "Spanish"];
+  const LANGUAGES_FIRST: string[] = ["No reading required"];
+  const LANGUAGES: string[] = ["English", "French", "Spanish"];
 
   const toys: Toy[] = useMemo(() => {
     if (!data) return [];
@@ -288,6 +289,9 @@ export default function Page(): JSX.Element {
           sx={{ bgcolor: "background.default" }}
         >
           <MenuItem value="">All</MenuItem>
+          {LANGUAGES_FIRST.map((lang: string) => (
+            <MenuItem key={lang} value={lang}>{lang}</MenuItem>
+          ))}
           {LANGUAGES.map((lang: string) => (
             <MenuItem key={lang} value={lang}>{lang}</MenuItem>
           ))}
