@@ -164,7 +164,7 @@ export default function CartPage(): JSX.Element {
         <Stack spacing={3}>
           <Typography variant="pageTitle" component="h1">Request submitted</Typography>
           <Typography variant="body1" color="text.secondary">
-            Your borrow request has been received.
+            Your reservation is complete.
           </Typography>
 
           <Paper elevation={0} sx={{ p: 3 }}>
