@@ -130,6 +130,18 @@ export default function HoursPage(): JSX.Element {
             })() : null}
           </Stack>
         )}
+
+        <Stack spacing={2}>
+          <Typography variant="body1">
+            Toy pickup and returns are located at 171 Calyer Street.
+          </Typography>
+          <Box
+            component="img"
+            src="/map.png"
+            alt="Map showing 171 Calyer Street"
+            sx={{ width: "100%", borderRadius: 2 }}
+          />
+        </Stack>
       </Stack>
     </Box>
   );
