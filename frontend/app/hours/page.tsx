@@ -8,10 +8,12 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { useTimeframes } from "../lib/queries";
+import { useAuth } from "../lib/AuthContext";
 import type { TimeframeRead } from "../lib/types";
 
 export default function HoursPage(): JSX.Element {
   const { data: timeframes, isPending, isError } = useTimeframes(null);
+  const { isMember } = useAuth();
   const [calendarMonth, setCalendarMonth] = useState<Date>(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -131,17 +133,19 @@ export default function HoursPage(): JSX.Element {
           </Stack>
         )}
 
-        <Stack spacing={2}>
-          <Typography variant="body1">
-            Toy pickup and returns are located at 171 Calyer Street.
-          </Typography>
-          <Box
-            component="img"
-            src="/map.png"
-            alt="Map showing 171 Calyer Street"
-            sx={{ width: "100%", borderRadius: 2 }}
-          />
-        </Stack>
+        {isMember ? (
+          <Stack spacing={2}>
+            <Typography variant="body1">
+              Toy pickup and returns are located at 171 Calyer Street.
+            </Typography>
+            <Box
+              component="img"
+              src="/map.png"
+              alt="Map showing 171 Calyer Street"
+              sx={{ width: "100%", borderRadius: 2 }}
+            />
+          </Stack>
+        ) : null}
       </Stack>
     </Box>
   );
