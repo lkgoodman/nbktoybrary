@@ -90,7 +90,7 @@ export default function LoginPage(): JSX.Element {
             <Box component="a" href="mailto:nbktoybrary@gmail.com" sx={{ color: "secondary.main" }}>
               nbktoybrary@gmail.com
             </Box>
-            {" "}for help.
+            .
           </Typography>
         </Stack>
       </Paper>
