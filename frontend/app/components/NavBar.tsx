@@ -8,7 +8,6 @@ import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
-import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Toolbar from "@mui/material/Toolbar";
@@ -22,22 +21,12 @@ export default function NavBar(): JSX.Element {
   const { cartIds } = useCart();
   const router = useRouter();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [browseAnchorEl, setBrowseAnchorEl] = useState<null | HTMLElement>(null);
-
   function handleOpenMenu(e: React.MouseEvent<HTMLElement>): void {
     setAnchorEl(e.currentTarget);
   }
 
   function handleCloseMenu(): void {
     setAnchorEl(null);
-  }
-
-  function handleOpenBrowse(e: React.MouseEvent<HTMLElement>): void {
-    setBrowseAnchorEl(e.currentTarget);
-  }
-
-  function handleCloseBrowse(): void {
-    setBrowseAnchorEl(null);
   }
 
   function handleSignOut(): void {
@@ -84,26 +73,24 @@ export default function NavBar(): JSX.Element {
                 </Badge>
               </IconButton>
             ) : null}
-            <IconButton
-              onClick={handleOpenBrowse}
-              sx={{ width: 40, height: 40, bgcolor: "brand.name", "&:hover": { bgcolor: "brand.name" } }}
+            <Button
+              component={NextLink}
+              href="/"
+              variant="text"
+              size="large"
+              sx={{ px: { xs: 1, md: 2 }, py: { xs: 1, md: 1.5 }, fontSize: { xs: "0.85rem", md: "1.1rem" }, color: "inherit" }}
             >
-              <Box sx={{ width: 16, height: 16, borderRadius: "50%", bgcolor: "background.default" }} />
-            </IconButton>
-            <Menu
-              anchorEl={browseAnchorEl}
-              open={browseAnchorEl !== null}
-              onClose={handleCloseBrowse}
-              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-              transformOrigin={{ vertical: "top", horizontal: "right" }}
+              Inventory
+            </Button>
+            <Button
+              component={NextLink}
+              href="/hours"
+              variant="text"
+              size="large"
+              sx={{ px: { xs: 1, md: 2 }, py: { xs: 1, md: 1.5 }, fontSize: { xs: "0.85rem", md: "1.1rem" }, color: "inherit" }}
             >
-              <MenuItem component={NextLink} href="/" onClick={handleCloseBrowse}>
-                Inventory
-              </MenuItem>
-              <MenuItem component={NextLink} href="/hours" onClick={handleCloseBrowse}>
-                Hours
-              </MenuItem>
-            </Menu>
+              Hours
+            </Button>
             <Button
               variant="contained"
               size="large"
