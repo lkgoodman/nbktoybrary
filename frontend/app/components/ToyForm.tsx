@@ -17,7 +17,7 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
-const LANGUAGES_FIRST: string[] = ["NA"];
+const LANGUAGES_FIRST: string[] = ["N/A"];
 const LANGUAGES: string[] = ["English", "French", "Spanish"];
 
 const DEFAULT_TAGS: string[] = ["art"];

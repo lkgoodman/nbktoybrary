@@ -104,7 +104,7 @@ export default function Page(): JSX.Element {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [availableOnly, setAvailableOnly] = useState<boolean>(false);
 
-  const LANGUAGES_FIRST: string[] = ["NA"];
+  const LANGUAGES_FIRST: string[] = ["N/A"];
   const LANGUAGES: string[] = ["English", "French", "Spanish"];
 
   const toys: Toy[] = useMemo(() => {
@@ -431,7 +431,7 @@ export default function Page(): JSX.Element {
                                   }}
                                 >
                                   <Typography variant="sectionTitle" sx={{ color: "white" }}>
-                                    {toy.available_count === 0 ? "UNAVAILABLE" : "IN CART"}
+                                    {toy.available_count === 0 ? "UN/AVAILABLE" : "IN CART"}
                                   </Typography>
                                 </Box>
                               ) : null}
