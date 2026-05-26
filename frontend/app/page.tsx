@@ -431,7 +431,7 @@ export default function Page(): JSX.Element {
                                   }}
                                 >
                                   <Typography variant="sectionTitle" sx={{ color: "white" }}>
-                                    {toy.available_count === 0 ? "UN/AVAILABLE" : "IN CART"}
+                                    {toy.available_count === 0 ? "UNAVAILABLE" : "IN CART"}
                                   </Typography>
                                 </Box>
                               ) : null}
