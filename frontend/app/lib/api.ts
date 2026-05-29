@@ -26,6 +26,7 @@ export const endpoints = {
   users: {
     create: (): string => `${BACKEND_URL}/users`,
     detail: (id: string): string => `${BACKEND_URL}/users/${id}`,
+    delete: (id: string): string => `${BACKEND_URL}/users/${id}`,
   },
   toys: {
     list: (): string => `${BACKEND_URL}/toys`,
@@ -268,6 +269,14 @@ export async function resetUserPassword(id: string, password: string, token: str
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify({ password }),
   });
+}
+
+export async function deleteUser(id: string, token: string): Promise<void> {
+  const res = await fetch(endpoints.users.delete(id), {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
 }
 
 export async function updateUser(id: string, payload: UserUpdate, token: string): Promise<UserRead> {

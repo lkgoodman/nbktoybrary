@@ -14,7 +14,7 @@ import Typography from "@mui/material/Typography";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../lib/AuthContext";
-import { useUser, useAdminBorrowRequests, useToys, useMembershipsByUser, useUpdateMembershipStanding, useCreateMembership, useResetUserPassword, queryKeys } from "../../../lib/queries";
+import { useUser, useAdminBorrowRequests, useToys, useMembershipsByUser, useUpdateMembershipStanding, useCreateMembership, useResetUserPassword, useDeleteUser, queryKeys } from "../../../lib/queries";
 import type { BorrowRequestReadWithDetails, MembershipRead, Toy, ToyImage } from "../../../lib/types";
 
 function getFeaturedImage(toy: Toy): ToyImage | null {
@@ -36,8 +36,10 @@ export default function AdminMemberPage({
   const updateStanding = useUpdateMembershipStanding();
   const createMembership = useCreateMembership();
   const resetPassword = useResetUserPassword();
+  const deleteUser = useDeleteUser();
   const membership: MembershipRead | null = memberships?.[0] ?? null;
   const [newPassword, setNewPassword] = useState<string>("");
+  const [confirmDeleteMember, setConfirmDeleteMember] = useState<boolean>(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<boolean>(false);
 
@@ -67,15 +69,50 @@ export default function AdminMemberPage({
     <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 700, mx: "auto" }}>
       <Stack spacing={4}>
         <Stack spacing={1}>
-          <Button
-            component={NextLink}
-            href="/admin?tab=members"
-            variant="text"
-            size="small"
-            sx={{ alignSelf: "flex-start", pl: 0 }}
-          >
-            ← Members
-          </Button>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Button
+              component={NextLink}
+              href="/admin?tab=members"
+              variant="text"
+              size="small"
+              sx={{ pl: 0 }}
+            >
+              ← Members
+            </Button>
+            {isSuperadmin ? (
+              !confirmDeleteMember ? (
+                <Button variant="outlined" color="error" size="small" onClick={() => setConfirmDeleteMember(true)}>
+                  Delete member
+                </Button>
+              ) : (
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    size="small"
+                    disabled={deleteUser.isPending}
+                    onClick={() => {
+                      if (token === null) return;
+                      deleteUser.mutate(
+                        { id: params.userId, token },
+                        {
+                          onSuccess: () => {
+                            void queryClient.invalidateQueries({ queryKey: queryKeys.users.list() });
+                            router.push("/admin?tab=members");
+                          },
+                        },
+                      );
+                    }}
+                  >
+                    Confirm delete
+                  </Button>
+                  <Button variant="outlined" size="small" onClick={() => setConfirmDeleteMember(false)}>
+                    Cancel
+                  </Button>
+                </Stack>
+              )
+            ) : null}
+          </Stack>
           <Typography variant="pageTitle" component="h1">Member profile</Typography>
         </Stack>
 
