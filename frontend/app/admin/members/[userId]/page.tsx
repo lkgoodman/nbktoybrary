@@ -69,50 +69,15 @@ export default function AdminMemberPage({
     <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 700, mx: "auto" }}>
       <Stack spacing={4}>
         <Stack spacing={1}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Button
-              component={NextLink}
-              href="/admin?tab=members"
-              variant="text"
-              size="small"
-              sx={{ pl: 0 }}
-            >
-              ← Members
-            </Button>
-            {isSuperadmin ? (
-              !confirmDeleteMember ? (
-                <Button variant="outlined" color="error" size="small" onClick={() => setConfirmDeleteMember(true)}>
-                  Delete member
-                </Button>
-              ) : (
-                <Stack direction="row" spacing={1}>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    size="small"
-                    disabled={deleteUser.isPending}
-                    onClick={() => {
-                      if (token === null) return;
-                      deleteUser.mutate(
-                        { id: params.userId, token },
-                        {
-                          onSuccess: () => {
-                            void queryClient.invalidateQueries({ queryKey: queryKeys.users.list() });
-                            router.push("/admin?tab=members");
-                          },
-                        },
-                      );
-                    }}
-                  >
-                    Confirm delete
-                  </Button>
-                  <Button variant="outlined" size="small" onClick={() => setConfirmDeleteMember(false)}>
-                    Cancel
-                  </Button>
-                </Stack>
-              )
-            ) : null}
-          </Stack>
+          <Button
+            component={NextLink}
+            href="/admin?tab=members"
+            variant="text"
+            size="small"
+            sx={{ alignSelf: "flex-start", pl: 0 }}
+          >
+            ← Members
+          </Button>
           <Typography variant="pageTitle" component="h1">Member profile</Typography>
         </Stack>
 
@@ -227,6 +192,42 @@ export default function AdminMemberPage({
                           >
                             Unban
                           </Button>
+                        )}
+                        {!confirmDeleteMember ? (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            color="error"
+                            onClick={() => setConfirmDeleteMember(true)}
+                          >
+                            Delete member
+                          </Button>
+                        ) : (
+                          <>
+                            <Button
+                              variant="contained"
+                              color="error"
+                              size="small"
+                              disabled={deleteUser.isPending}
+                              onClick={() => {
+                                if (token === null) return;
+                                deleteUser.mutate(
+                                  { id: params.userId, token },
+                                  {
+                                    onSuccess: () => {
+                                      void queryClient.invalidateQueries({ queryKey: queryKeys.users.list() });
+                                      router.push("/admin?tab=members");
+                                    },
+                                  },
+                                );
+                              }}
+                            >
+                              Confirm delete
+                            </Button>
+                            <Button variant="outlined" size="small" onClick={() => setConfirmDeleteMember(false)}>
+                              Cancel
+                            </Button>
+                          </>
                         )}
                       </>
                     )}
