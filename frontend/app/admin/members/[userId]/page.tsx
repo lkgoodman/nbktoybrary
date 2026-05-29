@@ -40,6 +40,7 @@ export default function AdminMemberPage({
   const membership: MembershipRead | null = memberships?.[0] ?? null;
   const [newPassword, setNewPassword] = useState<string>("");
   const [confirmDeleteMember, setConfirmDeleteMember] = useState<boolean>(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<boolean>(false);
 
@@ -211,6 +212,7 @@ export default function AdminMemberPage({
                               disabled={deleteUser.isPending}
                               onClick={() => {
                                 if (token === null) return;
+                                setDeleteError(null);
                                 deleteUser.mutate(
                                   { id: params.userId, token },
                                   {
@@ -218,6 +220,7 @@ export default function AdminMemberPage({
                                       void queryClient.invalidateQueries({ queryKey: queryKeys.users.list() });
                                       router.push("/admin?tab=members");
                                     },
+                                    onError: (err) => setDeleteError(err.message),
                                   },
                                 );
                               }}
@@ -232,6 +235,9 @@ export default function AdminMemberPage({
                       </>
                     )}
                   </Stack>
+                ) : null}
+                {deleteError !== null ? (
+                  <Typography variant="body1" color="error">{deleteError}</Typography>
                 ) : null}
               </Stack>
             </Paper>

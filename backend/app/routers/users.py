@@ -3,14 +3,15 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.auth import get_current_user, require_roles
 from app.core.security import hash_password
 from app.db.session import get_db
-from app.models.membership import MembershipRequest
+from app.models.membership import Membership, MembershipRequest
+from app.models.scheduling import Checkout
 from app.models.user import User, UserRole
 from app.schemas.user import UserCreate, UserRead, UserReadWithRoles, UserUpdate
 
@@ -97,6 +98,29 @@ async def delete_user(
     user = result.scalar_one_or_none()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    # Null out checkout.user_id references (RESTRICT fk, nullable)
+    await db.execute(update(Checkout).where(Checkout.user_id == user_id).values(user_id=None))
+
+    # Find membership_request ids for this user
+    mr_result = await db.execute(
+        select(MembershipRequest.id).where(MembershipRequest.user_id == user_id)
+    )
+    mr_ids = [row[0] for row in mr_result.all()]
+
+    if mr_ids:
+        # Find membership ids linked to those requests
+        m_result = await db.execute(
+            select(Membership.id).where(Membership.membership_request_id.in_(mr_ids))
+        )
+        m_ids = [row[0] for row in m_result.all()]
+
+        if m_ids:
+            # Delete checkouts linked to those memberships (RESTRICT fk)
+            await db.execute(delete(Checkout).where(Checkout.membership_id.in_(m_ids)))
+            # Delete memberships (RESTRICT fk blocks membership_request deletion)
+            await db.execute(delete(Membership).where(Membership.id.in_(m_ids)))
+
     await db.delete(user)
     await db.commit()
     return {"status": "deleted"}
