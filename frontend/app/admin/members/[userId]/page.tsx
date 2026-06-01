@@ -194,44 +194,44 @@ export default function AdminMemberPage({
                             Unban
                           </Button>
                         )}
-                        {!confirmDeleteMember ? (
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            color="error"
-                            onClick={() => setConfirmDeleteMember(true)}
-                          >
-                            Delete member
-                          </Button>
-                        ) : (
-                          <>
-                            <Button
-                              variant="contained"
-                              color="error"
-                              size="small"
-                              disabled={deleteUser.isPending}
-                              onClick={() => {
-                                if (token === null) return;
-                                setDeleteError(null);
-                                deleteUser.mutate(
-                                  { id: params.userId, token },
-                                  {
-                                    onSuccess: () => {
-                                      void queryClient.invalidateQueries({ queryKey: queryKeys.users.list() });
-                                      router.push("/admin?tab=members");
-                                    },
-                                    onError: (err) => setDeleteError(err.message),
-                                  },
-                                );
-                              }}
-                            >
-                              Confirm delete
-                            </Button>
-                            <Button variant="outlined" size="small" onClick={() => setConfirmDeleteMember(false)}>
-                              Cancel
-                            </Button>
-                          </>
-                        )}
+                      </>
+                    )}
+                    {!confirmDeleteMember ? (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color="error"
+                        onClick={() => setConfirmDeleteMember(true)}
+                      >
+                        Delete member
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          variant="contained"
+                          color="error"
+                          size="small"
+                          disabled={deleteUser.isPending}
+                          onClick={() => {
+                            if (token === null) return;
+                            setDeleteError(null);
+                            deleteUser.mutate(
+                              { id: params.userId, token },
+                              {
+                                onSuccess: () => {
+                                  void queryClient.invalidateQueries({ queryKey: queryKeys.users.list() });
+                                  router.push("/admin?tab=members");
+                                },
+                                onError: (err) => setDeleteError(err.message),
+                              },
+                            );
+                          }}
+                        >
+                          Confirm delete
+                        </Button>
+                        <Button variant="outlined" size="small" onClick={() => setConfirmDeleteMember(false)}>
+                          Cancel
+                        </Button>
                       </>
                     )}
                   </Stack>
