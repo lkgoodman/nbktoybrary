@@ -120,6 +120,7 @@ export default function NewMemberPage(): JSX.Element {
               fullWidth
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              helperText="Minimum 8 characters"
             />
             <TextField
               label="Address line 1"

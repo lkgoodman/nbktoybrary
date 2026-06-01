@@ -74,8 +74,12 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     }
     let detail: string | null = null;
     try {
-      const body = await res.json() as { detail?: string };
-      if (typeof body.detail === "string") detail = body.detail;
+      const body = await res.json() as { detail?: string | { msg: string }[] };
+      if (typeof body.detail === "string") {
+        detail = body.detail;
+      } else if (Array.isArray(body.detail)) {
+        detail = body.detail.map((d) => d.msg).join(", ");
+      }
     } catch {
       // ignore parse errors
     }
