@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import NextLink from "next/link";
+import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
@@ -35,6 +36,7 @@ function formatAgeRange(toy: Toy): string | null {
 type Props = { params: { id: string } };
 
 export default function ToyPage({ params }: Props): JSX.Element {
+  const router = useRouter();
   const { isAuthenticated, isMember, isAdmin, token, authReady } = useAuth();
   const { data: toy, isPending, isError, error } = useToy(params.id, token, { enabled: authReady });
   const { addToCart, removeFromCart, cartIds, countInCart } = useCart();
@@ -46,11 +48,10 @@ export default function ToyPage({ params }: Props): JSX.Element {
       <Stack spacing={3}>
         <Box>
           <Button
-            component={NextLink}
-            href="/"
             variant="text"
             size="small"
             sx={{ pl: 0 }}
+            onClick={() => router.back()}
           >
             ← All Toys
           </Button>
