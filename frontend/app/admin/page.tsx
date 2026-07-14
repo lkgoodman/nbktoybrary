@@ -1052,16 +1052,31 @@ export default function AdminPage(): JSX.Element {
           // Build sets of days that have pickups or returns
           const pickupDayKeys = new Set<string>();
           const returnDayKeys = new Set<string>();
+
+          // Active checkouts are the source of truth for return dates
+          const activeCheckouts = (allCheckouts ?? []).filter((c: CheckoutRead) => c.returned_at === null);
+          const checkedOutRequestIds = new Set(
+            activeCheckouts.map((c: CheckoutRead) => c.request_id).filter((id): id is string => id !== null)
+          );
+
           (borrowRequests ?? []).filter((r) => r.status !== "denied").forEach((r) => {
             if (r.pickup_start !== null) {
               const d = new Date(r.pickup_start);
               pickupDayKeys.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
             }
-            const ret = r.return_start ?? r.return_date;
-            if (ret !== null) {
-              const d = new Date(ret);
-              returnDayKeys.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+            // Only use borrow request return date if there's no active checkout for it
+            if (!checkedOutRequestIds.has(r.id)) {
+              const ret = r.return_start ?? r.return_date;
+              if (ret !== null) {
+                const d = new Date(ret);
+                returnDayKeys.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+              }
             }
+          });
+          // Use checkout.due_at (reflects member-updated return dates) for active checkouts
+          activeCheckouts.forEach((c: CheckoutRead) => {
+            const d = new Date(c.due_at);
+            returnDayKeys.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
           });
 
           const schedToday = new Date();
@@ -1136,11 +1151,23 @@ export default function AdminPage(): JSX.Element {
               {selectedScheduleDay !== null ? (() => {
                 const sel = selectedScheduleDay;
                 const pickupReqs = (borrowRequests ?? []).filter((r) => r.status !== "denied" && matchesSchedDay(r.pickup_start, sel));
-                const returnReqs = (borrowRequests ?? []).filter((r) =>
-                  r.status !== "denied" && (matchesSchedDay(r.return_start, sel) || (!r.return_start && matchesSchedDay(r.return_date, sel)))
-                );
                 const pickupBatches = toBatches(pickupReqs);
-                const returnBatches = toBatches(returnReqs);
+
+                // Returns: active checkouts due on this day (reflects updated due dates)
+                const returningCheckouts = activeCheckouts.filter((c: CheckoutRead) => matchesSchedDay(c.due_at, sel));
+                // Group by member_name for display
+                const checkoutsByMember = new Map<string, CheckoutRead[]>();
+                returningCheckouts.forEach((c: CheckoutRead) => {
+                  checkoutsByMember.set(c.member_name, [...(checkoutsByMember.get(c.member_name) ?? []), c]);
+                });
+                // Also show non-checked-out approved requests still due on this day
+                const pendingReturnReqs = (borrowRequests ?? []).filter((r) =>
+                  r.status !== "denied" &&
+                  !checkedOutRequestIds.has(r.id) &&
+                  (matchesSchedDay(r.return_start, sel) || (!r.return_start && matchesSchedDay(r.return_date, sel)))
+                );
+                const pendingReturnBatches = toBatches(pendingReturnReqs);
+
                 const dayLabel = new Date(sel.year, sel.month, sel.day).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
 
                 function BatchCard({ batch }: { batch: BorrowRequestReadWithDetails[] }): JSX.Element {
@@ -1161,6 +1188,8 @@ export default function AdminPage(): JSX.Element {
                   );
                 }
 
+                const hasAnyReturn = checkoutsByMember.size > 0 || pendingReturnBatches.length > 0;
+
                 return (
                   <Stack spacing={2} sx={{ mt: 1 }}>
                     <Divider />
@@ -1173,9 +1202,22 @@ export default function AdminPage(): JSX.Element {
                     </Stack>
                     <Stack spacing={1}>
                       <Typography variant="label" color="text.secondary">Returns</Typography>
-                      {returnBatches.length === 0
-                        ? <Typography variant="body1" color="text.secondary">No returns scheduled.</Typography>
-                        : <Stack spacing={1}>{returnBatches.map((b) => <BatchCard key={b[0].batch_id} batch={b} />)}</Stack>}
+                      {!hasAnyReturn ? (
+                        <Typography variant="body1" color="text.secondary">No returns scheduled.</Typography>
+                      ) : (
+                        <Stack spacing={1}>
+                          {Array.from(checkoutsByMember.entries()).map(([memberName, checkouts]) => (
+                            <Paper key={memberName} elevation={0} sx={{ p: 2 }}>
+                              <Stack spacing={0.5}>
+                                <Typography variant="bodyStrong">{memberName}</Typography>
+                                <Typography variant="label" color="text.secondary">{checkouts.map((c) => c.toy_name).join(", ")}</Typography>
+                                <Typography variant="label" color="text.secondary">checked out</Typography>
+                              </Stack>
+                            </Paper>
+                          ))}
+                          {pendingReturnBatches.map((b) => <BatchCard key={b[0].batch_id} batch={b} />)}
+                        </Stack>
+                      )}
                     </Stack>
                   </Stack>
                 );
