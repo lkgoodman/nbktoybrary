@@ -2,7 +2,8 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
-const STORAGE_KEY = "nbktoybrary_cart";
+import { useAuth } from "./AuthContext";
+
 const MAX_CART_SIZE = 3;
 
 interface CartContextValue {
@@ -17,57 +18,56 @@ interface CartContextValue {
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }): JSX.Element {
+  const { user } = useAuth();
   const [cartIds, setCartIds] = useState<string[]>([]);
 
+  const storageKey = user !== null ? `nbktoybrary_cart_${user.id}` : null;
+
+  // Reload cart from localStorage whenever the logged-in user changes
   useEffect(() => {
+    if (storageKey === null) {
+      setCartIds([]);
+      return;
+    }
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(storageKey);
       if (stored !== null) {
         const parsed: unknown = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setCartIds(parsed as string[]);
-        }
+        setCartIds(Array.isArray(parsed) ? (parsed as string[]) : []);
+      } else {
+        setCartIds([]);
       }
     } catch {
-      // ignore malformed storage
+      setCartIds([]);
     }
-  }, []);
-
-  function persist(ids: string[]): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
-    setCartIds(ids);
-  }
+  }, [storageKey]);
 
   const addToCart = useCallback((id: string): void => {
     setCartIds((prev) => {
       if (prev.length >= MAX_CART_SIZE) return prev;
       const next = [...prev, id];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      if (storageKey !== null) localStorage.setItem(storageKey, JSON.stringify(next));
       return next;
     });
-  }, []);
+  }, [storageKey]);
 
   const removeFromCart = useCallback((id: string): void => {
     setCartIds((prev) => {
       const lastIndex = prev.lastIndexOf(id);
       if (lastIndex === -1) return prev;
       const next = [...prev.slice(0, lastIndex), ...prev.slice(lastIndex + 1)];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      if (storageKey !== null) localStorage.setItem(storageKey, JSON.stringify(next));
       return next;
     });
-  }, []);
+  }, [storageKey]);
 
   const clearCart = useCallback((): void => {
-    persist([]);
-  }, []);
+    if (storageKey !== null) localStorage.setItem(storageKey, JSON.stringify([]));
+    setCartIds([]);
+  }, [storageKey]);
 
-  const isInCart = useCallback((id: string): boolean => {
-    return cartIds.includes(id);
-  }, [cartIds]);
-
-  const countInCart = useCallback((id: string): number => {
-    return cartIds.filter((x) => x === id).length;
-  }, [cartIds]);
+  const isInCart = useCallback((id: string): boolean => cartIds.includes(id), [cartIds]);
+  const countInCart = useCallback((id: string): number => cartIds.filter((x) => x === id).length, [cartIds]);
 
   return (
     <CartContext.Provider value={{ cartIds, addToCart, removeFromCart, clearCart, isInCart, countInCart }}>
