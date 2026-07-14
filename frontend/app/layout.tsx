@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Space_Mono, DM_Sans } from "next/font/google";
 import { AuthProvider } from "./lib/AuthContext";
 import { CartProvider } from "./lib/CartContext";
+import { FilterProvider } from "./lib/FilterContext";
 import QueryProvider from "./lib/QueryProvider";
 import ThemeRegistry from "./theme/ThemeRegistry";
 import NavBar from "./components/NavBar";
@@ -36,8 +37,10 @@ export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
           <QueryProvider>
             <AuthProvider>
               <CartProvider>
-                <NavBar />
-                {children}
+                <FilterProvider>
+                  <NavBar />
+                  {children}
+                </FilterProvider>
               </CartProvider>
             </AuthProvider>
           </QueryProvider>

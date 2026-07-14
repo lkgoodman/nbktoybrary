@@ -25,6 +25,7 @@ import { useToys, useFavorites, useAddFavorite, useRemoveFavorite } from "./lib/
 import { queryKeys } from "./lib/queries";
 import { useCart } from "./lib/CartContext";
 import { useAuth } from "./lib/AuthContext";
+import { useFilters } from "./lib/FilterContext";
 import type { Toy, ToyImage } from "./lib/types";
 
 interface AgeBucket {
@@ -77,29 +78,26 @@ export default function Page(): JSX.Element {
   const addFavoriteMut = useAddFavorite();
   const removeFavoriteMut = useRemoveFavorite();
   const favoriteIds = useMemo(() => new Set((favorites ?? []).map((f) => f.toy_id)), [favorites]);
-  const [favoritesOnly, setFavoritesOnly] = useState<boolean>(false);
-  const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
+  const { filters, setFilters, clearFilters } = useFilters();
+  const searchQuery = filters.searchQuery;
+  const activeTags = new Set(filters.tagList);
+  const activeAgeBucket = AGE_BUCKETS.find((b) => b.label === filters.ageLabel) ?? null;
+  const activeLanguage = filters.language;
+  const availableOnly = filters.availableOnly;
+  const favoritesOnly = filters.favoritesOnly;
+
+  function setSearchQuery(q: string): void { setFilters((prev) => ({ ...prev, searchQuery: q })); }
+  function setActiveTags(tags: Set<string>): void { setFilters((prev) => ({ ...prev, tagList: [...tags] })); }
+  function setActiveAgeBucket(bucket: AgeBucket | null): void { setFilters((prev) => ({ ...prev, ageLabel: bucket?.label ?? null })); }
+  function setActiveLanguage(lang: string | null): void { setFilters((prev) => ({ ...prev, language: lang })); }
+  function setAvailableOnly(v: boolean): void { setFilters((prev) => ({ ...prev, availableOnly: v })); }
+  function setFavoritesOnly(v: boolean): void { setFilters((prev) => ({ ...prev, favoritesOnly: v })); }
+
   const [welcomeName, setWelcomeName] = useState<string | null>(null);
   const [signedOut, setSignedOut] = useState<boolean>(false);
   const prevAuthRef = useRef<boolean>(isAuthenticated);
-  const [activeAgeBucket, setActiveAgeBucket] = useState<AgeBucket | null>(null);
-  const [activeLanguage, setActiveLanguage] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [availableOnly, setAvailableOnly] = useState<boolean>(false);
 
-  // Restore filters from sessionStorage once on mount (after hydration)
   useEffect(() => {
-    const q = sessionStorage.getItem("filter_q");
-    const tags = sessionStorage.getItem("filter_tags");
-    const age = sessionStorage.getItem("filter_age");
-    const lang = sessionStorage.getItem("filter_lang");
-    if (q) setSearchQuery(q);
-    if (tags) setActiveTags(new Set(tags.split(",").filter(Boolean)));
-    if (age) setActiveAgeBucket(AGE_BUCKETS.find((b) => b.label === age) ?? null);
-    if (lang) setActiveLanguage(lang);
-    if (sessionStorage.getItem("filter_available") === "1") setAvailableOnly(true);
-    if (sessionStorage.getItem("filter_favorites") === "1") setFavoritesOnly(true);
-
     const name = sessionStorage.getItem("welcomeName");
     if (name !== null) {
       sessionStorage.removeItem("welcomeName");
@@ -162,16 +160,12 @@ export default function Page(): JSX.Element {
 
   function handleTagsChange(e: SelectChangeEvent<string[]>): void {
     const val = e.target.value;
-    const tags = new Set(typeof val === "string" ? val.split(",") : val);
-    setActiveTags(tags);
-    tags.size > 0 ? sessionStorage.setItem("filter_tags", [...tags].join(",")) : sessionStorage.removeItem("filter_tags");
+    setActiveTags(new Set(typeof val === "string" ? val.split(",") : val));
   }
 
   function handleAgeChange(e: SelectChangeEvent<string>): void {
     const val = e.target.value;
-    const bucket = val === "" ? null : AGE_BUCKETS.find((b) => b.label === val) ?? null;
-    setActiveAgeBucket(bucket);
-    bucket ? sessionStorage.setItem("filter_age", bucket.label) : sessionStorage.removeItem("filter_age");
+    setActiveAgeBucket(val === "" ? null : AGE_BUCKETS.find((b) => b.label === val) ?? null);
   }
 
   function handleToggleFavorite(e: React.MouseEvent, toyId: string): void {
@@ -200,14 +194,7 @@ export default function Page(): JSX.Element {
           label="Clear all filters"
           size="small"
           variant="outlined"
-          onClick={() => {
-            setSearchQuery(""); sessionStorage.removeItem("filter_q");
-            setActiveTags(new Set()); sessionStorage.removeItem("filter_tags");
-            setActiveAgeBucket(null); sessionStorage.removeItem("filter_age");
-            setActiveLanguage(null); sessionStorage.removeItem("filter_lang");
-            setAvailableOnly(false); sessionStorage.removeItem("filter_available");
-            setFavoritesOnly(false); sessionStorage.removeItem("filter_favorites");
-          }}
+          onClick={() => clearFilters()}
         />
       ) : null}
 
@@ -216,10 +203,7 @@ export default function Page(): JSX.Element {
         fullWidth
         label="Search"
         value={searchQuery}
-        onChange={(e) => {
-          setSearchQuery(e.target.value);
-          e.target.value ? sessionStorage.setItem("filter_q", e.target.value) : sessionStorage.removeItem("filter_q");
-        }}
+        onChange={(e) => setSearchQuery(e.target.value)}
         slotProps={{ input: { sx: { bgcolor: "background.default" } } }}
       />
 
@@ -228,10 +212,7 @@ export default function Page(): JSX.Element {
           control={
             <Checkbox
               checked={availableOnly}
-              onChange={(e) => {
-                setAvailableOnly(e.target.checked);
-                e.target.checked ? sessionStorage.setItem("filter_available", "1") : sessionStorage.removeItem("filter_available");
-              }}
+              onChange={(e) => setAvailableOnly(e.target.checked)}
               size="small"
             />
           }
@@ -246,10 +227,7 @@ export default function Page(): JSX.Element {
           control={
             <Checkbox
               checked={favoritesOnly}
-              onChange={(e) => {
-                setFavoritesOnly(e.target.checked);
-                e.target.checked ? sessionStorage.setItem("filter_favorites", "1") : sessionStorage.removeItem("filter_favorites");
-              }}
+              onChange={(e) => setFavoritesOnly(e.target.checked)}
               size="small"
             />
           }
@@ -272,7 +250,7 @@ export default function Page(): JSX.Element {
           sx={{ bgcolor: "background.default" }}
         >
           <MenuItem
-            onClick={() => { setActiveTags(new Set()); sessionStorage.removeItem("filter_tags"); }}
+            onClick={() => setActiveTags(new Set())}
             sx={{ fontStyle: activeTags.size === 0 ? "normal" : "normal" }}
           >
             <Checkbox checked={activeTags.size === 0} size="small" />
@@ -313,11 +291,7 @@ export default function Page(): JSX.Element {
         <Select
           label="Language"
           value={activeLanguage ?? ""}
-          onChange={(e) => {
-            const lang = e.target.value === "" ? null : e.target.value;
-            setActiveLanguage(lang);
-            lang ? sessionStorage.setItem("filter_lang", lang) : sessionStorage.removeItem("filter_lang");
-          }}
+          onChange={(e) => setActiveLanguage(e.target.value === "" ? null : e.target.value)}
           sx={{ bgcolor: "background.default" }}
         >
           <MenuItem value="">All</MenuItem>
