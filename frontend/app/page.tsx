@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import NextLink from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -78,24 +77,15 @@ export default function Page(): JSX.Element {
   const addFavoriteMut = useAddFavorite();
   const removeFavoriteMut = useRemoveFavorite();
   const favoriteIds = useMemo(() => new Set((favorites ?? []).map((f) => f.toy_id)), [favorites]);
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
-  function updateParams(updates: Record<string, string | null>): void {
-    const params = new URLSearchParams(searchParams.toString());
-    for (const [key, value] of Object.entries(updates)) {
-      if (value === null || value === "") {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
-    }
-    const qs = params.toString();
-    router.replace(qs ? `/?${qs}` : "/", { scroll: false });
-  }
-
-  const favoritesOnly = searchParams.get("favorites") === "1";
-  const activeTags = new Set(searchParams.get("tags")?.split(",").filter(Boolean) ?? []);
+  const [favoritesOnly, setFavoritesOnly] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem("filter_favorites") === "1";
+  });
+  const [activeTags, setActiveTags] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    const saved = sessionStorage.getItem("filter_tags");
+    return saved ? new Set(saved.split(",").filter(Boolean)) : new Set();
+  });
   const [welcomeName, setWelcomeName] = useState<string | null>(null);
   const [signedOut, setSignedOut] = useState<boolean>(false);
   const prevAuthRef = useRef<boolean>(isAuthenticated);
@@ -118,10 +108,42 @@ export default function Page(): JSX.Element {
     }
     prevAuthRef.current = isAuthenticated;
   }, [isAuthenticated]);
-  const activeAgeBucket = AGE_BUCKETS.find((b) => b.label === searchParams.get("age")) ?? null;
-  const activeLanguage = searchParams.get("lang") ?? null;
-  const searchQuery = searchParams.get("q") ?? "";
-  const availableOnly = searchParams.get("available") === "1";
+  const [activeAgeBucket, setActiveAgeBucket] = useState<AgeBucket | null>(() => {
+    if (typeof window === "undefined") return null;
+    const saved = sessionStorage.getItem("filter_age");
+    return AGE_BUCKETS.find((b) => b.label === saved) ?? null;
+  });
+  const [activeLanguage, setActiveLanguage] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return sessionStorage.getItem("filter_lang");
+  });
+  const [searchQuery, setSearchQuery] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return sessionStorage.getItem("filter_q") ?? "";
+  });
+  const [availableOnly, setAvailableOnly] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem("filter_available") === "1";
+  });
+
+  useEffect(() => {
+    searchQuery ? sessionStorage.setItem("filter_q", searchQuery) : sessionStorage.removeItem("filter_q");
+  }, [searchQuery]);
+  useEffect(() => {
+    activeTags.size > 0 ? sessionStorage.setItem("filter_tags", [...activeTags].join(",")) : sessionStorage.removeItem("filter_tags");
+  }, [activeTags]);
+  useEffect(() => {
+    activeAgeBucket ? sessionStorage.setItem("filter_age", activeAgeBucket.label) : sessionStorage.removeItem("filter_age");
+  }, [activeAgeBucket]);
+  useEffect(() => {
+    activeLanguage ? sessionStorage.setItem("filter_lang", activeLanguage) : sessionStorage.removeItem("filter_lang");
+  }, [activeLanguage]);
+  useEffect(() => {
+    availableOnly ? sessionStorage.setItem("filter_available", "1") : sessionStorage.removeItem("filter_available");
+  }, [availableOnly]);
+  useEffect(() => {
+    favoritesOnly ? sessionStorage.setItem("filter_favorites", "1") : sessionStorage.removeItem("filter_favorites");
+  }, [favoritesOnly]);
 
   const LANGUAGES_FIRST: string[] = ["N/A"];
   const LANGUAGES: string[] = ["English", "French", "Spanish"];
@@ -166,12 +188,12 @@ export default function Page(): JSX.Element {
 
   function handleTagsChange(e: SelectChangeEvent<string[]>): void {
     const val = e.target.value;
-    const tags = typeof val === "string" ? val.split(",") : val;
-    updateParams({ tags: tags.join(",") || null });
+    setActiveTags(new Set(typeof val === "string" ? val.split(",") : val));
   }
 
   function handleAgeChange(e: SelectChangeEvent<string>): void {
-    updateParams({ age: e.target.value || null });
+    const val = e.target.value;
+    setActiveAgeBucket(val === "" ? null : AGE_BUCKETS.find((b) => b.label === val) ?? null);
   }
 
   function handleToggleFavorite(e: React.MouseEvent, toyId: string): void {
@@ -200,7 +222,14 @@ export default function Page(): JSX.Element {
           label="Clear all filters"
           size="small"
           variant="outlined"
-          onClick={() => router.replace("/", { scroll: false })}
+          onClick={() => {
+            setSearchQuery("");
+            setActiveTags(new Set());
+            setActiveAgeBucket(null);
+            setActiveLanguage(null);
+            setAvailableOnly(false);
+            setFavoritesOnly(false);
+          }}
         />
       ) : null}
 
@@ -209,7 +238,7 @@ export default function Page(): JSX.Element {
         fullWidth
         label="Search"
         value={searchQuery}
-        onChange={(e) => updateParams({ q: e.target.value || null })}
+        onChange={(e) => setSearchQuery(e.target.value)}
         slotProps={{ input: { sx: { bgcolor: "background.default" } } }}
       />
 
@@ -218,7 +247,7 @@ export default function Page(): JSX.Element {
           control={
             <Checkbox
               checked={availableOnly}
-              onChange={(e) => updateParams({ available: e.target.checked ? "1" : null })}
+              onChange={(e) => setAvailableOnly(e.target.checked)}
               size="small"
             />
           }
@@ -233,7 +262,7 @@ export default function Page(): JSX.Element {
           control={
             <Checkbox
               checked={favoritesOnly}
-              onChange={(e) => updateParams({ favorites: e.target.checked ? "1" : null })}
+              onChange={(e) => setFavoritesOnly(e.target.checked)}
               size="small"
             />
           }
@@ -256,7 +285,7 @@ export default function Page(): JSX.Element {
           sx={{ bgcolor: "background.default" }}
         >
           <MenuItem
-            onClick={() => updateParams({ tags: null })}
+            onClick={() => setActiveTags(new Set())}
             sx={{ fontStyle: activeTags.size === 0 ? "normal" : "normal" }}
           >
             <Checkbox checked={activeTags.size === 0} size="small" />
@@ -297,7 +326,7 @@ export default function Page(): JSX.Element {
         <Select
           label="Language"
           value={activeLanguage ?? ""}
-          onChange={(e) => updateParams({ lang: e.target.value || null })}
+          onChange={(e) => setActiveLanguage(e.target.value === "" ? null : e.target.value)}
           sx={{ bgcolor: "background.default" }}
         >
           <MenuItem value="">All</MenuItem>
