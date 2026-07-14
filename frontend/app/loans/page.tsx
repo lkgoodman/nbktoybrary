@@ -63,7 +63,7 @@ function ToyRow({ checkout, toy, token }: ToyRowProps): JSX.Element {
 
   return (
     <Paper elevation={0} sx={{ p: 3 }}>
-      <Stack direction="row" alignItems="center" spacing={2}>
+      <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
         <Box sx={{ width: 64, height: 64, flexShrink: 0, bgcolor: "grey.100", borderRadius: 1, overflow: "hidden" }}>
           {image !== null ? (
             <Box component="img" src={image.image_url} alt={toy?.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -77,13 +77,13 @@ function ToyRow({ checkout, toy, token }: ToyRowProps): JSX.Element {
             </Typography>
           ) : isEditing ? (
             <Stack spacing={1}>
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <TextField
                   type="date"
                   size="small"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  inputProps={{ min: todayStr, max: maxDueDateStr }}
+                  slotProps={{ htmlInput: { min: todayStr, max: maxDueDateStr } }}
                   sx={{ width: 170 }}
                 />
                 <Button size="small" variant="contained" onClick={handleSave} disabled={updateDueDate.isPending}>
@@ -98,7 +98,7 @@ function ToyRow({ checkout, toy, token }: ToyRowProps): JSX.Element {
               ) : null}
             </Stack>
           ) : (
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <Typography variant="label" color="text.secondary">
                 Due: {new Date(checkout.due_at).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
               </Typography>
@@ -167,14 +167,14 @@ export default function LoansPage(): JSX.Element {
               <Paper key={batch[0].batch_id} elevation={0} sx={{ p: 3 }}>
                 <Stack spacing={2}>
                   {batch[0].pickup_start !== null && batch[0].pickup_end !== null ? (
-                    <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+                    <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "space-between" }}>
                       <Typography variant="label" color="text.secondary">
                         Pickup: {new Date(batch[0].pickup_start).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}{" "}
                         {new Date(batch[0].pickup_start).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                         {" – "}
                         {new Date(batch[0].pickup_end).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                       </Typography>
-                      <Stack direction="row" spacing={1} alignItems="center">
+                      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                         <Chip label="Upcoming" size="small" color="info" variant="outlined" />
                         <Button component={NextLink} href={`/requests/${batch[0].batch_id}`} variant="outlined" size="small">
                           View
@@ -186,7 +186,7 @@ export default function LoansPage(): JSX.Element {
                     const toy = toysById.get(req.toy_id);
                     const image = toy !== undefined ? getFeaturedImage(toy) : null;
                     return (
-                      <Stack key={req.id} direction="row" alignItems="center" spacing={2}>
+                      <Stack key={req.id} direction="row" spacing={2} sx={{ alignItems: "center" }}>
                         <Box sx={{ width: 64, height: 64, flexShrink: 0, bgcolor: "grey.100", borderRadius: 1, overflow: "hidden" }}>
                           {image !== null ? (
                             <Box component="img" src={image.image_url} alt={toy?.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />

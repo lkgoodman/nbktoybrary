@@ -198,7 +198,7 @@ export default function RequestBatchPage({
               const image = toy !== undefined ? getFeaturedImage(toy) : null;
               return (
                 <Paper key={req.id} elevation={0} sx={{ p: 3 }}>
-                  <Stack direction="row" alignItems="center" spacing={2}>
+                  <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                     <Box sx={{ width: 64, height: 64, flexShrink: 0, bgcolor: "grey.100", borderRadius: 1, overflow: "hidden" }}>
                       {image !== null ? (
                         <Box
@@ -217,7 +217,7 @@ export default function RequestBatchPage({
                         </Typography>
                       ) : null}
                     </Stack>
-                    <Stack direction="row" spacing={1} alignItems="center">
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                       {req.status === "pending" ? (
                         <Chip label="Pending" size="small" variant="outlined" />
                       ) : req.status === "approved" ? (

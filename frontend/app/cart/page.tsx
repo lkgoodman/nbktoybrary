@@ -174,7 +174,7 @@ export default function CartPage(): JSX.Element {
                 {submittedToys.map((toy) => {
                   const image = getFeaturedImage(toy);
                   return (
-                    <Stack key={toy.id} direction="row" alignItems="center" spacing={2}>
+                    <Stack key={toy.id} direction="row" spacing={2} sx={{ alignItems: "center" }}>
                       {image !== null ? (
                         <Box
                           component="img"
@@ -292,7 +292,7 @@ export default function CartPage(): JSX.Element {
                       />
                     ) : <Box />}
                     <Typography variant="bodyStrong">{toy.name}</Typography>
-                    <Stack direction="row" spacing={1} alignItems="center">
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                       <Button size="small" variant="outlined" onClick={() => removeFromCart(toy.id)} sx={{ minWidth: 32, px: 1 }}>−</Button>
                       <Typography variant="body1">{count}</Typography>
                       <Button
@@ -322,7 +322,7 @@ export default function CartPage(): JSX.Element {
                 </Typography>
               ) : (
                 <Stack spacing={1}>
-                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                  <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                     <Button size="small" onClick={() => setPickupCalendarMonth(new Date(pickupCalYear, pickupCalMonth - 1, 1))}>← Prev</Button>
                     <Typography variant="bodyStrong">
                       {pickupCalendarMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
@@ -419,7 +419,7 @@ export default function CartPage(): JSX.Element {
               ) : (
                 <Stack spacing={1}>
                   {/* Calendar navigation */}
-                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                  <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                     <Button size="small" onClick={() => setReturnCalendarMonth(new Date(calYear, calMonth - 1, 1))}>
                       ← Prev
                     </Button>

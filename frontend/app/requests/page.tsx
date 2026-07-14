@@ -64,7 +64,7 @@ export default function RequestsPage(): JSX.Element {
   function BatchCard({ batch }: { batch: BorrowRequestRead[] }): JSX.Element {
     return (
       <Paper elevation={0} sx={{ p: 3 }}>
-        <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "flex-start", sm: "center" }} justifyContent="space-between" spacing={2}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "space-between" }}>
           <Stack spacing={0.5}>
             <Typography variant="bodyStrong">
               {batch.length} {batch.length === 1 ? "toy" : "toys"} requested
@@ -73,7 +73,7 @@ export default function RequestsPage(): JSX.Element {
               Submitted {new Date(batch[0].created_at).toLocaleDateString()}
             </Typography>
           </Stack>
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             {batchStatusChip(batch)}
             <Button
               component={NextLink}

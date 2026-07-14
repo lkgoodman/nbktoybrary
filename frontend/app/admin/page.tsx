@@ -223,7 +223,7 @@ export default function AdminPage(): JSX.Element {
           Admin
         </Typography>
 
-        <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 2, md: 4 }} alignItems="flex-start">
+        <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 2, md: 4 }} sx={{ alignItems: "flex-start" }}>
           <Tabs
             value={tab}
             onChange={(_e, v: number) => {
@@ -259,7 +259,7 @@ export default function AdminPage(): JSX.Element {
 
         {tab === 0 ? (
           <Stack spacing={2}>
-            <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center", flexWrap: "wrap" }}>
               <TextField
                 label="Search"
                 size="small"
@@ -316,7 +316,7 @@ export default function AdminPage(): JSX.Element {
                   label="Status"
                   value={inventoryAvailability ?? ""}
                   onChange={(e) => {
-                    const val = e.target.value;
+                    const val: string = e.target.value;
                     setInventoryAvailability(val === "" ? null : val as "available" | "requested" | "checked_out" | "shareable" | "not_shareable");
                   }}
                 >
@@ -432,7 +432,7 @@ export default function AdminPage(): JSX.Element {
                 }
                 return (
                   <Paper key={batch[0].batch_id} elevation={0} sx={{ p: 3 }}>
-                    <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                       <Stack spacing={0.5}>
                         <Typography variant="bodyStrong">{batch[0].member_name}</Typography>
                         <Typography variant="label" color="text.secondary">
@@ -561,7 +561,7 @@ export default function AdminPage(): JSX.Element {
               </Stack>
             ) : null}
             <Stack spacing={2}>
-              <Stack direction="row" spacing={2} alignItems="center">
+              <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                 <TextField
                   label="Search members"
                   size="small"
@@ -594,7 +594,7 @@ export default function AdminPage(): JSX.Element {
                     const canViewProfile = isMember || isSuperadmin;
                     return (
                       <Paper key={u.id} elevation={0} sx={{ p: 2 }}>
-                        <Stack direction="row" alignItems="center" justifyContent="space-between">
+                        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                           <Stack spacing={0.25}>
                             <Typography variant="bodyStrong">{u.name}</Typography>
                             <Typography variant="body1" color="text.secondary">{u.email}</Typography>
@@ -646,7 +646,7 @@ export default function AdminPage(): JSX.Element {
           <Stack spacing={3}>
             <Stack spacing={2}>
               <Typography variant="bodyStrong">Add open hours</Typography>
-              <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="flex-end">
+              <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", alignItems: "flex-end" }}>
                 <TextField
                   label="Date"
                   type="date"
@@ -730,7 +730,7 @@ export default function AdminPage(): JSX.Element {
 
             <Stack spacing={2}>
               <Typography variant="bodyStrong">Generate recurring open hours</Typography>
-              <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="flex-end">
+              <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", alignItems: "flex-end" }}>
                 <FormControl size="small" sx={{ minWidth: 140 }}>
                   <InputLabel>Day of week</InputLabel>
                   <Select
@@ -821,7 +821,7 @@ export default function AdminPage(): JSX.Element {
 
               return (
                 <Stack spacing={1}>
-                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                  <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                     <Button
                       size="small"
                       onClick={() => setCalendarMonth(new Date(year, month - 1, 1))}
@@ -884,7 +884,7 @@ export default function AdminPage(): JSX.Element {
                           </Typography>
                           <Stack spacing={0.5} sx={{ mt: 0.5 }}>
                             {dayTfs.map((tf) => (
-                              <Stack key={tf.id} direction="row" alignItems="center" justifyContent="space-between" spacing={0.5}>
+                              <Stack key={tf.id} direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "space-between" }}>
                                 <Typography variant="label" color="primary.main" sx={{ fontSize: "0.65rem", lineHeight: 1.2 }}>
                                   {new Date(tf.start_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                                   {" – "}
@@ -937,7 +937,7 @@ export default function AdminPage(): JSX.Element {
                     return (
                       <Stack spacing={2} sx={{ mt: 1 }}>
                         <Divider />
-                        <Stack direction="row" alignItems="center" justifyContent="space-between">
+                        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                           <Typography variant="bodyStrong">{label}</Typography>
                           {dayTimeframes.length > 0 ? (
                             <Button
@@ -964,7 +964,7 @@ export default function AdminPage(): JSX.Element {
                         ) : (
                           <Stack spacing={0.5}>
                             {dayTimeframes.map((tf) => (
-                              <Stack key={tf.id} direction="row" alignItems="center" justifyContent="space-between">
+                              <Stack key={tf.id} direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                                 <Typography variant="label">
                                   {new Date(tf.start_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                                   {" – "}
@@ -1003,7 +1003,7 @@ export default function AdminPage(): JSX.Element {
         ) : tab === 5 ? (
           <Stack spacing={3}>
             <Typography variant="sectionTitle" component="h2">Location</Typography>
-            <Stack direction="row" spacing={2} alignItems="flex-start">
+            <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start" }}>
               <TextField
                 label="Pickup / return address"
                 size="small"
@@ -1083,7 +1083,7 @@ export default function AdminPage(): JSX.Element {
 
           return (
             <Stack spacing={2}>
-              <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                 <Button size="small" onClick={() => setScheduleCalendarMonth(new Date(schedYear, schedMonth - 1, 1))}>← Prev</Button>
                 <Typography variant="bodyStrong">
                   {scheduleCalendarMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
@@ -1147,7 +1147,7 @@ export default function AdminPage(): JSX.Element {
                   const pendingCount = batch.filter((r) => r.status === "pending").length;
                   return (
                     <Paper elevation={0} sx={{ p: 2 }}>
-                      <Stack direction="row" alignItems="center" justifyContent="space-between">
+                      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                         <Stack spacing={0.5}>
                           <Typography variant="bodyStrong">{batch[0].member_name}</Typography>
                           <Typography variant="label" color="text.secondary">{batch.map((r) => r.toy_name).join(", ")}</Typography>
@@ -1207,7 +1207,7 @@ export default function AdminPage(): JSX.Element {
 
           return (
             <Stack spacing={4}>
-              <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+              <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
                 {([
                   { label: "Total toys", value: totalToys },
                   { label: "Available now", value: availableNow },
@@ -1231,8 +1231,8 @@ export default function AdminPage(): JSX.Element {
                   <Stack spacing={1}>
                     {ranked.map((entry, i) => (
                       <Paper key={entry.name} elevation={0} sx={{ p: 2 }}>
-                        <Stack direction="row" alignItems="center" justifyContent="space-between">
-                          <Stack direction="row" spacing={1} alignItems="center">
+                        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+                          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                             <Typography variant="label" color="text.secondary" sx={{ minWidth: 24 }}>{i + 1}.</Typography>
                             <Typography variant="body1">
                               {entry.name}: {entry.count} {entry.count === 1 ? "checkout" : "checkouts"}

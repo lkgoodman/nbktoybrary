@@ -90,7 +90,7 @@ export default function AdminMemberPage({
           <Stack spacing={4}>
             <Paper elevation={0} sx={{ p: 3 }}>
               <Stack spacing={1}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                   <Typography variant="bodyStrong">{member.name}</Typography>
                   {membership !== null ? (
                     membership.account_standing === "temporary_hold" ? (
@@ -245,7 +245,7 @@ export default function AdminMemberPage({
             <Paper elevation={0} sx={{ p: 3 }}>
               <Stack spacing={2}>
                 <Typography variant="sectionTitle" component="h2">Reset password</Typography>
-                <Stack direction="row" spacing={2} alignItems="flex-start">
+                <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start" }}>
                   <TextField
                     label="New password"
                     type="password"
@@ -294,7 +294,7 @@ export default function AdminMemberPage({
                 <Stack spacing={3}>
                   {batches.map((batch) => (
                     <Stack key={batch[0].batch_id} spacing={1}>
-                      <Stack direction="row" alignItems="center" justifyContent="space-between">
+                      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                         <Typography variant="label" color="text.secondary">
                           {new Date(batch[0].created_at).toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
                           {batch[0].pickup_start !== null ? ` · Pickup ${new Date(batch[0].pickup_start).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : ""}
@@ -313,7 +313,7 @@ export default function AdminMemberPage({
                         const image = toy !== undefined ? getFeaturedImage(toy) : null;
                         return (
                           <Paper key={req.id} elevation={0} sx={{ p: 2 }}>
-                            <Stack direction="row" alignItems="center" spacing={2}>
+                            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                               <Box sx={{ width: 56, height: 56, flexShrink: 0, bgcolor: "grey.100", borderRadius: 1, overflow: "hidden" }}>
                                 {image !== null ? (
                                   <Box component="img" src={image.image_url} alt={req.toy_name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />

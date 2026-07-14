@@ -79,13 +79,13 @@ export default function LoginPage(): JSX.Element {
             {isLoading ? "Signing in…" : "Sign in"}
           </Button>
 
-          <Typography variant="body1" color="text.secondary" textAlign="center">
+          <Typography variant="body1" color="text.secondary" sx={{ textAlign: "center" }}>
             Don&apos;t have an account?{" "}
             <Box component="a" href="https://nbktoybrary.org/membership-application" target="_blank" rel="noopener noreferrer" sx={{ color: "secondary.main" }}>
               Apply for membership
             </Box>
           </Typography>
-          <Typography variant="body1" color="text.secondary" textAlign="center">
+          <Typography variant="body1" color="text.secondary" sx={{ textAlign: "center" }}>
             Forgot your password? Email{" "}
             <Box component="a" href="mailto:nbktoybrary@gmail.com" sx={{ color: "secondary.main" }}>
               nbktoybrary@gmail.com

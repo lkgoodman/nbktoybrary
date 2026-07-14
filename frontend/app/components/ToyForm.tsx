@@ -237,7 +237,7 @@ export default function ToyForm({
             value={values.piece_count ?? ""}
             onChange={(e) => set("piece_count", parseOptionalInt(e.target.value))}
             sx={{ flex: 1 }}
-            inputProps={{ min: 0 }}
+            slotProps={{ htmlInput: { min: 0 } }}
           />
           <TextField
             label="Quantity"
@@ -245,7 +245,7 @@ export default function ToyForm({
             value={values.quantity ?? 1}
             onChange={(e) => set("quantity", Math.max(1, parseInt(e.target.value, 10) || 1))}
             sx={{ width: 100, flexShrink: 0 }}
-            inputProps={{ min: 1 }}
+            slotProps={{ htmlInput: { min: 1 } }}
           />
         </Stack>
         <Box>

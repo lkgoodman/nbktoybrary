@@ -162,8 +162,8 @@ export default function BorrowRequestDetailPage({
                 const isCheckedOut = checkout !== undefined;
                 return (
                   <Paper key={req.id} elevation={0} sx={{ p: 2 }}>
-                    <Stack direction="row" alignItems="center" spacing={2} justifyContent="space-between">
-                      <Stack direction="row" alignItems="center" spacing={2}>
+                    <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+                      <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                         <Box sx={{ width: 64, height: 64, flexShrink: 0, bgcolor: "grey.100", borderRadius: 1, overflow: "hidden" }}>
                           {imageUrl !== null ? (
                             <Box component="img" src={imageUrl} alt={req.toy_name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -178,7 +178,7 @@ export default function BorrowRequestDetailPage({
                           ) : null}
                         </Stack>
                       </Stack>
-                      <Stack direction="row" spacing={1} alignItems="center">
+                      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                         {isCheckedOut ? (
                           <>
                             <Chip label="Checked out" size="small" color="warning" variant="outlined" />

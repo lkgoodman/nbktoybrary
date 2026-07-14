@@ -67,7 +67,7 @@ export default function ToyPage({ params }: Props): JSX.Element {
           </Typography>
         ) : (
           <Stack spacing={3}>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={3} alignItems="flex-start">
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={3} sx={{ alignItems: "flex-start" }}>
               {getFeaturedImage(toy) !== null ? (
                 <Stack spacing={1} sx={{ flexShrink: 0, width: { xs: "100%", sm: 280 } }}>
                   <Box
@@ -108,7 +108,7 @@ export default function ToyPage({ params }: Props): JSX.Element {
               ) : null}
 
               <Stack spacing={2} sx={{ flex: 1, minWidth: 0 }}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                   <Typography variant="pageTitle" component="h1">
                     {toy.name}
                   </Typography>
@@ -188,7 +188,7 @@ export default function ToyPage({ params }: Props): JSX.Element {
                   Borrow this toy
                 </Typography>
                 {isMember ? (
-                  <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                     {toy.available_count === 0 ? (
                       <Typography variant="body1" color="text.secondary">
                         This toy is currently unavailable.

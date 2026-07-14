@@ -106,7 +106,7 @@ export default function ProfilePage(): JSX.Element {
   return (
     <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 600, mx: "auto" }}>
       <Stack spacing={4}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
           <Typography variant="pageTitle" component="h1">My profile</Typography>
           {membership !== null ? (
             membership.account_standing === "temporary_hold" ? (
@@ -194,7 +194,7 @@ export default function ProfilePage(): JSX.Element {
         <Paper elevation={0} sx={{ p: 3 }}>
           <Stack spacing={2}>
             <Typography variant="sectionTitle" component="h2">Change password</Typography>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ xs: "stretch", sm: "flex-start" }}>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { xs: "stretch", sm: "flex-start" } }}>
               <TextField
                 label="New password"
                 type="password"

@@ -449,7 +449,7 @@ export default function Page(): JSX.Element {
                           {isMember && toy.available_count > 0 ? (
                             <Box onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} sx={{ display: "flex", justifyContent: "center" }}>
                               {countInCart(toy.id) > 0 ? (
-                                <Stack direction="row" spacing={1} alignItems="center">
+                                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                                   <Button size="small" variant="outlined" onClick={() => removeFromCart(toy.id)} sx={{ minWidth: 32, px: 1 }}>−</Button>
                                   <Typography variant="body1">{countInCart(toy.id)}</Typography>
                                   <Button

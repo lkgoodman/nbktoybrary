@@ -53,7 +53,7 @@ export default function HoursPage(): JSX.Element {
           <Typography variant="body1" color="error">Failed to load hours.</Typography>
         ) : (
           <Stack spacing={1}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
               <Button size="small" onClick={() => setCalendarMonth(new Date(year, month - 1, 1))}>← Prev</Button>
               <Typography variant="bodyStrong">
                 {calendarMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}

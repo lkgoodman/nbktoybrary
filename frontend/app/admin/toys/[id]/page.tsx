@@ -157,7 +157,7 @@ export default function AdminToyDetailPage({
           <Typography variant="body1" color="error">Failed to load toy.</Typography>
         ) : (
           <Stack spacing={3}>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={3} alignItems="flex-start">
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={3} sx={{ alignItems: "flex-start" }}>
               {getFeaturedImage(toy) !== null ? (
                 <Box
                   component="img"
@@ -170,7 +170,7 @@ export default function AdminToyDetailPage({
               )}
 
               <Stack spacing={2} sx={{ flex: 1, minWidth: 0 }}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+                <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "space-between" }}>
                   <Typography variant="pageTitle" component="h1">{toy.name}</Typography>
                   <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
                     <Button component={NextLink} href={`/admin/toys/${toy.id}/edit`} variant="outlined" size="small">
@@ -255,7 +255,7 @@ export default function AdminToyDetailPage({
             <Divider />
 
             <Stack spacing={2}>
-              <Stack direction="row" alignItems="center" spacing={1}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <Typography variant="bodyStrong">Status</Typography>
                 {isCheckedOut ? (
                   <Chip label="Checked out" size="small" color="warning" variant="outlined" />
@@ -268,7 +268,7 @@ export default function AdminToyDetailPage({
                 <Typography variant="body1" color="text.secondary">Loading…</Typography>
               ) : isCheckedOut ? (
                 <Paper elevation={0} sx={{ p: 2 }}>
-                  <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+                  <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "space-between" }}>
                     <Stack spacing={0.25}>
                       <Typography variant="bodyStrong">{activeCheckout.member_name}</Typography>
                       <Typography variant="label" color="text.secondary">
@@ -305,7 +305,7 @@ export default function AdminToyDetailPage({
                   <Typography variant="label" color="text.secondary">Approved requests ready for pickup</Typography>
                   {readyToCheckOut.map((req) => (
                     <Paper key={req.id} elevation={0} sx={{ p: 2 }}>
-                      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+                      <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "space-between" }}>
                         <Stack spacing={0.25}>
                           <Typography variant="bodyStrong">{req.member_name}</Typography>
                           {req.return_start !== null && req.return_end !== null ? (
@@ -318,7 +318,7 @@ export default function AdminToyDetailPage({
                             </Typography>
                           ) : null}
                         </Stack>
-                        <Stack direction="row" spacing={1} alignItems="center">
+                        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                           <Button
                             component={NextLink}
                             href={`/admin/borrow-requests/${req.batch_id}`}
@@ -359,7 +359,7 @@ export default function AdminToyDetailPage({
             <Stack spacing={2}>
               <Typography variant="bodyStrong">Photos</Typography>
               {toy.images.length > 0 ? (
-                <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
                   {toy.images.map((img: ToyImage) => (
                     <Box key={img.id}>
                       <Box

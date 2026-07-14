@@ -145,7 +145,7 @@ export default function NewToyPage(): JSX.Element {
           <Stack spacing={2}>
             <Typography variant="sectionTitle" component="h2">Photos</Typography>
             {previews.length > 0 ? (
-              <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+              <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
                 {previews.map((url, i) => {
                   const isPrimary = featuredIndex === i;
                   return (
