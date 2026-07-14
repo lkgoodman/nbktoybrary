@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
 import { useAuth } from "./AuthContext";
 
@@ -17,7 +17,7 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-export function CartProvider({ children }: { children: React.ReactNode }): JSX.Element {
+export function CartProvider({ children }: { children: ReactNode }): JSX.Element {
   const { user } = useAuth();
   const [cartIds, setCartIds] = useState<string[]>([]);
 
