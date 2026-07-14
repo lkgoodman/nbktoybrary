@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 
 export interface FilterState {
   searchQuery: string;
@@ -28,7 +28,7 @@ interface FilterContextValue {
 
 const FilterContext = createContext<FilterContextValue | null>(null);
 
-export function FilterProvider({ children }: { children: React.ReactNode }): JSX.Element {
+export function FilterProvider({ children }: { children: ReactNode }): JSX.Element {
   const [filters, setFiltersState] = useState<FilterState>(DEFAULT_STATE);
 
   function setFilters(updater: (prev: FilterState) => FilterState): void {
