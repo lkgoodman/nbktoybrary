@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import uuid as uuid_lib
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +13,7 @@ from app.db.session import get_db
 from app.models.membership import Membership, MembershipUser
 from app.models.scheduling import Checkout, Request, RequestStatus
 from app.models.user import User
-from app.schemas.checkout import CheckoutCreate, CheckoutRead
+from app.schemas.checkout import CheckoutCreate, CheckoutRead, CheckoutUpdate
 
 router = APIRouter(prefix="/checkouts", tags=["checkouts"])
 
@@ -147,10 +147,11 @@ async def create_checkout(
 
 
 @router.patch("/{checkout_id}", response_model=CheckoutRead)
-async def checkin_checkout(
+async def update_checkout(
     checkout_id: uuid_lib.UUID,
+    payload: CheckoutUpdate | None = Body(default=None),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_roles("admin", "superadmin")),
+    current_user: User = Depends(get_current_user),
 ) -> CheckoutRead:
     result = await db.execute(
         select(Checkout).options(*_load_options).where(Checkout.id == checkout_id)
@@ -158,12 +159,48 @@ async def checkin_checkout(
     checkout = result.scalar_one_or_none()
     if checkout is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Checkout not found")
-    if checkout.returned_at is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="This toy has already been returned",
-        )
-    checkout.returned_at = datetime.now(tz=timezone.utc)
+
+    is_admin = any(ur.role.name in ("admin", "superadmin") for ur in current_user.roles)
+
+    if payload is not None and payload.due_at is not None:
+        # Due date update — members can update their own checkout within the 4-week window
+        if not is_admin:
+            mem_result = await db.execute(
+                select(Membership)
+                .join(MembershipUser, MembershipUser.membership_id == Membership.id)
+                .where(MembershipUser.user_id == current_user.id)
+                .order_by(Membership.end_date.desc())
+            )
+            membership = mem_result.scalars().first()
+            if membership is None or membership.id != checkout.membership_id:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this checkout")
+
+        if checkout.returned_at is not None:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Cannot change return date of a returned checkout")
+
+        new_due = payload.due_at if payload.due_at.tzinfo is not None else payload.due_at.replace(tzinfo=timezone.utc)
+        max_due = checkout.checked_out_at.replace(tzinfo=timezone.utc) + timedelta(weeks=4)
+
+        if new_due > max_due:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Return date must be within 4 weeks of checkout date",
+            )
+        if new_due <= datetime.now(tz=timezone.utc):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Return date must be in the future",
+            )
+
+        checkout.due_at = new_due
+    else:
+        # Check-in — admin only
+        if not is_admin:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+        if checkout.returned_at is not None:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This toy has already been returned")
+        checkout.returned_at = datetime.now(tz=timezone.utc)
+
     await db.commit()
     await db.refresh(checkout)
 

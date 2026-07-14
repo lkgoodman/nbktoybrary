@@ -1,6 +1,6 @@
 import { useMutation, useQuery, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 
-import { addFavorite, checkinCheckout, createBorrowRequests, createCheckout, createMembership, createTimeframe, createToy, deleteBorrowRequest, deleteToy, deleteUser, updateBorrowRequest, deleteTimeframe, deleteToyImage, fetchSettings, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listFavorites, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, removeFavorite, resetUserPassword, setFeaturedImage, updateMembershipRequest, updateMembershipStanding, updateSettings, updateToy, updateUser, uploadToyImage } from "./api";
+import { addFavorite, checkinCheckout, createBorrowRequests, createCheckout, createMembership, createTimeframe, createToy, deleteBorrowRequest, deleteToy, deleteUser, updateBorrowRequest, deleteTimeframe, deleteToyImage, fetchSettings, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listFavorites, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, removeFavorite, resetUserPassword, setFeaturedImage, updateCheckoutDueDate, updateMembershipRequest, updateMembershipStanding, updateSettings, updateToy, updateUser, uploadToyImage } from "./api";
 import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, MembershipRead, MembershipRequestRead, RegisterRequest, SiteSettingsRead, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead, UserUpdate } from "./types";
 
 
@@ -232,6 +232,12 @@ export function useCreateCheckout(): UseMutationResult<CheckoutRead, Error, { re
 export function useCheckinCheckout(): UseMutationResult<CheckoutRead, Error, { id: string; token: string }> {
   return useMutation<CheckoutRead, Error, { id: string; token: string }>({
     mutationFn: ({ id, token }) => checkinCheckout(id, token),
+  });
+}
+
+export function useUpdateCheckoutDueDate(): UseMutationResult<CheckoutRead, Error, { id: string; dueAt: string; token: string }> {
+  return useMutation<CheckoutRead, Error, { id: string; dueAt: string; token: string }>({
+    mutationFn: ({ id, dueAt, token }) => updateCheckoutDueDate(id, dueAt, token),
   });
 }
 

@@ -12,6 +12,10 @@ class CheckoutCreate(BaseModel):
     request_id: uuid.UUID
 
 
+class CheckoutUpdate(BaseModel):
+    due_at: datetime | None = None
+
+
 class CheckoutRead(AuditRead):
     id: uuid.UUID
     toy_id: uuid.UUID

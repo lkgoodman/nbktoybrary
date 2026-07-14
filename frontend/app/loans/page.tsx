@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import NextLink from "next/link";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -7,14 +8,114 @@ import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "../lib/AuthContext";
-import { useBorrowRequests, useCheckouts, useToys } from "../lib/queries";
+import { useBorrowRequests, useCheckouts, useUpdateCheckoutDueDate, useToys, queryKeys } from "../lib/queries";
 import type { BorrowRequestRead, CheckoutRead, Toy, ToyImage } from "../lib/types";
 
 function getFeaturedImage(toy: Toy): ToyImage | null {
   return toy.images.find((img: ToyImage) => img.is_featured) ?? toy.images[0] ?? null;
+}
+
+function toDateString(iso: string): string {
+  return new Date(iso).toISOString().split("T")[0];
+}
+
+interface ToyRowProps {
+  checkout: CheckoutRead;
+  toy: Toy | undefined;
+  token: string | null;
+}
+
+function ToyRow({ checkout, toy, token }: ToyRowProps): JSX.Element {
+  const image = toy !== undefined ? getFeaturedImage(toy) : null;
+  const queryClient = useQueryClient();
+  const updateDueDate = useUpdateCheckoutDueDate();
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const currentDueDateStr = toDateString(checkout.due_at);
+  const [selectedDate, setSelectedDate] = useState<string>(currentDueDateStr);
+
+  const todayStr = toDateString(new Date().toISOString());
+  const maxDueDateStr = toDateString(
+    new Date(new Date(checkout.checked_out_at).getTime() + 28 * 24 * 60 * 60 * 1000).toISOString()
+  );
+
+  function startEditing(): void {
+    setSelectedDate(currentDueDateStr);
+    setIsEditing(true);
+  }
+
+  function handleSave(): void {
+    if (token === null) return;
+    updateDueDate.mutate(
+      { id: checkout.id, dueAt: `${selectedDate}T00:00:00.000Z`, token },
+      {
+        onSuccess: () => {
+          void queryClient.invalidateQueries({ queryKey: queryKeys.checkouts.list({ returned: false }) });
+          setIsEditing(false);
+        },
+      },
+    );
+  }
+
+  return (
+    <Paper elevation={0} sx={{ p: 3 }}>
+      <Stack direction="row" alignItems="center" spacing={2}>
+        <Box sx={{ width: 64, height: 64, flexShrink: 0, bgcolor: "grey.100", borderRadius: 1, overflow: "hidden" }}>
+          {image !== null ? (
+            <Box component="img" src={image.image_url} alt={toy?.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : null}
+        </Box>
+        <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="bodyStrong">{checkout.toy_name}</Typography>
+          {checkout.returned_at !== null ? (
+            <Typography variant="label" color="text.secondary">
+              Returned {new Date(checkout.returned_at).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
+            </Typography>
+          ) : isEditing ? (
+            <Stack spacing={1}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <TextField
+                  type="date"
+                  size="small"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  inputProps={{ min: todayStr, max: maxDueDateStr }}
+                  sx={{ width: 170 }}
+                />
+                <Button size="small" variant="contained" onClick={handleSave} disabled={updateDueDate.isPending}>
+                  Save
+                </Button>
+                <Button size="small" variant="outlined" onClick={() => setIsEditing(false)} disabled={updateDueDate.isPending}>
+                  Cancel
+                </Button>
+              </Stack>
+              {updateDueDate.isError ? (
+                <Typography variant="label" color="error">{updateDueDate.error.message}</Typography>
+              ) : null}
+            </Stack>
+          ) : (
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography variant="label" color="text.secondary">
+                Due: {new Date(checkout.due_at).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+              </Typography>
+              <Button size="small" variant="text" sx={{ p: 0, minWidth: 0, fontSize: "inherit" }} onClick={startEditing}>
+                Change
+              </Button>
+            </Stack>
+          )}
+        </Stack>
+        {toy !== undefined ? (
+          <Button component={NextLink} href={`/toys/${toy.id}`} variant="outlined" size="small">
+            View
+          </Button>
+        ) : null}
+      </Stack>
+    </Paper>
+  );
 }
 
 export default function LoansPage(): JSX.Element {
@@ -53,39 +154,6 @@ export default function LoansPage(): JSX.Element {
   }
 
   const toysById = new Map((toys ?? []).map((t: Toy) => [t.id, t]));
-
-  function ToyRow({ checkout }: { checkout: CheckoutRead }): JSX.Element {
-    const toy = toysById.get(checkout.toy_id);
-    const image = toy !== undefined ? getFeaturedImage(toy) : null;
-    return (
-      <Paper elevation={0} sx={{ p: 3 }}>
-        <Stack direction="row" alignItems="center" spacing={2}>
-          <Box sx={{ width: 64, height: 64, flexShrink: 0, bgcolor: "grey.100", borderRadius: 1, overflow: "hidden" }}>
-            {image !== null ? (
-              <Box component="img" src={image.image_url} alt={toy?.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : null}
-          </Box>
-          <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="bodyStrong">{checkout.toy_name}</Typography>
-            {checkout.returned_at !== null ? (
-              <Typography variant="label" color="text.secondary">
-                Returned {new Date(checkout.returned_at).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
-              </Typography>
-            ) : (
-              <Typography variant="label" color="text.secondary">
-                Due: {new Date(checkout.due_at).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
-              </Typography>
-            )}
-          </Stack>
-          {toy !== undefined ? (
-            <Button component={NextLink} href={`/toys/${toy.id}`} variant="outlined" size="small">
-              View
-            </Button>
-          ) : null}
-        </Stack>
-      </Paper>
-    );
-  }
 
   return (
     <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 600, mx: "auto" }}>
@@ -146,7 +214,9 @@ export default function LoansPage(): JSX.Element {
             <Typography variant="body1" color="text.secondary">You have no toys currently checked out.</Typography>
           ) : (
             <Stack spacing={2}>
-              {(activeCheckouts ?? []).map((c: CheckoutRead) => <ToyRow key={c.id} checkout={c} />)}
+              {(activeCheckouts ?? []).map((c: CheckoutRead) => (
+                <ToyRow key={c.id} checkout={c} toy={toysById.get(c.toy_id)} token={token} />
+              ))}
             </Stack>
           )}
         </Stack>
@@ -157,7 +227,9 @@ export default function LoansPage(): JSX.Element {
             <Stack spacing={2}>
               <Typography variant="sectionTitle" component="h2">History</Typography>
               <Stack spacing={2}>
-                {(pastCheckouts ?? []).map((c: CheckoutRead) => <ToyRow key={c.id} checkout={c} />)}
+                {(pastCheckouts ?? []).map((c: CheckoutRead) => (
+                  <ToyRow key={c.id} checkout={c} toy={toysById.get(c.toy_id)} token={token} />
+                ))}
               </Stack>
             </Stack>
           </>

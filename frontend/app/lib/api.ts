@@ -318,6 +318,14 @@ export async function checkinCheckout(id: string, token: string): Promise<Checko
   });
 }
 
+export async function updateCheckoutDueDate(id: string, dueAt: string, token: string): Promise<CheckoutRead> {
+  return request<CheckoutRead>(endpoints.checkouts.update(id), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ due_at: dueAt }),
+  });
+}
+
 export async function listToys(token?: string): Promise<Toy[]> {
   return request<Toy[]>(endpoints.toys.list(), {
     headers: token !== undefined ? { Authorization: `Bearer ${token}` } : {},
