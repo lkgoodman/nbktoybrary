@@ -53,7 +53,7 @@ export default function ToyPage({ params }: Props): JSX.Element {
             sx={{ pl: 0 }}
             onClick={() => router.back()}
           >
-            ← All Toys
+            ← Back
           </Button>
         </Box>
 
