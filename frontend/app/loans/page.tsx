@@ -6,14 +6,15 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
+import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
+import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "../lib/AuthContext";
-import { useBorrowRequests, useCheckouts, useUpdateCheckoutDueDate, useToys, queryKeys } from "../lib/queries";
+import { useBorrowRequests, useCheckouts, useUpdateCheckoutDueDate, useToys, useTimeframes, queryKeys } from "../lib/queries";
 import type { BorrowRequestRead, CheckoutRead, Toy, ToyImage } from "../lib/types";
 
 function getFeaturedImage(toy: Toy): ToyImage | null {
@@ -28,9 +29,10 @@ interface ToyRowProps {
   checkout: CheckoutRead;
   toy: Toy | undefined;
   token: string | null;
+  openDates: string[];
 }
 
-function ToyRow({ checkout, toy, token }: ToyRowProps): JSX.Element {
+function ToyRow({ checkout, toy, token, openDates }: ToyRowProps): JSX.Element {
   const image = toy !== undefined ? getFeaturedImage(toy) : null;
   const queryClient = useQueryClient();
   const updateDueDate = useUpdateCheckoutDueDate();
@@ -43,13 +45,16 @@ function ToyRow({ checkout, toy, token }: ToyRowProps): JSX.Element {
     new Date(new Date(checkout.checked_out_at).getTime() + 28 * 24 * 60 * 60 * 1000).toISOString()
   );
 
+  const availableDates = openDates.filter((d) => d >= todayStr && d <= maxDueDateStr);
+
   function startEditing(): void {
-    setSelectedDate(currentDueDateStr);
+    const initial = availableDates.includes(currentDueDateStr) ? currentDueDateStr : (availableDates[0] ?? "");
+    setSelectedDate(initial);
     setIsEditing(true);
   }
 
   function handleSave(): void {
-    if (token === null) return;
+    if (token === null || selectedDate === "") return;
     updateDueDate.mutate(
       { id: checkout.id, dueAt: `${selectedDate}T00:00:00.000Z`, token },
       {
@@ -77,22 +82,30 @@ function ToyRow({ checkout, toy, token }: ToyRowProps): JSX.Element {
             </Typography>
           ) : isEditing ? (
             <Stack spacing={1}>
-              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                <TextField
-                  type="date"
-                  size="small"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  slotProps={{ htmlInput: { min: todayStr, max: maxDueDateStr } }}
-                  sx={{ width: 170 }}
-                />
-                <Button size="small" variant="contained" onClick={handleSave} disabled={updateDueDate.isPending}>
-                  Save
-                </Button>
-                <Button size="small" variant="outlined" onClick={() => setIsEditing(false)} disabled={updateDueDate.isPending}>
-                  Cancel
-                </Button>
-              </Stack>
+              {availableDates.length === 0 ? (
+                <Typography variant="label" color="text.secondary">No open return dates available in the allowed window.</Typography>
+              ) : (
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                  <Select
+                    size="small"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    sx={{ minWidth: 200 }}
+                  >
+                    {availableDates.map((d) => (
+                      <MenuItem key={d} value={d}>
+                        {new Date(`${d}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "long", day: "numeric" })}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <Button size="small" variant="contained" onClick={handleSave} disabled={updateDueDate.isPending || selectedDate === ""}>
+                    Save
+                  </Button>
+                  <Button size="small" variant="outlined" onClick={() => setIsEditing(false)} disabled={updateDueDate.isPending}>
+                    Cancel
+                  </Button>
+                </Stack>
+              )}
               {updateDueDate.isError ? (
                 <Typography variant="label" color="error">{updateDueDate.error.message}</Typography>
               ) : null}
@@ -124,6 +137,13 @@ export default function LoansPage(): JSX.Element {
   const { data: pastCheckouts } = useCheckouts(token, { returned: true });
   const { data: requests } = useBorrowRequests(token);
   const { data: toys } = useToys();
+  const { data: timeframes } = useTimeframes();
+
+  const openDates: string[] = Array.from(
+    new Set(
+      (timeframes ?? []).map((tf) => toDateString(tf.start_time))
+    )
+  ).sort();
 
   const now = new Date();
 
@@ -215,7 +235,7 @@ export default function LoansPage(): JSX.Element {
           ) : (
             <Stack spacing={2}>
               {(activeCheckouts ?? []).map((c: CheckoutRead) => (
-                <ToyRow key={c.id} checkout={c} toy={toysById.get(c.toy_id)} token={token} />
+                <ToyRow key={c.id} checkout={c} toy={toysById.get(c.toy_id)} token={token} openDates={openDates} />
               ))}
             </Stack>
           )}
@@ -228,7 +248,7 @@ export default function LoansPage(): JSX.Element {
               <Typography variant="sectionTitle" component="h2">History</Typography>
               <Stack spacing={2}>
                 {(pastCheckouts ?? []).map((c: CheckoutRead) => (
-                  <ToyRow key={c.id} checkout={c} toy={toysById.get(c.toy_id)} token={token} />
+                  <ToyRow key={c.id} checkout={c} toy={toysById.get(c.toy_id)} token={token} openDates={openDates} />
                 ))}
               </Stack>
             </Stack>
