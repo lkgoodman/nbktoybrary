@@ -132,7 +132,10 @@ export default function AdminPage(): JSX.Element {
     const tagMatch =
       inventoryTags.size === 0 || toy.tags.some((t: string) => inventoryTags.has(t));
     const ageMatch =
-      inventoryAge === null || (toy.age_min !== null && toy.age_min <= inventoryAge);
+      inventoryAge === null ||
+      (toy.age_min !== null &&
+        toy.age_min <= inventoryAge &&
+        (toy.age_max === null || inventoryAge <= toy.age_max));
 
     const languageMatch =
       inventoryLanguage === null || toy.language === inventoryLanguage;

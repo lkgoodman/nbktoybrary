@@ -63,7 +63,9 @@ function formatAgeRange(toy: Toy): string | null {
 
 function toyMatchesAgeBucket(toy: Toy, bucket: AgeBucket): boolean {
   if (toy.age_min === null) return false;
-  return toy.age_min <= bucket.age;
+  if (toy.age_min > bucket.age) return false;
+  if (toy.age_max !== null && bucket.age > toy.age_max) return false;
+  return true;
 }
 
 export default function Page(): JSX.Element {
