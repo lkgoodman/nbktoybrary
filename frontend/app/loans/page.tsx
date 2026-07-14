@@ -4,6 +4,7 @@ import { useState } from "react";
 import NextLink from "next/link";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
@@ -12,6 +13,7 @@ import Typography from "@mui/material/Typography";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "../lib/AuthContext";
+import { updateCheckoutDueDate } from "../lib/api";
 import { useBorrowRequests, useCheckouts, useUpdateCheckoutDueDate, useToys, useTimeframes, queryKeys } from "../lib/queries";
 import type { BorrowRequestRead, CheckoutRead, Toy, ToyImage, TimeframeRead } from "../lib/types";
 
@@ -23,43 +25,31 @@ function toDateString(iso: string): string {
   return new Date(iso).toISOString().split("T")[0];
 }
 
-interface ToyRowProps {
-  checkout: CheckoutRead;
-  toy: Toy | undefined;
-  token: string | null;
+// ── Shared calendar + time-slot picker ───────────────────────────────────────
+
+interface ReturnCalendarPickerProps {
   timeframes: TimeframeRead[];
+  todayStr: string;
+  maxDueDateStr: string;
+  selectedTimeframeId: string | null;
+  onSelectTimeframe: (tf: TimeframeRead | null) => void;
 }
 
-function ToyRow({ checkout, toy, token, timeframes }: ToyRowProps): JSX.Element {
-  const image = toy !== undefined ? getFeaturedImage(toy) : null;
-  const queryClient = useQueryClient();
-  const updateDueDate = useUpdateCheckoutDueDate();
-  const [isEditing, setIsEditing] = useState<boolean>(false);
+function ReturnCalendarPicker({ timeframes, todayStr, maxDueDateStr, selectedTimeframeId, onSelectTimeframe }: ReturnCalendarPickerProps): JSX.Element {
   const [calendarMonth, setCalendarMonth] = useState<{ year: number; month: number }>(() => {
     const d = new Date();
     return { year: d.getFullYear(), month: d.getMonth() };
   });
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
-  const [selectedTimeframeId, setSelectedTimeframeId] = useState<string | null>(null);
 
-  const todayStr = toDateString(new Date().toISOString());
-  const maxDueDateStr = toDateString(
-    new Date(new Date(checkout.checked_out_at).getTime() + 28 * 24 * 60 * 60 * 1000).toISOString()
-  );
-
-  // Map date string → timeframes within the valid window
   const tfByDay = new Map<string, TimeframeRead[]>();
   timeframes.forEach((tf) => {
     const d = toDateString(tf.start_time);
     if (d >= todayStr && d <= maxDueDateStr) {
-      const existing = tfByDay.get(d) ?? [];
-      tfByDay.set(d, [...existing, tf]);
+      tfByDay.set(d, [...(tfByDay.get(d) ?? []), tf]);
     }
   });
 
-  const hasAnyOpenDates = tfByDay.size > 0;
-
-  // Calendar grid for current month
   const { year, month } = calendarMonth;
   const firstDayOfWeek = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -77,15 +67,114 @@ function ToyRow({ checkout, toy, token, timeframes }: ToyRowProps): JSX.Element 
   const canGoNext = year < maxCalMonth.year || (year === maxCalMonth.year && month < maxCalMonth.month);
 
   const selectedSlots = selectedDateKey !== null ? (tfByDay.get(selectedDateKey) ?? []) : [];
-  const selectedTimeframe = timeframes.find((tf) => tf.id === selectedTimeframeId) ?? null;
 
-  function startEditing(): void {
-    setSelectedDateKey(null);
-    setSelectedTimeframeId(null);
-    const d = new Date();
-    setCalendarMonth({ year: d.getFullYear(), month: d.getMonth() });
-    setIsEditing(true);
+  if (tfByDay.size === 0) {
+    return (
+      <Typography variant="label" color="text.secondary">No open return dates available in the allowed window.</Typography>
+    );
   }
+
+  return (
+    <Stack spacing={1.5}>
+      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+        <Button size="small" onClick={() => setCalendarMonth({ year: month === 0 ? year - 1 : year, month: month === 0 ? 11 : month - 1 })} disabled={!canGoPrev}>
+          ← Prev
+        </Button>
+        <Typography variant="label">
+          {new Date(year, month, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+        </Typography>
+        <Button size="small" onClick={() => setCalendarMonth({ year: month === 11 ? year + 1 : year, month: month === 11 ? 0 : month + 1 })} disabled={!canGoNext}>
+          Next →
+        </Button>
+      </Stack>
+
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.25 }}>
+        {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+          <Typography key={d} variant="label" color="text.secondary" sx={{ textAlign: "center", py: 0.25 }}>
+            {d}
+          </Typography>
+        ))}
+        {cells.map((day, i) => {
+          if (day === null) return <Box key={`empty-${i}`} />;
+          const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const isOpen = tfByDay.has(dateKey);
+          const isToday = todayStr === dateKey;
+          const isSelected = selectedDateKey === dateKey;
+          return (
+            <Box
+              key={dateKey}
+              onClick={() => {
+                if (!isOpen) return;
+                const next = isSelected ? null : dateKey;
+                setSelectedDateKey(next);
+                onSelectTimeframe(null);
+              }}
+              sx={{
+                py: 0.5,
+                border: 1,
+                borderColor: isSelected ? "primary.main" : isToday ? "primary.light" : "divider",
+                borderRadius: 1,
+                bgcolor: isSelected ? "primary.light" : isOpen ? "grey.50" : "transparent",
+                cursor: isOpen ? "pointer" : "default",
+                opacity: isOpen ? 1 : 0.35,
+                textAlign: "center",
+                "&:hover": isOpen && !isSelected ? { borderColor: "primary.light" } : {},
+              }}
+            >
+              <Typography variant="label" color={isToday ? "primary.main" : isOpen ? "text.primary" : "text.disabled"}>
+                {day}
+              </Typography>
+            </Box>
+          );
+        })}
+      </Box>
+
+      {selectedDateKey !== null ? (
+        <Stack spacing={0.5}>
+          <Typography variant="label" color="text.secondary">Select a drop-off time:</Typography>
+          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+            {selectedSlots.map((tf) => {
+              const isChosen = selectedTimeframeId === tf.id;
+              return (
+                <Chip
+                  key={tf.id}
+                  label={`${new Date(tf.start_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })} – ${new Date(tf.end_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`}
+                  onClick={() => onSelectTimeframe(isChosen ? null : tf)}
+                  color={isChosen ? "primary" : "default"}
+                  variant={isChosen ? "filled" : "outlined"}
+                  size="small"
+                />
+              );
+            })}
+          </Stack>
+        </Stack>
+      ) : null}
+    </Stack>
+  );
+}
+
+// ── Per-toy row ───────────────────────────────────────────────────────────────
+
+interface ToyRowProps {
+  checkout: CheckoutRead;
+  toy: Toy | undefined;
+  token: string | null;
+  timeframes: TimeframeRead[];
+  isSelected: boolean;
+  onToggleSelect: () => void;
+}
+
+function ToyRow({ checkout, toy, token, timeframes, isSelected, onToggleSelect }: ToyRowProps): JSX.Element {
+  const image = toy !== undefined ? getFeaturedImage(toy) : null;
+  const queryClient = useQueryClient();
+  const updateDueDate = useUpdateCheckoutDueDate();
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeRead | null>(null);
+
+  const todayStr = toDateString(new Date().toISOString());
+  const maxDueDateStr = toDateString(
+    new Date(new Date(checkout.checked_out_at).getTime() + 28 * 24 * 60 * 60 * 1000).toISOString()
+  );
 
   function handleSave(): void {
     if (token === null || selectedTimeframe === null) return;
@@ -95,14 +184,25 @@ function ToyRow({ checkout, toy, token, timeframes }: ToyRowProps): JSX.Element 
         onSuccess: () => {
           void queryClient.invalidateQueries({ queryKey: queryKeys.checkouts.list({ returned: false }) });
           setIsEditing(false);
+          setSelectedTimeframe(null);
         },
       },
     );
   }
 
+  const isActive = checkout.returned_at === null;
+
   return (
     <Paper elevation={0} sx={{ p: 3 }}>
       <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start" }}>
+        {isActive ? (
+          <Checkbox
+            checked={isSelected}
+            onChange={onToggleSelect}
+            size="small"
+            sx={{ mt: -0.5, ml: -1 }}
+          />
+        ) : null}
         <Box sx={{ width: 64, height: 64, flexShrink: 0, bgcolor: "grey.100", borderRadius: 1, overflow: "hidden" }}>
           {image !== null ? (
             <Box component="img" src={image.image_url} alt={toy?.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -118,103 +218,27 @@ function ToyRow({ checkout, toy, token, timeframes }: ToyRowProps): JSX.Element 
             ) : null}
           </Stack>
 
-          {checkout.returned_at !== null ? (
+          {!isActive ? (
             <Typography variant="label" color="text.secondary">
-              Returned {new Date(checkout.returned_at).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
+              Returned {new Date(checkout.returned_at!).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
             </Typography>
           ) : isEditing ? (
             <Stack spacing={1.5}>
-              {!hasAnyOpenDates ? (
-                <Typography variant="label" color="text.secondary">No open return dates available in the allowed window.</Typography>
-              ) : (
-                <>
-                  {/* Calendar header */}
-                  <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
-                    <Button size="small" onClick={() => setCalendarMonth({ year: month === 0 ? year - 1 : year, month: month === 0 ? 11 : month - 1 })} disabled={!canGoPrev}>
-                      ← Prev
-                    </Button>
-                    <Typography variant="label">
-                      {new Date(year, month, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" })}
-                    </Typography>
-                    <Button size="small" onClick={() => setCalendarMonth({ year: month === 11 ? year + 1 : year, month: month === 11 ? 0 : month + 1 })} disabled={!canGoNext}>
-                      Next →
-                    </Button>
-                  </Stack>
-
-                  {/* Calendar grid */}
-                  <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.25 }}>
-                    {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
-                      <Typography key={d} variant="label" color="text.secondary" sx={{ textAlign: "center", py: 0.25 }}>
-                        {d}
-                      </Typography>
-                    ))}
-                    {cells.map((day, i) => {
-                      if (day === null) return <Box key={`empty-${i}`} />;
-                      const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                      const isOpen = tfByDay.has(dateKey);
-                      const isToday = todayStr === dateKey;
-                      const isSelected = selectedDateKey === dateKey;
-                      return (
-                        <Box
-                          key={dateKey}
-                          onClick={() => {
-                            if (!isOpen) return;
-                            setSelectedDateKey(isSelected ? null : dateKey);
-                            setSelectedTimeframeId(null);
-                          }}
-                          sx={{
-                            py: 0.5,
-                            border: 1,
-                            borderColor: isSelected ? "primary.main" : isToday ? "primary.light" : "divider",
-                            borderRadius: 1,
-                            bgcolor: isSelected ? "primary.light" : isOpen ? "grey.50" : "transparent",
-                            cursor: isOpen ? "pointer" : "default",
-                            opacity: isOpen ? 1 : 0.35,
-                            textAlign: "center",
-                            "&:hover": isOpen && !isSelected ? { borderColor: "primary.light" } : {},
-                          }}
-                        >
-                          <Typography variant="label" color={isToday ? "primary.main" : isOpen ? "text.primary" : "text.disabled"}>
-                            {day}
-                          </Typography>
-                        </Box>
-                      );
-                    })}
-                  </Box>
-
-                  {/* Time slots for selected date */}
-                  {selectedDateKey !== null ? (
-                    <Stack spacing={0.5}>
-                      <Typography variant="label" color="text.secondary">Select a drop-off time:</Typography>
-                      <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-                        {selectedSlots.map((tf) => {
-                          const isChosen = selectedTimeframeId === tf.id;
-                          return (
-                            <Chip
-                              key={tf.id}
-                              label={`${new Date(tf.start_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })} – ${new Date(tf.end_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`}
-                              onClick={() => setSelectedTimeframeId(isChosen ? null : tf.id)}
-                              color={isChosen ? "primary" : "default"}
-                              variant={isChosen ? "filled" : "outlined"}
-                              size="small"
-                            />
-                          );
-                        })}
-                      </Stack>
-                    </Stack>
-                  ) : null}
-                </>
-              )}
-
+              <ReturnCalendarPicker
+                timeframes={timeframes}
+                todayStr={todayStr}
+                maxDueDateStr={maxDueDateStr}
+                selectedTimeframeId={selectedTimeframe?.id ?? null}
+                onSelectTimeframe={(tf) => setSelectedTimeframe(tf)}
+              />
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <Button size="small" variant="contained" onClick={handleSave} disabled={updateDueDate.isPending || selectedTimeframe === null}>
                   Save
                 </Button>
-                <Button size="small" variant="outlined" onClick={() => setIsEditing(false)} disabled={updateDueDate.isPending}>
+                <Button size="small" variant="outlined" onClick={() => { setIsEditing(false); setSelectedTimeframe(null); }} disabled={updateDueDate.isPending}>
                   Cancel
                 </Button>
               </Stack>
-
               {updateDueDate.isError ? (
                 <Typography variant="label" color="error">{updateDueDate.error.message}</Typography>
               ) : null}
@@ -224,7 +248,7 @@ function ToyRow({ checkout, toy, token, timeframes }: ToyRowProps): JSX.Element 
               <Typography variant="label" color="text.secondary">
                 Due: {new Date(checkout.due_at).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
               </Typography>
-              <Button size="small" variant="text" sx={{ p: 0, minWidth: 0, fontSize: "inherit" }} onClick={startEditing}>
+              <Button size="small" variant="text" sx={{ p: 0, minWidth: 0, fontSize: "inherit" }} onClick={() => setIsEditing(true)}>
                 Change
               </Button>
             </Stack>
@@ -235,6 +259,8 @@ function ToyRow({ checkout, toy, token, timeframes }: ToyRowProps): JSX.Element 
   );
 }
 
+// ── Page ─────────────────────────────────────────────────────────────────────
+
 export default function LoansPage(): JSX.Element {
   const { token, isMember } = useAuth();
   const { data: activeCheckouts, isPending, isError } = useCheckouts(token, { returned: false });
@@ -242,8 +268,58 @@ export default function LoansPage(): JSX.Element {
   const { data: requests } = useBorrowRequests(token);
   const { data: toys } = useToys();
   const { data: timeframes } = useTimeframes();
+  const queryClient = useQueryClient();
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkEditing, setIsBulkEditing] = useState<boolean>(false);
+  const [bulkTimeframe, setBulkTimeframe] = useState<TimeframeRead | null>(null);
+  const [bulkSaving, setBulkSaving] = useState<boolean>(false);
+  const [bulkError, setBulkError] = useState<string | null>(null);
 
   const now = new Date();
+  const todayStr = toDateString(now.toISOString());
+  const allTimeframes = timeframes ?? [];
+
+  function toggleSelect(id: string): void {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      return next;
+    });
+  }
+
+  function clearSelection(): void {
+    setSelectedIds(new Set());
+    setIsBulkEditing(false);
+    setBulkTimeframe(null);
+    setBulkError(null);
+  }
+
+  async function handleBulkSave(): Promise<void> {
+    if (token === null || bulkTimeframe === null) return;
+    setBulkSaving(true);
+    setBulkError(null);
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) => updateCheckoutDueDate(id, bulkTimeframe.start_time, token))
+      );
+      void queryClient.invalidateQueries({ queryKey: queryKeys.checkouts.list({ returned: false }) });
+      clearSelection();
+    } catch (err) {
+      setBulkError(err instanceof Error ? err.message : "Failed to update return dates");
+    } finally {
+      setBulkSaving(false);
+    }
+  }
+
+  // For the bulk picker, constrain to the earliest max date across all selected checkouts
+  const selectedCheckouts = (activeCheckouts ?? []).filter((c) => selectedIds.has(c.id));
+  const bulkMaxDueDateStr = selectedCheckouts.length > 0
+    ? selectedCheckouts.reduce<string>((min, c) => {
+        const d = toDateString(new Date(new Date(c.checked_out_at).getTime() + 28 * 24 * 60 * 60 * 1000).toISOString());
+        return d < min ? d : min;
+      }, toDateString(new Date(new Date(selectedCheckouts[0].checked_out_at).getTime() + 28 * 24 * 60 * 60 * 1000).toISOString()))
+    : todayStr;
 
   const upcomingBatches: BorrowRequestRead[][] = Object.values(
     (requests ?? []).reduce<Record<string, BorrowRequestRead[]>>(
@@ -272,7 +348,6 @@ export default function LoansPage(): JSX.Element {
   }
 
   const toysById = new Map((toys ?? []).map((t: Toy) => [t.id, t]));
-  const allTimeframes = timeframes ?? [];
 
   return (
     <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 600, mx: "auto" }}>
@@ -334,8 +409,67 @@ export default function LoansPage(): JSX.Element {
           ) : (
             <Stack spacing={2}>
               {(activeCheckouts ?? []).map((c: CheckoutRead) => (
-                <ToyRow key={c.id} checkout={c} toy={toysById.get(c.toy_id)} token={token} timeframes={allTimeframes} />
+                <ToyRow
+                  key={c.id}
+                  checkout={c}
+                  toy={toysById.get(c.toy_id)}
+                  token={token}
+                  timeframes={allTimeframes}
+                  isSelected={selectedIds.has(c.id)}
+                  onToggleSelect={() => toggleSelect(c.id)}
+                />
               ))}
+
+              {/* Bulk action bar */}
+              {selectedIds.size > 0 ? (
+                <Paper elevation={0} sx={{ p: 3, border: 1, borderColor: "primary.main" }}>
+                  <Stack spacing={2}>
+                    <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+                      <Typography variant="bodyStrong">
+                        {selectedIds.size} toy{selectedIds.size > 1 ? "s" : ""} selected
+                      </Typography>
+                      <Stack direction="row" spacing={1}>
+                        {!isBulkEditing ? (
+                          <Button size="small" variant="contained" onClick={() => { setIsBulkEditing(true); setBulkTimeframe(null); }}>
+                            Change return date
+                          </Button>
+                        ) : null}
+                        <Button size="small" variant="outlined" onClick={clearSelection}>
+                          Cancel
+                        </Button>
+                      </Stack>
+                    </Stack>
+
+                    {isBulkEditing ? (
+                      <Stack spacing={1.5}>
+                        <ReturnCalendarPicker
+                          timeframes={allTimeframes}
+                          todayStr={todayStr}
+                          maxDueDateStr={bulkMaxDueDateStr}
+                          selectedTimeframeId={bulkTimeframe?.id ?? null}
+                          onSelectTimeframe={(tf) => setBulkTimeframe(tf)}
+                        />
+                        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                          <Button
+                            size="small"
+                            variant="contained"
+                            onClick={() => { void handleBulkSave(); }}
+                            disabled={bulkSaving || bulkTimeframe === null}
+                          >
+                            {bulkSaving ? "Saving…" : `Save for ${selectedIds.size} toy${selectedIds.size > 1 ? "s" : ""}`}
+                          </Button>
+                          <Button size="small" variant="outlined" onClick={() => { setIsBulkEditing(false); setBulkTimeframe(null); }} disabled={bulkSaving}>
+                            Back
+                          </Button>
+                        </Stack>
+                        {bulkError !== null ? (
+                          <Typography variant="label" color="error">{bulkError}</Typography>
+                        ) : null}
+                      </Stack>
+                    ) : null}
+                  </Stack>
+                </Paper>
+              ) : null}
             </Stack>
           )}
         </Stack>
@@ -347,7 +481,15 @@ export default function LoansPage(): JSX.Element {
               <Typography variant="sectionTitle" component="h2">History</Typography>
               <Stack spacing={2}>
                 {(pastCheckouts ?? []).map((c: CheckoutRead) => (
-                  <ToyRow key={c.id} checkout={c} toy={toysById.get(c.toy_id)} token={token} timeframes={allTimeframes} />
+                  <ToyRow
+                    key={c.id}
+                    checkout={c}
+                    toy={toysById.get(c.toy_id)}
+                    token={token}
+                    timeframes={allTimeframes}
+                    isSelected={false}
+                    onToggleSelect={() => undefined}
+                  />
                 ))}
               </Stack>
             </Stack>
