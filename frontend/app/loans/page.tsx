@@ -6,16 +6,14 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
-import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
-import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "../lib/AuthContext";
 import { useBorrowRequests, useCheckouts, useUpdateCheckoutDueDate, useToys, useTimeframes, queryKeys } from "../lib/queries";
-import type { BorrowRequestRead, CheckoutRead, Toy, ToyImage } from "../lib/types";
+import type { BorrowRequestRead, CheckoutRead, Toy, ToyImage, TimeframeRead } from "../lib/types";
 
 function getFeaturedImage(toy: Toy): ToyImage | null {
   return toy.images.find((img: ToyImage) => img.is_featured) ?? toy.images[0] ?? null;
@@ -29,34 +27,70 @@ interface ToyRowProps {
   checkout: CheckoutRead;
   toy: Toy | undefined;
   token: string | null;
-  openDates: string[];
+  timeframes: TimeframeRead[];
 }
 
-function ToyRow({ checkout, toy, token, openDates }: ToyRowProps): JSX.Element {
+function ToyRow({ checkout, toy, token, timeframes }: ToyRowProps): JSX.Element {
   const image = toy !== undefined ? getFeaturedImage(toy) : null;
   const queryClient = useQueryClient();
   const updateDueDate = useUpdateCheckoutDueDate();
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const currentDueDateStr = toDateString(checkout.due_at);
-  const [selectedDate, setSelectedDate] = useState<string>(currentDueDateStr);
+  const [calendarMonth, setCalendarMonth] = useState<{ year: number; month: number }>(() => {
+    const d = new Date();
+    return { year: d.getFullYear(), month: d.getMonth() };
+  });
+  const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
+  const [selectedTimeframeId, setSelectedTimeframeId] = useState<string | null>(null);
 
   const todayStr = toDateString(new Date().toISOString());
   const maxDueDateStr = toDateString(
     new Date(new Date(checkout.checked_out_at).getTime() + 28 * 24 * 60 * 60 * 1000).toISOString()
   );
 
-  const availableDates = openDates.filter((d) => d >= todayStr && d <= maxDueDateStr);
+  // Map date string → timeframes within the valid window
+  const tfByDay = new Map<string, TimeframeRead[]>();
+  timeframes.forEach((tf) => {
+    const d = toDateString(tf.start_time);
+    if (d >= todayStr && d <= maxDueDateStr) {
+      const existing = tfByDay.get(d) ?? [];
+      tfByDay.set(d, [...existing, tf]);
+    }
+  });
+
+  const hasAnyOpenDates = tfByDay.size > 0;
+
+  // Calendar grid for current month
+  const { year, month } = calendarMonth;
+  const firstDayOfWeek = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells: (number | null)[] = [
+    ...Array<null>(firstDayOfWeek).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const todayParts = todayStr.split("-");
+  const maxParts = maxDueDateStr.split("-");
+  const minCalMonth = { year: parseInt(todayParts[0]), month: parseInt(todayParts[1]) - 1 };
+  const maxCalMonth = { year: parseInt(maxParts[0]), month: parseInt(maxParts[1]) - 1 };
+  const canGoPrev = year > minCalMonth.year || (year === minCalMonth.year && month > minCalMonth.month);
+  const canGoNext = year < maxCalMonth.year || (year === maxCalMonth.year && month < maxCalMonth.month);
+
+  const selectedSlots = selectedDateKey !== null ? (tfByDay.get(selectedDateKey) ?? []) : [];
+  const selectedTimeframe = timeframes.find((tf) => tf.id === selectedTimeframeId) ?? null;
 
   function startEditing(): void {
-    const initial = availableDates.includes(currentDueDateStr) ? currentDueDateStr : (availableDates[0] ?? "");
-    setSelectedDate(initial);
+    setSelectedDateKey(null);
+    setSelectedTimeframeId(null);
+    const d = new Date();
+    setCalendarMonth({ year: d.getFullYear(), month: d.getMonth() });
     setIsEditing(true);
   }
 
   function handleSave(): void {
-    if (token === null || selectedDate === "") return;
+    if (token === null || selectedTimeframe === null) return;
     updateDueDate.mutate(
-      { id: checkout.id, dueAt: `${selectedDate}T00:00:00.000Z`, token },
+      { id: checkout.id, dueAt: selectedTimeframe.start_time, token },
       {
         onSuccess: () => {
           void queryClient.invalidateQueries({ queryKey: queryKeys.checkouts.list({ returned: false }) });
@@ -68,44 +102,119 @@ function ToyRow({ checkout, toy, token, openDates }: ToyRowProps): JSX.Element {
 
   return (
     <Paper elevation={0} sx={{ p: 3 }}>
-      <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+      <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start" }}>
         <Box sx={{ width: 64, height: 64, flexShrink: 0, bgcolor: "grey.100", borderRadius: 1, overflow: "hidden" }}>
           {image !== null ? (
             <Box component="img" src={image.image_url} alt={toy?.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : null}
         </Box>
-        <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="bodyStrong">{checkout.toy_name}</Typography>
+        <Stack spacing={1} sx={{ flex: 1, minWidth: 0 }}>
+          <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+            <Typography variant="bodyStrong">{checkout.toy_name}</Typography>
+            {toy !== undefined ? (
+              <Button component={NextLink} href={`/toys/${toy.id}`} variant="outlined" size="small" sx={{ flexShrink: 0 }}>
+                View
+              </Button>
+            ) : null}
+          </Stack>
+
           {checkout.returned_at !== null ? (
             <Typography variant="label" color="text.secondary">
               Returned {new Date(checkout.returned_at).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
             </Typography>
           ) : isEditing ? (
-            <Stack spacing={1}>
-              {availableDates.length === 0 ? (
+            <Stack spacing={1.5}>
+              {!hasAnyOpenDates ? (
                 <Typography variant="label" color="text.secondary">No open return dates available in the allowed window.</Typography>
               ) : (
-                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                  <Select
-                    size="small"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    sx={{ minWidth: 200 }}
-                  >
-                    {availableDates.map((d) => (
-                      <MenuItem key={d} value={d}>
-                        {new Date(`${d}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "long", day: "numeric" })}
-                      </MenuItem>
+                <>
+                  {/* Calendar header */}
+                  <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+                    <Button size="small" onClick={() => setCalendarMonth({ year: month === 0 ? year - 1 : year, month: month === 0 ? 11 : month - 1 })} disabled={!canGoPrev}>
+                      ← Prev
+                    </Button>
+                    <Typography variant="label">
+                      {new Date(year, month, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+                    </Typography>
+                    <Button size="small" onClick={() => setCalendarMonth({ year: month === 11 ? year + 1 : year, month: month === 11 ? 0 : month + 1 })} disabled={!canGoNext}>
+                      Next →
+                    </Button>
+                  </Stack>
+
+                  {/* Calendar grid */}
+                  <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.25 }}>
+                    {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+                      <Typography key={d} variant="label" color="text.secondary" sx={{ textAlign: "center", py: 0.25 }}>
+                        {d}
+                      </Typography>
                     ))}
-                  </Select>
-                  <Button size="small" variant="contained" onClick={handleSave} disabled={updateDueDate.isPending || selectedDate === ""}>
-                    Save
-                  </Button>
-                  <Button size="small" variant="outlined" onClick={() => setIsEditing(false)} disabled={updateDueDate.isPending}>
-                    Cancel
-                  </Button>
-                </Stack>
+                    {cells.map((day, i) => {
+                      if (day === null) return <Box key={`empty-${i}`} />;
+                      const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                      const isOpen = tfByDay.has(dateKey);
+                      const isToday = todayStr === dateKey;
+                      const isSelected = selectedDateKey === dateKey;
+                      return (
+                        <Box
+                          key={dateKey}
+                          onClick={() => {
+                            if (!isOpen) return;
+                            setSelectedDateKey(isSelected ? null : dateKey);
+                            setSelectedTimeframeId(null);
+                          }}
+                          sx={{
+                            py: 0.5,
+                            border: 1,
+                            borderColor: isSelected ? "primary.main" : isToday ? "primary.light" : "divider",
+                            borderRadius: 1,
+                            bgcolor: isSelected ? "primary.light" : isOpen ? "grey.50" : "transparent",
+                            cursor: isOpen ? "pointer" : "default",
+                            opacity: isOpen ? 1 : 0.35,
+                            textAlign: "center",
+                            "&:hover": isOpen && !isSelected ? { borderColor: "primary.light" } : {},
+                          }}
+                        >
+                          <Typography variant="label" color={isToday ? "primary.main" : isOpen ? "text.primary" : "text.disabled"}>
+                            {day}
+                          </Typography>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+
+                  {/* Time slots for selected date */}
+                  {selectedDateKey !== null ? (
+                    <Stack spacing={0.5}>
+                      <Typography variant="label" color="text.secondary">Select a drop-off time:</Typography>
+                      <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+                        {selectedSlots.map((tf) => {
+                          const isChosen = selectedTimeframeId === tf.id;
+                          return (
+                            <Chip
+                              key={tf.id}
+                              label={`${new Date(tf.start_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })} – ${new Date(tf.end_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`}
+                              onClick={() => setSelectedTimeframeId(isChosen ? null : tf.id)}
+                              color={isChosen ? "primary" : "default"}
+                              variant={isChosen ? "filled" : "outlined"}
+                              size="small"
+                            />
+                          );
+                        })}
+                      </Stack>
+                    </Stack>
+                  ) : null}
+                </>
               )}
+
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                <Button size="small" variant="contained" onClick={handleSave} disabled={updateDueDate.isPending || selectedTimeframe === null}>
+                  Save
+                </Button>
+                <Button size="small" variant="outlined" onClick={() => setIsEditing(false)} disabled={updateDueDate.isPending}>
+                  Cancel
+                </Button>
+              </Stack>
+
               {updateDueDate.isError ? (
                 <Typography variant="label" color="error">{updateDueDate.error.message}</Typography>
               ) : null}
@@ -121,11 +230,6 @@ function ToyRow({ checkout, toy, token, openDates }: ToyRowProps): JSX.Element {
             </Stack>
           )}
         </Stack>
-        {toy !== undefined ? (
-          <Button component={NextLink} href={`/toys/${toy.id}`} variant="outlined" size="small">
-            View
-          </Button>
-        ) : null}
       </Stack>
     </Paper>
   );
@@ -138,12 +242,6 @@ export default function LoansPage(): JSX.Element {
   const { data: requests } = useBorrowRequests(token);
   const { data: toys } = useToys();
   const { data: timeframes } = useTimeframes();
-
-  const openDates: string[] = Array.from(
-    new Set(
-      (timeframes ?? []).map((tf) => toDateString(tf.start_time))
-    )
-  ).sort();
 
   const now = new Date();
 
@@ -174,6 +272,7 @@ export default function LoansPage(): JSX.Element {
   }
 
   const toysById = new Map((toys ?? []).map((t: Toy) => [t.id, t]));
+  const allTimeframes = timeframes ?? [];
 
   return (
     <Box component="main" sx={{ p: { xs: 2, md: 4 }, maxWidth: 600, mx: "auto" }}>
@@ -235,7 +334,7 @@ export default function LoansPage(): JSX.Element {
           ) : (
             <Stack spacing={2}>
               {(activeCheckouts ?? []).map((c: CheckoutRead) => (
-                <ToyRow key={c.id} checkout={c} toy={toysById.get(c.toy_id)} token={token} openDates={openDates} />
+                <ToyRow key={c.id} checkout={c} toy={toysById.get(c.toy_id)} token={token} timeframes={allTimeframes} />
               ))}
             </Stack>
           )}
@@ -248,7 +347,7 @@ export default function LoansPage(): JSX.Element {
               <Typography variant="sectionTitle" component="h2">History</Typography>
               <Stack spacing={2}>
                 {(pastCheckouts ?? []).map((c: CheckoutRead) => (
-                  <ToyRow key={c.id} checkout={c} toy={toysById.get(c.toy_id)} token={token} openDates={openDates} />
+                  <ToyRow key={c.id} checkout={c} toy={toysById.get(c.toy_id)} token={token} timeframes={allTimeframes} />
                 ))}
               </Stack>
             </Stack>
