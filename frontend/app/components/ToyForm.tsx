@@ -70,6 +70,22 @@ export default function ToyForm({
     { label: "7+", months: 84 },
   ];
 
+  const AGE_MAX_OPTIONS: { label: string; months: number }[] = [
+    { label: "3m", months: 3 },
+    { label: "6m", months: 6 },
+    { label: "9m", months: 9 },
+    { label: "1yr", months: 12 },
+    { label: "2yr", months: 24 },
+    { label: "3yr", months: 36 },
+    { label: "4yr", months: 48 },
+    { label: "5yr", months: 60 },
+    { label: "6yr", months: 72 },
+    { label: "7yr", months: 84 },
+    { label: "8yr", months: 96 },
+    { label: "10yr", months: 120 },
+    { label: "12yr", months: 144 },
+  ];
+
   return (
     <Stack spacing={3} component="form" onSubmit={onSubmit}>
       {error !== null ? (
@@ -196,6 +212,21 @@ export default function ToyForm({
             >
               <MenuItem value="">None</MenuItem>
               {AGE_OPTIONS.map((opt) => (
+                <MenuItem key={opt.label} value={String(opt.months)}>{opt.label}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl sx={{ flex: 1 }}>
+            <InputLabel>Max age (optional)</InputLabel>
+            <Select
+              label="Max age (optional)"
+              value={values.age_max !== null ? String(values.age_max) : ""}
+              onChange={(e: SelectChangeEvent<string>) =>
+                set("age_max", e.target.value === "" ? null : Number(e.target.value))
+              }
+            >
+              <MenuItem value="">None</MenuItem>
+              {AGE_MAX_OPTIONS.map((opt) => (
                 <MenuItem key={opt.label} value={String(opt.months)}>{opt.label}</MenuItem>
               ))}
             </Select>
