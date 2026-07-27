@@ -472,7 +472,7 @@ export default function AdminPage(): JSX.Element {
                   map.set(key, existing);
                 }
                 return [...map.entries()]
-                  .sort(([a], [b]) => a.localeCompare(b))
+                  .sort(([a], [b]) => b.localeCompare(a))
                   .map(([key, bs]) => ({
                     dateLabel: new Date(key + "T12:00:00").toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" }),
                     batches: bs,
