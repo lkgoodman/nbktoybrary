@@ -6,6 +6,7 @@ import Badge from "@mui/material/Badge";
 import { useRouter, useSearchParams } from "next/navigation";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -58,6 +59,7 @@ export default function AdminPage(): JSX.Element {
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
   const [selectedScheduleDay, setSelectedScheduleDay] = useState<{ year: number; month: number; day: number } | null>(null);
+  const [borrowCheckoutFilter, setBorrowCheckoutFilter] = useState<"pending" | "checked_out" | "completed">("pending");
   const [memberSearch, setMemberSearch] = useState<string>("");
   const [settingsAddress, setSettingsAddress] = useState<string>("");
   const [settingsSaved, setSettingsSaved] = useState<boolean>(false);
@@ -399,6 +401,19 @@ export default function AdminPage(): JSX.Element {
             ) : borrowError ? (
               <Typography variant="body1" color="error">Failed to load borrow requests.</Typography>
             ) : (() => {
+              // Map request_id → checkout for checkout-status classification
+              const checkoutByRequestId = new Map<string, CheckoutRead>();
+              (allCheckouts ?? []).forEach((c: CheckoutRead) => {
+                if (c.request_id !== null) checkoutByRequestId.set(c.request_id, c);
+              });
+
+              function batchCheckoutStatus(batch: BorrowRequestReadWithDetails[]): "pending" | "checked_out" | "completed" {
+                const checkouts = batch.map((r) => checkoutByRequestId.get(r.id)).filter((c): c is CheckoutRead => c !== undefined);
+                if (checkouts.length === 0) return "pending";
+                if (checkouts.every((c) => c.returned_at !== null)) return "completed";
+                return "checked_out";
+              }
+
               const batches = Object.values(
                 (borrowRequests ?? []).reduce<Record<string, BorrowRequestReadWithDetails[]>>(
                   (groups, req) => {
@@ -413,8 +428,13 @@ export default function AdminPage(): JSX.Element {
                 return bPickup - aPickup;
               });
 
-              const pendingBatches = batches.filter((b) => b.some((r) => r.status === "pending"));
-              const resolvedBatches = batches.filter((b) => b.every((r) => r.status !== "pending"));
+              const counts = {
+                pending: batches.filter((b) => batchCheckoutStatus(b) === "pending").length,
+                checked_out: batches.filter((b) => batchCheckoutStatus(b) === "checked_out").length,
+                completed: batches.filter((b) => batchCheckoutStatus(b) === "completed").length,
+              };
+
+              const filteredBatches = batches.filter((b) => batchCheckoutStatus(b) === borrowCheckoutFilter);
 
               function BatchCard({ batch }: { batch: BorrowRequestReadWithDetails[] }): JSX.Element {
                 const pendingCount = batch.filter((r) => r.status === "pending").length;
@@ -422,7 +442,7 @@ export default function AdminPage(): JSX.Element {
                 const pickup = batch[0].pickup_start;
                 let statusLabel: string;
                 if (pendingCount > 0) {
-                  statusLabel = `${pendingCount} pending`;
+                  statusLabel = `${pendingCount} pending approval`;
                 } else if (approvedCount === batch.length) {
                   statusLabel = "all approved";
                 } else if (approvedCount === 0) {
@@ -435,30 +455,19 @@ export default function AdminPage(): JSX.Element {
                     <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                       <Stack spacing={0.5}>
                         <Typography variant="bodyStrong">{batch[0].member_name}</Typography>
-                        <Typography variant="label" color="text.secondary">
-                          {statusLabel}
-                        </Typography>
+                        <Typography variant="label" color="text.secondary">{statusLabel}</Typography>
                         {pickup !== null ? (
                           <Typography variant="label" color="text.secondary">
                             Pickup: {new Date(pickup).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
                           </Typography>
                         ) : null}
                       </Stack>
-                      <Button
-                        component={NextLink}
-                        href={`/admin/borrow-requests/${batch[0].batch_id}`}
-                        variant="outlined"
-                        size="small"
-                      >
+                      <Button component={NextLink} href={`/admin/borrow-requests/${batch[0].batch_id}`} variant="outlined" size="small">
                         View
                       </Button>
                     </Stack>
                   </Paper>
                 );
-              }
-
-              if (batches.length === 0) {
-                return <Typography variant="body1" color="text.secondary">No borrow requests.</Typography>;
               }
 
               function groupByDate(batchList: BorrowRequestReadWithDetails[][]): { dateLabel: string; batches: BorrowRequestReadWithDetails[][] }[] {
@@ -479,37 +488,38 @@ export default function AdminPage(): JSX.Element {
                   }));
               }
 
-              const pendingByDate = groupByDate(pendingBatches);
-              const resolvedByDate = groupByDate(resolvedBatches);
+              const filterOptions: { value: "pending" | "checked_out" | "completed"; label: string }[] = [
+                { value: "pending", label: "Pending" },
+                { value: "checked_out", label: "Checked out" },
+                { value: "completed", label: "Completed" },
+              ];
 
               return (
                 <Stack spacing={2}>
-                  {pendingBatches.length > 0 ? (
+                  <Stack direction="row" spacing={1}>
+                    {filterOptions.map(({ value, label }) => (
+                      <Chip
+                        key={value}
+                        label={`${label} (${counts[value]})`}
+                        onClick={() => setBorrowCheckoutFilter(value)}
+                        color={borrowCheckoutFilter === value ? "primary" : "default"}
+                        variant={borrowCheckoutFilter === value ? "filled" : "outlined"}
+                      />
+                    ))}
+                  </Stack>
+
+                  {filteredBatches.length === 0 ? (
+                    <Typography variant="body1" color="text.secondary">No {filterOptions.find((f) => f.value === borrowCheckoutFilter)?.label.toLowerCase()} requests.</Typography>
+                  ) : (
                     <Stack spacing={2}>
-                      {pendingByDate.map(({ dateLabel, batches: dateBatches }) => (
+                      {groupByDate(filteredBatches).map(({ dateLabel, batches: dateBatches }) => (
                         <Stack key={dateLabel} spacing={1}>
                           <Typography variant="sectionTitle">{dateLabel}</Typography>
                           {dateBatches.map((batch) => <BatchCard key={batch[0].batch_id} batch={batch} />)}
                         </Stack>
                       ))}
                     </Stack>
-                  ) : (
-                    <Typography variant="body1" color="text.secondary">No pending borrow requests.</Typography>
                   )}
-                  {resolvedBatches.length > 0 ? (
-                    <>
-                      <Divider />
-                      <Typography variant="label" color="text.secondary">Resolved</Typography>
-                      <Stack spacing={2}>
-                        {resolvedByDate.map(({ dateLabel, batches: dateBatches }) => (
-                          <Stack key={dateLabel} spacing={1}>
-                            <Typography variant="sectionTitle">{dateLabel}</Typography>
-                            {dateBatches.map((batch) => <BatchCard key={batch[0].batch_id} batch={batch} />)}
-                          </Stack>
-                        ))}
-                      </Stack>
-                    </>
-                  ) : null}
                 </Stack>
               );
             })()}
