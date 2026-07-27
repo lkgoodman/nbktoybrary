@@ -410,7 +410,7 @@ export default function AdminPage(): JSX.Element {
               ).sort((a, b) => {
                 const aPickup = a[0].pickup_start !== null ? new Date(a[0].pickup_start).getTime() : new Date(a[0].created_at).getTime();
                 const bPickup = b[0].pickup_start !== null ? new Date(b[0].pickup_start).getTime() : new Date(b[0].created_at).getTime();
-                return aPickup - bPickup;
+                return bPickup - aPickup;
               });
 
               const pendingBatches = batches.filter((b) => b.some((r) => r.status === "pending"));
