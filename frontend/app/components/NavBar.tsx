@@ -75,6 +75,15 @@ export default function NavBar(): JSX.Element {
               </IconButton>
             ) : null}
             <Button
+              component="a"
+              href="https://nbktoybrary.org/"
+              variant="text"
+              size="large"
+              sx={{ px: { xs: 1, md: 2 }, py: { xs: 1, md: 1.5 }, fontSize: { xs: "0.85rem", md: "1.1rem" }, color: "inherit" }}
+            >
+              Home
+            </Button>
+            <Button
               component={NextLink}
               href="/"
               variant="text"
@@ -131,6 +140,15 @@ export default function NavBar(): JSX.Element {
           </Box>
         ) : (
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Button
+              component="a"
+              href="https://nbktoybrary.org/"
+              variant="text"
+              size="large"
+              sx={{ px: { xs: 1, md: 2 }, py: { xs: 1, md: 1.5 }, fontSize: { xs: "0.85rem", md: "1.1rem" }, color: "inherit" }}
+            >
+              Home
+            </Button>
             <Button
               component={NextLink}
               href="/hours"
