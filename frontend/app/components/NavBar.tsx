@@ -54,7 +54,7 @@ export default function NavBar(): JSX.Element {
               sx={{ height: { xs: 96, md: 112 }, width: { xs: 96, md: 112 }, flexShrink: 0 }}
             />
             <Typography variant="navTitle" sx={{ color: "brand.name", display: { xs: "none", md: "block" } }}>
-              North Brooklyn Community Toybrary
+              NBK Toybrary Lending Portal
             </Typography>
           </Box>
         </Box>
