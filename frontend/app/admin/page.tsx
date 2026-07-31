@@ -59,7 +59,7 @@ export default function AdminPage(): JSX.Element {
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
   const [selectedScheduleDay, setSelectedScheduleDay] = useState<{ year: number; month: number; day: number } | null>(null);
-  const [borrowCheckoutFilter, setBorrowCheckoutFilter] = useState<"pending" | "checked_out" | "completed">("pending");
+  const [borrowCheckoutFilter, setBorrowCheckoutFilter] = useState<"pending" | "checked_out" | "overdue" | "completed">("pending");
   const [memberSearch, setMemberSearch] = useState<string>("");
   const [settingsAddress, setSettingsAddress] = useState<string>("");
   const [settingsSaved, setSettingsSaved] = useState<boolean>(false);
@@ -407,10 +407,13 @@ export default function AdminPage(): JSX.Element {
                 if (c.request_id !== null) checkoutByRequestId.set(c.request_id, c);
               });
 
-              function batchCheckoutStatus(batch: BorrowRequestReadWithDetails[]): "pending" | "checked_out" | "completed" {
+              const now = new Date();
+
+              function batchCheckoutStatus(batch: BorrowRequestReadWithDetails[]): "pending" | "checked_out" | "overdue" | "completed" {
                 const checkouts = batch.map((r) => checkoutByRequestId.get(r.id)).filter((c): c is CheckoutRead => c !== undefined);
                 if (checkouts.length === 0) return "pending";
                 if (checkouts.every((c) => c.returned_at !== null)) return "completed";
+                if (checkouts.some((c) => c.returned_at === null && new Date(c.due_at) < now)) return "overdue";
                 return "checked_out";
               }
 
@@ -431,6 +434,7 @@ export default function AdminPage(): JSX.Element {
               const counts = {
                 pending: batches.filter((b) => batchCheckoutStatus(b) === "pending").length,
                 checked_out: batches.filter((b) => batchCheckoutStatus(b) === "checked_out").length,
+                overdue: batches.filter((b) => batchCheckoutStatus(b) === "overdue").length,
                 completed: batches.filter((b) => batchCheckoutStatus(b) === "completed").length,
               };
 
@@ -488,9 +492,10 @@ export default function AdminPage(): JSX.Element {
                   }));
               }
 
-              const filterOptions: { value: "pending" | "checked_out" | "completed"; label: string }[] = [
+              const filterOptions: { value: "pending" | "checked_out" | "overdue" | "completed"; label: string }[] = [
                 { value: "pending", label: "Pending" },
                 { value: "checked_out", label: "Checked out" },
+                { value: "overdue", label: "Overdue" },
                 { value: "completed", label: "Completed" },
               ];
 
