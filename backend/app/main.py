@@ -31,6 +31,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             "ALTER TABLE toys ADD COLUMN IF NOT EXISTS quantity INTEGER NOT NULL DEFAULT 1",
             "ALTER TABLE toys ADD COLUMN IF NOT EXISTS admin_notes TEXT",
             "ALTER TABLE toy_images ADD COLUMN IF NOT EXISTS storage_key TEXT",
+            "ALTER TABLE kids ALTER COLUMN name DROP NOT NULL",
         ]:
             try:
                 await conn.execute(text(stmt))

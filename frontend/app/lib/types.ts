@@ -114,7 +114,7 @@ export interface UserUpdate {
 export interface KidRead {
   id: string;
   user_id: string;
-  name: string;
+  name: string | null;
   birthdate: string | null;
   created_at: string;
   updated_at: string;
@@ -122,12 +122,12 @@ export interface KidRead {
 
 export interface KidCreate {
   user_id: string;
-  name: string;
+  name: string | null;
   birthdate: string | null;
 }
 
 export interface KidUpdate {
-  name?: string;
+  name?: string | null;
   birthdate?: string | null;
 }
 

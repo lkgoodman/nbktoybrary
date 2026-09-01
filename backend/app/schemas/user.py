@@ -69,7 +69,7 @@ class UserRoleRead(ORMModel):
 
 
 class KidBase(BaseModel):
-    name: str = Field(min_length=1, max_length=255)
+    name: str | None = Field(default=None, max_length=255)
     birthdate: date | None = None
 
 
@@ -85,5 +85,5 @@ class KidRead(KidBase, ORMModel):
 
 
 class KidUpdate(BaseModel):
-    name: str | None = Field(default=None, min_length=1, max_length=255)
+    name: str | None = Field(default=None, max_length=255)
     birthdate: date | None = None

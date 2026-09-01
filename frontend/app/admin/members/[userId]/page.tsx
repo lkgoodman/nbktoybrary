@@ -30,19 +30,19 @@ function KidRow({
   token: string;
   onChanged: () => void;
 }): JSX.Element {
-  const [name, setName] = useState<string>(kid.name);
+  const [name, setName] = useState<string>(kid.name ?? "");
   const [birthdate, setBirthdate] = useState<string>(kid.birthdate ?? "");
   const [error, setError] = useState<string | null>(null);
   const updateKid = useUpdateKid();
   const deleteKid = useDeleteKid();
 
-  const dirty = name !== kid.name || birthdate !== (kid.birthdate ?? "");
+  const dirty = name !== (kid.name ?? "") || birthdate !== (kid.birthdate ?? "");
 
   return (
     <Stack spacing={1}>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { xs: "stretch", sm: "center" } }}>
         <TextField
-          label="Name"
+          label="Name (optional)"
           size="small"
           value={name}
           onChange={(e) => { setName(e.target.value); setError(null); }}
@@ -61,11 +61,11 @@ function KidRow({
           <Button
             variant="outlined"
             size="small"
-            disabled={!dirty || updateKid.isPending || name.trim() === ""}
+            disabled={!dirty || updateKid.isPending}
             onClick={() => {
               setError(null);
               updateKid.mutate(
-                { id: kid.id, payload: { name, birthdate: birthdate !== "" ? birthdate : null }, token },
+                { id: kid.id, payload: { name: name.trim() !== "" ? name : null, birthdate: birthdate !== "" ? birthdate : null }, token },
                 { onSuccess: onChanged, onError: (err) => setError(err.message) },
               );
             }}
@@ -542,7 +542,7 @@ export default function AdminMemberPage({
                   <Divider />
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { xs: "stretch", sm: "center" } }}>
                     <TextField
-                      label="Name"
+                      label="Name (optional)"
                       size="small"
                       value={newKidName}
                       onChange={(e) => { setNewKidName(e.target.value); setNewKidError(null); }}
@@ -560,7 +560,7 @@ export default function AdminMemberPage({
                     <Button
                       variant="contained"
                       size="small"
-                      disabled={createKid.isPending || newKidName.trim() === ""}
+                      disabled={createKid.isPending || (newKidName.trim() === "" && newKidBirthdate === "")}
                       onClick={() => {
                         if (token === null) return;
                         setNewKidError(null);
@@ -568,7 +568,7 @@ export default function AdminMemberPage({
                           {
                             payload: {
                               user_id: params.userId,
-                              name: newKidName,
+                              name: newKidName.trim() !== "" ? newKidName : null,
                               birthdate: newKidBirthdate !== "" ? newKidBirthdate : null,
                             },
                             token,
