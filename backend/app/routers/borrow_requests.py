@@ -108,6 +108,15 @@ async def create_borrow_requests(
     if timeframe is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Timeframe not found")
 
+    pickup_start = timeframe.start_time
+    if pickup_start.tzinfo is None:
+        pickup_start = pickup_start.replace(tzinfo=timezone.utc)
+    if pickup_start - datetime.now(timezone.utc) < timedelta(hours=24):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Reservations must be made at least 24 hours before the pickup time.",
+        )
+
     return_tf_result = await db.execute(select(Timeframe).where(Timeframe.id == payload.return_timeframe_id))
     return_timeframe = return_tf_result.scalar_one_or_none()
     if return_timeframe is None:

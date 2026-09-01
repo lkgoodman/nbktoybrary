@@ -71,10 +71,11 @@ export default function CartPage(): JSX.Element {
   const cartToys: Toy[] = cartEntries.map((e) => e.toy);
 
   const now = new Date();
+  const minPickupTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const availableTimeframes: TimeframeRead[] = (allTimeframes ?? []).filter((tf) => {
     const start = new Date(tf.start_time);
-    return start > now && start <= oneWeekFromNow;
+    return start > minPickupTime && start <= oneWeekFromNow;
   });
 
   const selectedTimeframe = availableTimeframes.find((tf) => tf.id === selectedTimeframeId) ?? null;
