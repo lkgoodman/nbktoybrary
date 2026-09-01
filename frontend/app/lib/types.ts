@@ -111,6 +111,26 @@ export interface UserUpdate {
   password?: string;
 }
 
+export interface KidRead {
+  id: string;
+  user_id: string;
+  name: string;
+  birthdate: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface KidCreate {
+  user_id: string;
+  name: string;
+  birthdate: string | null;
+}
+
+export interface KidUpdate {
+  name?: string;
+  birthdate?: string | null;
+}
+
 export interface ToyUpdate {
   name?: string;
   description?: string;

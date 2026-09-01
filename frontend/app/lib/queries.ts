@@ -1,7 +1,7 @@
 import { useMutation, useQuery, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 
-import { addFavorite, checkinCheckout, createBorrowRequests, createCheckout, createMembership, createTimeframe, createToy, deleteBorrowRequest, deleteToy, deleteUser, updateBorrowRequest, deleteTimeframe, deleteToyImage, fetchSettings, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listFavorites, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, removeFavorite, resetUserPassword, setFeaturedImage, updateCheckoutDueDate, updateMembershipRequest, updateMembershipStanding, updateSettings, updateToy, updateUser, uploadToyImage } from "./api";
-import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, MembershipRead, MembershipRequestRead, RegisterRequest, SiteSettingsRead, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead, UserUpdate } from "./types";
+import { addFavorite, checkinCheckout, createBorrowRequests, createCheckout, createKid, createMembership, createTimeframe, createToy, deleteBorrowRequest, deleteKid, deleteToy, deleteUser, updateBorrowRequest, deleteTimeframe, deleteToyImage, fetchSettings, getToy, getUser, listAdminBorrowRequests, listBorrowRequests, listCheckouts, listFavorites, listKids, listMemberships, listMembershipRequests, listTimeframes, listToys, listUsers, login, registerUser, removeFavorite, resetUserPassword, setFeaturedImage, updateCheckoutDueDate, updateKid, updateMembershipRequest, updateMembershipStanding, updateSettings, updateToy, updateUser, uploadToyImage } from "./api";
+import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, KidCreate, KidRead, KidUpdate, MembershipRead, MembershipRequestRead, RegisterRequest, SiteSettingsRead, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead, UserUpdate } from "./types";
 
 
 export const queryKeys = {
@@ -43,6 +43,10 @@ export const queryKeys = {
   favorites: {
     all: ["favorites"] as const,
     list: () => [...queryKeys.favorites.all, "list"] as const,
+  },
+  kids: {
+    all: ["kids"] as const,
+    byUser: (userId: string) => ["kids", "user", userId] as const,
   },
 } as const;
 
@@ -299,5 +303,31 @@ export function useUpdateSettings(): UseMutationResult<SiteSettingsRead, Error, 
 export function useUpdateUser(): UseMutationResult<UserRead, Error, { id: string; payload: UserUpdate; token: string }> {
   return useMutation<UserRead, Error, { id: string; payload: UserUpdate; token: string }>({
     mutationFn: ({ id, payload, token }) => updateUser(id, payload, token),
+  });
+}
+
+export function useKids(userId: string, token: string | null): UseQueryResult<KidRead[], Error> {
+  return useQuery<KidRead[], Error>({
+    queryKey: queryKeys.kids.byUser(userId),
+    queryFn: () => listKids(userId, token!),
+    enabled: token !== null,
+  });
+}
+
+export function useCreateKid(): UseMutationResult<KidRead, Error, { payload: KidCreate; token: string }> {
+  return useMutation<KidRead, Error, { payload: KidCreate; token: string }>({
+    mutationFn: ({ payload, token }) => createKid(payload, token),
+  });
+}
+
+export function useUpdateKid(): UseMutationResult<KidRead, Error, { id: string; payload: KidUpdate; token: string }> {
+  return useMutation<KidRead, Error, { id: string; payload: KidUpdate; token: string }>({
+    mutationFn: ({ id, payload, token }) => updateKid(id, payload, token),
+  });
+}
+
+export function useDeleteKid(): UseMutationResult<void, Error, { id: string; token: string }> {
+  return useMutation<void, Error, { id: string; token: string }>({
+    mutationFn: ({ id, token }) => deleteKid(id, token),
   });
 }

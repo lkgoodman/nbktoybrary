@@ -15,7 +15,7 @@ from app.models import *  # noqa: F401,F403  -- register mappers
 from app.models.user import User, Role, UserRole
 from app.core.security import hash_password
 from app.models.settings import SiteSettings  # noqa: F401 -- register mapper
-from app.routers import auth, borrow_requests, checkouts, favorites, membership_requests, memberships, settings, timeframes, toy_images, toys, users
+from app.routers import auth, borrow_requests, checkouts, favorites, kids, membership_requests, memberships, settings, timeframes, toy_images, toys, users
 
 IMAGES_DIR: str = os.getenv("IMAGES_DIR", "/data/images")
 
@@ -131,6 +131,7 @@ app.include_router(memberships.router)
 app.include_router(borrow_requests.router)
 app.include_router(checkouts.router)
 app.include_router(favorites.router)
+app.include_router(kids.router)
 app.include_router(timeframes.router)
 app.include_router(toys.router)
 app.include_router(toy_images.router)

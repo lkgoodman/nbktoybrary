@@ -14,13 +14,14 @@ from app.models.scheduling import (
     TimeframeStatus,
 )
 from app.models.toy import Favorite, Tag, Toy, ToyImage, ToyTag
-from app.models.user import Role, User, UserRole
+from app.models.user import Kid, Role, User, UserRole
 
 __all__ = [
     "AccountStanding",
     "Checkout",
     "CheckoutTimeframe",
     "Favorite",
+    "Kid",
     "Membership",
     "MembershipRequest",
     "MembershipRequestStatus",

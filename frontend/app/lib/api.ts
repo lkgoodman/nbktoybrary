@@ -1,4 +1,4 @@
-import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, HelloResponse, MembershipRead, MembershipRequestRead, RegisterRequest, SiteSettingsRead, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead, UserUpdate } from "./types";
+import type { BorrowRequestRead, BorrowRequestReadWithDetails, CheckoutRead, FavoriteRead, HelloResponse, KidCreate, KidRead, KidUpdate, MembershipRead, MembershipRequestRead, RegisterRequest, SiteSettingsRead, TimeframeCreate, TimeframeRead, TokenResponse, Toy, ToyCreate, ToyImage, ToyUpdate, UserRead, UserUpdate } from "./types";
 
 const BACKEND_URL = "/api";
 
@@ -63,6 +63,12 @@ export const endpoints = {
     list: (): string => `${BACKEND_URL}/favorites`,
     add: (): string => `${BACKEND_URL}/favorites`,
     remove: (toyId: string): string => `${BACKEND_URL}/favorites/${toyId}`,
+  },
+  kids: {
+    list: (userId: string): string => `${BACKEND_URL}/kids?user_id=${userId}`,
+    create: (): string => `${BACKEND_URL}/kids`,
+    update: (id: string): string => `${BACKEND_URL}/kids/${id}`,
+    delete: (id: string): string => `${BACKEND_URL}/kids/${id}`,
   },
 } as const;
 
@@ -377,4 +383,34 @@ export async function removeFavorite(toyId: string, token: string): Promise<void
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error(`Remove favorite failed: ${res.status}`);
+}
+
+export async function listKids(userId: string, token: string): Promise<KidRead[]> {
+  return request<KidRead[]>(endpoints.kids.list(userId), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function createKid(payload: KidCreate, token: string): Promise<KidRead> {
+  return request<KidRead>(endpoints.kids.create(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateKid(id: string, payload: KidUpdate, token: string): Promise<KidRead> {
+  return request<KidRead>(endpoints.kids.update(id), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteKid(id: string, token: string): Promise<void> {
+  const res = await fetch(endpoints.kids.delete(id), {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`Delete kid failed: ${res.status}`);
 }

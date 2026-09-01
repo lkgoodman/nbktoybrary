@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import uuid
+from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, String, Uuid
+from sqlalchemy import Date, ForeignKey, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import AuditMixin, Base, UuidPK
+from app.db.base import AuditMixin, Base, TimestampMixin, UuidPK
 
 if TYPE_CHECKING:
     from app.models.membership import MembershipUser
@@ -37,6 +38,7 @@ class User(AuditMixin, Base):
     checkouts: Mapped[list["Checkout"]] = relationship(
         back_populates="user", foreign_keys="Checkout.user_id"
     )
+    kids: Mapped[list["Kid"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 
 class Role(AuditMixin, Base):
@@ -60,3 +62,16 @@ class UserRole(Base):
 
     user: Mapped["User"] = relationship(back_populates="roles", foreign_keys=[user_id])
     role: Mapped["Role"] = relationship(back_populates="users")
+
+
+class Kid(TimestampMixin, Base):
+    __tablename__ = "kids"
+
+    id: Mapped[UuidPK]
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    birthdate: Mapped[date | None] = mapped_column(Date, nullable=True)
+
+    user: Mapped["User"] = relationship(back_populates="kids")

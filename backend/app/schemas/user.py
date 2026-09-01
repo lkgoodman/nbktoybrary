@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import date, datetime
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -65,3 +66,24 @@ class UserRoleCreate(BaseModel):
 class UserRoleRead(ORMModel):
     user_id: uuid.UUID
     role_id: uuid.UUID
+
+
+class KidBase(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    birthdate: date | None = None
+
+
+class KidCreate(KidBase):
+    user_id: uuid.UUID
+
+
+class KidRead(KidBase, ORMModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+
+
+class KidUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    birthdate: date | None = None

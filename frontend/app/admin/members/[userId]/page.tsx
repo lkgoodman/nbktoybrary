@@ -14,11 +14,86 @@ import Typography from "@mui/material/Typography";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../lib/AuthContext";
-import { useUser, useAdminBorrowRequests, useToys, useMembershipsByUser, useUpdateMembershipStanding, useCreateMembership, useResetUserPassword, useUpdateUser, useDeleteUser, queryKeys } from "../../../lib/queries";
-import type { BorrowRequestReadWithDetails, MembershipRead, Toy, ToyImage } from "../../../lib/types";
+import { useUser, useAdminBorrowRequests, useToys, useMembershipsByUser, useUpdateMembershipStanding, useCreateMembership, useResetUserPassword, useUpdateUser, useDeleteUser, useKids, useCreateKid, useUpdateKid, useDeleteKid, queryKeys } from "../../../lib/queries";
+import type { BorrowRequestReadWithDetails, KidRead, MembershipRead, Toy, ToyImage } from "../../../lib/types";
 
 function getFeaturedImage(toy: Toy): ToyImage | null {
   return toy.images.find((img: ToyImage) => img.is_featured) ?? toy.images[0] ?? null;
+}
+
+function KidRow({
+  kid,
+  token,
+  onChanged,
+}: {
+  kid: KidRead;
+  token: string;
+  onChanged: () => void;
+}): JSX.Element {
+  const [name, setName] = useState<string>(kid.name);
+  const [birthdate, setBirthdate] = useState<string>(kid.birthdate ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const updateKid = useUpdateKid();
+  const deleteKid = useDeleteKid();
+
+  const dirty = name !== kid.name || birthdate !== (kid.birthdate ?? "");
+
+  return (
+    <Stack spacing={1}>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { xs: "stretch", sm: "center" } }}>
+        <TextField
+          label="Name"
+          size="small"
+          value={name}
+          onChange={(e) => { setName(e.target.value); setError(null); }}
+          sx={{ flex: 1 }}
+        />
+        <TextField
+          label="Birthdate"
+          type="date"
+          size="small"
+          slotProps={{ inputLabel: { shrink: true } }}
+          value={birthdate}
+          onChange={(e) => { setBirthdate(e.target.value); setError(null); }}
+          sx={{ width: { xs: "100%", sm: 180 } }}
+        />
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="outlined"
+            size="small"
+            disabled={!dirty || updateKid.isPending || name.trim() === ""}
+            onClick={() => {
+              setError(null);
+              updateKid.mutate(
+                { id: kid.id, payload: { name, birthdate: birthdate !== "" ? birthdate : null }, token },
+                { onSuccess: onChanged, onError: (err) => setError(err.message) },
+              );
+            }}
+          >
+            {updateKid.isPending ? "Saving…" : "Save"}
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            color="error"
+            disabled={deleteKid.isPending}
+            onClick={() => {
+              setError(null);
+              deleteKid.mutate(
+                { id: kid.id, token },
+                { onSuccess: onChanged, onError: (err) => setError(err.message) },
+              );
+            }}
+          >
+            Remove
+          </Button>
+        </Stack>
+      </Stack>
+      {error !== null ? (
+        <Typography variant="body1" color="error">{error}</Typography>
+      ) : null}
+    </Stack>
+  );
 }
 
 export default function AdminMemberPage({
@@ -33,11 +108,13 @@ export default function AdminMemberPage({
   const { data: allRequests, isPending: requestsPending } = useAdminBorrowRequests(token);
   const { data: toys } = useToys(token, { enabled: authReady });
   const { data: memberships } = useMembershipsByUser(params.userId, isSuperadmin ? token : null);
+  const { data: kids, isPending: kidsPending } = useKids(params.userId, isSuperadmin ? token : null);
   const updateStanding = useUpdateMembershipStanding();
   const createMembership = useCreateMembership();
   const resetPassword = useResetUserPassword();
   const updateUser = useUpdateUser();
   const deleteUser = useDeleteUser();
+  const createKid = useCreateKid();
   const membership: MembershipRead | null = memberships?.[0] ?? null;
   const [newPassword, setNewPassword] = useState<string>("");
   const [confirmDeleteMember, setConfirmDeleteMember] = useState<boolean>(false);
@@ -55,6 +132,10 @@ export default function AdminMemberPage({
   const [zip, setZip] = useState<string>("");
   const [infoError, setInfoError] = useState<string | null>(null);
   const [infoSuccess, setInfoSuccess] = useState<boolean>(false);
+
+  const [newKidName, setNewKidName] = useState<string>("");
+  const [newKidBirthdate, setNewKidBirthdate] = useState<string>("");
+  const [newKidError, setNewKidError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated || !isAdmin) router.replace("/");
@@ -437,6 +518,81 @@ export default function AdminMemberPage({
                 ) : null}
               </Stack>
             </Paper>
+
+            {isSuperadmin ? (
+              <Paper elevation={0} sx={{ p: 3 }}>
+                <Stack spacing={2}>
+                  <Typography variant="sectionTitle" component="h2">Kids</Typography>
+                  {kidsPending ? (
+                    <Typography variant="body1" color="text.secondary">Loading…</Typography>
+                  ) : (kids ?? []).length === 0 ? (
+                    <Typography variant="body1" color="text.secondary">No kids added yet.</Typography>
+                  ) : (
+                    <Stack spacing={2} divider={<Divider />}>
+                      {(kids ?? []).map((kid) => (
+                        <KidRow
+                          key={kid.id}
+                          kid={kid}
+                          token={token ?? ""}
+                          onChanged={() => void queryClient.invalidateQueries({ queryKey: queryKeys.kids.byUser(params.userId) })}
+                        />
+                      ))}
+                    </Stack>
+                  )}
+                  <Divider />
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { xs: "stretch", sm: "center" } }}>
+                    <TextField
+                      label="Name"
+                      size="small"
+                      value={newKidName}
+                      onChange={(e) => { setNewKidName(e.target.value); setNewKidError(null); }}
+                      sx={{ flex: 1 }}
+                    />
+                    <TextField
+                      label="Birthdate"
+                      type="date"
+                      size="small"
+                      slotProps={{ inputLabel: { shrink: true } }}
+                      value={newKidBirthdate}
+                      onChange={(e) => { setNewKidBirthdate(e.target.value); setNewKidError(null); }}
+                      sx={{ width: { xs: "100%", sm: 180 } }}
+                    />
+                    <Button
+                      variant="contained"
+                      size="small"
+                      disabled={createKid.isPending || newKidName.trim() === ""}
+                      onClick={() => {
+                        if (token === null) return;
+                        setNewKidError(null);
+                        createKid.mutate(
+                          {
+                            payload: {
+                              user_id: params.userId,
+                              name: newKidName,
+                              birthdate: newKidBirthdate !== "" ? newKidBirthdate : null,
+                            },
+                            token,
+                          },
+                          {
+                            onSuccess: () => {
+                              setNewKidName("");
+                              setNewKidBirthdate("");
+                              void queryClient.invalidateQueries({ queryKey: queryKeys.kids.byUser(params.userId) });
+                            },
+                            onError: (err) => setNewKidError(err.message),
+                          },
+                        );
+                      }}
+                    >
+                      {createKid.isPending ? "Adding…" : "Add kid"}
+                    </Button>
+                  </Stack>
+                  {newKidError !== null ? (
+                    <Typography variant="body1" color="error">{newKidError}</Typography>
+                  ) : null}
+                </Stack>
+              </Paper>
+            ) : null}
 
             <Stack spacing={2}>
               <Typography variant="sectionTitle" component="h2">Borrowing history</Typography>
