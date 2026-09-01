@@ -21,6 +21,14 @@ function getFeaturedImage(toy: Toy): ToyImage | null {
   return toy.images.find((img: ToyImage) => img.is_featured) ?? toy.images[0] ?? null;
 }
 
+function formatBirthdate(birthdate: string): string {
+  return new Date(`${birthdate}T00:00:00`).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 function KidRow({
   kid,
   token,
@@ -30,6 +38,7 @@ function KidRow({
   token: string;
   onChanged: () => void;
 }): JSX.Element {
+  const [editing, setEditing] = useState<boolean>(false);
   const [name, setName] = useState<string>(kid.name ?? "");
   const [birthdate, setBirthdate] = useState<string>(kid.birthdate ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -38,57 +47,79 @@ function KidRow({
 
   const dirty = name !== (kid.name ?? "") || birthdate !== (kid.birthdate ?? "");
 
+  function handleCancel(): void {
+    setName(kid.name ?? "");
+    setBirthdate(kid.birthdate ?? "");
+    setError(null);
+    setEditing(false);
+  }
+
+  function handleRemove(): void {
+    setError(null);
+    deleteKid.mutate(
+      { id: kid.id, token },
+      { onSuccess: onChanged, onError: (err) => setError(err.message) },
+    );
+  }
+
   return (
     <Stack spacing={1}>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { xs: "stretch", sm: "center" } }}>
-        <TextField
-          label="Name (optional)"
-          size="small"
-          value={name}
-          onChange={(e) => { setName(e.target.value); setError(null); }}
-          sx={{ flex: 1 }}
-        />
-        <TextField
-          label="Birthdate"
-          type="date"
-          size="small"
-          slotProps={{ inputLabel: { shrink: true } }}
-          value={birthdate}
-          onChange={(e) => { setBirthdate(e.target.value); setError(null); }}
-          sx={{ width: { xs: "100%", sm: 180 } }}
-        />
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant="outlined"
+      {editing ? (
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { xs: "stretch", sm: "center" } }}>
+          <TextField
+            label="Name (optional)"
             size="small"
-            disabled={!dirty || updateKid.isPending}
-            onClick={() => {
-              setError(null);
-              updateKid.mutate(
-                { id: kid.id, payload: { name: name.trim() !== "" ? name : null, birthdate: birthdate !== "" ? birthdate : null }, token },
-                { onSuccess: onChanged, onError: (err) => setError(err.message) },
-              );
-            }}
-          >
-            {updateKid.isPending ? "Saving…" : "Save"}
-          </Button>
-          <Button
-            variant="outlined"
+            value={name}
+            onChange={(e) => { setName(e.target.value); setError(null); }}
+            sx={{ flex: 1 }}
+          />
+          <TextField
+            label="Birthdate"
+            type="date"
             size="small"
-            color="error"
-            disabled={deleteKid.isPending}
-            onClick={() => {
-              setError(null);
-              deleteKid.mutate(
-                { id: kid.id, token },
-                { onSuccess: onChanged, onError: (err) => setError(err.message) },
-              );
-            }}
-          >
-            Remove
-          </Button>
+            slotProps={{ inputLabel: { shrink: true } }}
+            value={birthdate}
+            onChange={(e) => { setBirthdate(e.target.value); setError(null); }}
+            sx={{ width: { xs: "100%", sm: 180 } }}
+          />
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="contained"
+              size="small"
+              disabled={!dirty || updateKid.isPending}
+              onClick={() => {
+                setError(null);
+                updateKid.mutate(
+                  { id: kid.id, payload: { name: name.trim() !== "" ? name : null, birthdate: birthdate !== "" ? birthdate : null }, token },
+                  { onSuccess: () => { setEditing(false); onChanged(); }, onError: (err) => setError(err.message) },
+                );
+              }}
+            >
+              {updateKid.isPending ? "Saving…" : "Save"}
+            </Button>
+            <Button variant="outlined" size="small" onClick={handleCancel} disabled={updateKid.isPending}>
+              Cancel
+            </Button>
+          </Stack>
         </Stack>
-      </Stack>
+      ) : (
+        <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+          <Stack>
+            <Typography variant="body1">{kid.name !== null && kid.name !== "" ? kid.name : "Unnamed"}</Typography>
+            <Typography variant="label" color="text.secondary">
+              {kid.birthdate !== null ? formatBirthdate(kid.birthdate) : "No birthdate set"}
+            </Typography>
+          </Stack>
+          <Stack direction="row" spacing={1}>
+            <Button variant="outlined" size="small" onClick={() => setEditing(true)}>
+              Edit
+            </Button>
+            <Button variant="outlined" size="small" color="error" disabled={deleteKid.isPending} onClick={handleRemove}>
+              Remove
+            </Button>
+          </Stack>
+        </Stack>
+      )}
       {error !== null ? (
         <Typography variant="body1" color="error">{error}</Typography>
       ) : null}
