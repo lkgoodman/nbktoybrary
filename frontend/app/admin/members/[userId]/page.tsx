@@ -21,8 +21,8 @@ function getFeaturedImage(toy: Toy): ToyImage | null {
   return toy.images.find((img: ToyImage) => img.is_featured) ?? toy.images[0] ?? null;
 }
 
-function formatBirthdate(birthdate: string): string {
-  return new Date(`${birthdate}T00:00:00`).toLocaleDateString(undefined, {
+function formatDate(dateStr: string): string {
+  return new Date(`${dateStr}T00:00:00`).toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -107,7 +107,7 @@ function KidRow({
           <Stack>
             <Typography variant="body1">{kid.name !== null && kid.name !== "" ? kid.name : "Unnamed"}</Typography>
             <Typography variant="label" color="text.secondary">
-              {kid.birthdate !== null ? formatBirthdate(kid.birthdate) : "No birthdate set"}
+              {kid.birthdate !== null ? formatDate(kid.birthdate) : "No birthdate set"}
             </Typography>
           </Stack>
           <Stack direction="row" spacing={1}>
@@ -371,6 +371,11 @@ export default function AdminMemberPage({
                     <Typography variant="label" color="text.secondary">
                       {member.address_line1}{member.address_line2 !== null ? `, ${member.address_line2}` : ""}, {member.city}, {member.state} {member.zip}
                     </Typography>
+                    {membership !== null ? (
+                      <Typography variant="label" color="text.secondary">
+                        Member since {formatDate(membership.start_date)}
+                      </Typography>
+                    ) : null}
                     {infoSuccess ? (
                       <Typography variant="body1" color="success.main">Profile updated.</Typography>
                     ) : null}
