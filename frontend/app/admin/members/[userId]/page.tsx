@@ -138,7 +138,7 @@ export default function AdminMemberPage({
   const { data: member, isPending: memberPending, isError: memberError } = useUser(params.userId, token);
   const { data: allRequests, isPending: requestsPending } = useAdminBorrowRequests(token);
   const { data: toys } = useToys(token, { enabled: authReady });
-  const { data: memberships } = useMembershipsByUser(params.userId, isSuperadmin ? token : null);
+  const { data: memberships } = useMembershipsByUser(params.userId, isAdmin ? token : null);
   const { data: kids, isPending: kidsPending } = useKids(params.userId, isSuperadmin ? token : null);
   const updateStanding = useUpdateMembershipStanding();
   const createMembership = useCreateMembership();

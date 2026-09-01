@@ -98,9 +98,9 @@ async def list_memberships(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> list[Membership]:
-    is_superadmin = any(ur.role.name == "superadmin" for ur in current_user.roles)
-    # Non-superadmins may only query their own membership
-    if not is_superadmin:
+    is_admin = any(ur.role.name in ("admin", "superadmin") for ur in current_user.roles)
+    # Members may only query their own membership; admins/superadmins may query any
+    if not is_admin:
         if user_id is None or user_id != current_user.id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
     stmt = select(Membership).options(*_load_options)
