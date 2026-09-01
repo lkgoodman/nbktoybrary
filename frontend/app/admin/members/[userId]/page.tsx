@@ -29,6 +29,29 @@ function formatDate(dateStr: string): string {
   });
 }
 
+function formatMembershipDuration(startDateStr: string): string {
+  const start = new Date(`${startDateStr}T00:00:00`);
+  const now = new Date();
+  let years = now.getFullYear() - start.getFullYear();
+  let months = now.getMonth() - start.getMonth();
+  let days = now.getDate() - start.getDate();
+  if (days < 0) {
+    months -= 1;
+    days += new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+  }
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+  if (years > 0) {
+    const parts = [`${years} year${years !== 1 ? "s" : ""}`];
+    if (months > 0) parts.push(`${months} month${months !== 1 ? "s" : ""}`);
+    return parts.join(", ");
+  }
+  if (months > 0) return `${months} month${months !== 1 ? "s" : ""}`;
+  return days <= 1 ? "less than a day" : `${days} days`;
+}
+
 function KidRow({
   kid,
   token,
@@ -155,6 +178,7 @@ export default function AdminMemberPage({
 
   const [editingInfo, setEditingInfo] = useState<boolean>(false);
   const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
   const [addressLine1, setAddressLine1] = useState<string>("");
   const [addressLine2, setAddressLine2] = useState<string>("");
@@ -175,6 +199,7 @@ export default function AdminMemberPage({
   useEffect(() => {
     if (member !== undefined) {
       setName(member.name);
+      setEmail(member.email);
       setPhone(member.phone);
       setAddressLine1(member.address_line1);
       setAddressLine2(member.address_line2 ?? "");
@@ -195,6 +220,7 @@ export default function AdminMemberPage({
   function handleCancelEdit(): void {
     if (member !== undefined) {
       setName(member.name);
+      setEmail(member.email);
       setPhone(member.phone);
       setAddressLine1(member.address_line1);
       setAddressLine2(member.address_line2 ?? "");
@@ -215,6 +241,7 @@ export default function AdminMemberPage({
         id: params.userId,
         payload: {
           name,
+          email,
           phone,
           address_line1: addressLine1,
           address_line2: addressLine2 !== "" ? addressLine2 : null,
@@ -297,12 +324,18 @@ export default function AdminMemberPage({
                 </Stack>
                 {editingInfo ? (
                   <Stack spacing={2} sx={{ pt: 1 }}>
-                    <Typography variant="label" color="text.secondary">{member.email}</Typography>
                     <TextField
                       label="Full name"
                       size="small"
                       value={name}
                       onChange={(e) => { setName(e.target.value); setInfoError(null); }}
+                    />
+                    <TextField
+                      label="Email"
+                      type="email"
+                      size="small"
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); setInfoError(null); }}
                     />
                     <TextField
                       label="Phone"
@@ -352,7 +385,7 @@ export default function AdminMemberPage({
                       <Button
                         variant="contained"
                         size="small"
-                        disabled={updateUser.isPending || name.trim() === "" || phone.trim() === "" || addressLine1.trim() === "" || city.trim() === "" || state.trim() === "" || zip.trim() === ""}
+                        disabled={updateUser.isPending || name.trim() === "" || email.trim() === "" || phone.trim() === "" || addressLine1.trim() === "" || city.trim() === "" || state.trim() === "" || zip.trim() === ""}
                         onClick={handleSaveInfo}
                       >
                         {updateUser.isPending ? "Saving…" : "Save changes"}

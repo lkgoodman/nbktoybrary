@@ -37,6 +37,7 @@ class UserPasswordUpdate(BaseModel):
 
 class UserUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
+    email: EmailStr | None = None
     phone: str | None = Field(default=None, min_length=1, max_length=32)
     address_line1: str | None = Field(default=None, min_length=1, max_length=255)
     address_line2: str | None = Field(default=None, max_length=255)

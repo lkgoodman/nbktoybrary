@@ -102,6 +102,7 @@ export interface ToyCreate {
 
 export interface UserUpdate {
   name?: string;
+  email?: string;
   phone?: string;
   address_line1?: string;
   address_line2?: string | null;

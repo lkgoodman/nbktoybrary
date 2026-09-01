@@ -78,6 +78,12 @@ async def update_user(
     user = result.scalar_one_or_none()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if "email" in payload.model_fields_set and payload.email != user.email:
+        existing = await db.execute(select(User).where(User.email == payload.email))
+        if existing.scalar_one_or_none() is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
+            )
     for field in payload.model_fields_set:
         if field == "password":
             user.password_hash = hash_password(payload.password)  # type: ignore[arg-type]
